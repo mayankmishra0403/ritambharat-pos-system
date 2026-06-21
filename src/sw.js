@@ -6,6 +6,12 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response/CacheableRes
 
 precacheAndRoute(self.__WB_MANIFEST)
 
+self.addEventListener('install', () => self.skipWaiting())
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim())
+})
+
 registerRoute(
   /^https:\/\/.*\/api\/menu.*/,
   new StaleWhileRevalidate({
