@@ -10,7 +10,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
-import ReceiptTemplate from '../../components/common/ReceiptTemplate';
 import ManualBillModal from '../../components/billing/ManualBillModal';
 import toast from 'react-hot-toast';
 
@@ -92,15 +91,75 @@ const Billing = () => {
     };
 
     useEffect(() => {
-        if (!printing) return;
-        const timer = setTimeout(() => window.print(), 300);
-        const handleAfterPrint = () => setPrinting(false);
-        window.addEventListener('afterprint', handleAfterPrint);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('afterprint', handleAfterPrint);
-        };
-    }, [printing]);
+        if (!printing || !selectedBill) return;
+        const timer = setTimeout(() => {
+            const win = window.open('', '_blank');
+            if (!win) { toast.error('Popup blocked! Allow popups for this site.'); setPrinting(false); return; }
+            const order = selectedBill;
+            const itemsHtml = order.items.map(item =>
+                `<tr><td style="padding:4px 0;font-size:12px">${item.quantity}x ${item.name}</td><td style="padding:4px 0;font-size:12px;text-align:right;font-weight:bold">₹${(item.price * item.quantity).toFixed(2)}</td></tr>`
+            ).join('');
+            win.document.write(`
+                <html><head>
+                <style>
+                    @page { margin: 0; size: auto; }
+                    body { margin: 0; padding: 20px; font-family: monospace; color: black; background: white; }
+                    .receipt { max-width: 320px; margin: 0 auto; }
+                    .center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .border-t { border-top: 2px solid black; }
+                    .border-b { border-bottom: 2px solid black; }
+                    .mt-2 { margin-top: 8px; }
+                    .mt-4 { margin-top: 16px; }
+                    .mb-2 { margin-bottom: 8px; }
+                    .mb-4 { margin-bottom: 16px; }
+                    .mb-6 { margin-bottom: 24px; }
+                    .text-lg { font-size: 18px; }
+                    .text-sm { font-size: 12px; }
+                    .text-xs { font-size: 10px; }
+                    .text-2xl { font-size: 24px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    td { padding: 4px 0; font-size: 12px; }
+                    .no-print { display: none; }
+                </style>
+                </head><body>
+                <div class="receipt">
+                    <div class="center mb-4">
+                        <h2 class="bold text-lg">${order.restaurant?.name || 'Restaurant Name'}</h2>
+                        ${order.restaurant?.address ? `<p class="text-xs">${typeof order.restaurant.address === 'string' ? order.restaurant.address : [order.restaurant.address.street, order.restaurant.address.city].filter(Boolean).join(', ')}</p>` : ''}
+                        ${order.restaurant?.phone ? `<p class="text-xs">TEL: ${order.restaurant.phone}</p>` : ''}
+                    </div>
+                    <div class="border-t mb-4"></div>
+                    <div class="center mb-4">
+                        <p class="bold text-lg">OFFICIAL INVOICE</p>
+                        <p class="text-xs">DATE: ${new Date(order.createdAt).toLocaleDateString()} TIME: ${new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p class="bold text-xs mt-2">INVOICE NO: ${(order.orderNumber?.split('-')[2] || order._id?.slice(-6).toUpperCase())}</p>
+                    </div>
+                    <div class="border-b mb-4"></div>
+                    <p class="bold text-sm mb-4">TABLE: ${order.table?.name || 'TAKEOUT'} &nbsp; ${order.orderSource || 'WEB'}</p>
+                    <table>
+                        ${itemsHtml}
+                    </table>
+                    <div class="border-t mt-4 pt-2">
+                        <table>
+                            <tr><td class="bold text-sm">Subtotal</td><td style="text-align:right">₹${(order.total / 1.1).toFixed(2)}</td></tr>
+                            <tr><td class="bold text-sm">VAT (10%)</td><td style="text-align:right">₹${(order.total - order.total / 1.1).toFixed(2)}</td></tr>
+                            <tr><td class="bold text-2xl border-t pt-2">Grand Total</td><td class="bold text-2xl border-t pt-2" style="text-align:right">₹${order.total.toFixed(2)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="center mt-4 border-t pt-4">
+                        <p class="bold text-sm">Thank You</p>
+                        <p class="text-xs">Please visit again</p>
+                        <p class="text-xs mt-4">Powered by Ritam Bharat POS</p>
+                    </div>
+                </div>
+                <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };</script>
+                </body></html>
+            `);
+            win.document.close();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [printing, selectedBill]);
 
     const handlePrint = (bill) => {
         setSelectedBill(bill);
@@ -488,24 +547,14 @@ const Billing = () => {
                             </div>
                         </div>
 
-                        {/* Print Overlay - renders receipt and triggers browser print dialog */}
+                        {/* Print overlay - shows briefly while opening print window */}
                         {printing && selectedBill && (
-                            <div id="print-overlay" style={{
+                            <div style={{
                                 position: 'fixed', inset: 0, background: 'white', zIndex: 9999,
-                                display: 'flex', justifyContent: 'center', paddingTop: 20
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16
                             }}>
-                                <style>{`
-                                    #print-overlay #thermal-receipt { display: block !important; }
-                                    @media print {
-                                        body * { visibility: hidden !important; }
-                                        #print-overlay, #print-overlay * { visibility: visible !important; }
-                                        #print-overlay { position: fixed !important; inset: 0 !important; background: white !important; z-index: 9999 !important; display: flex !important; justify-content: center !important; padding-top: 20px !important; }
-                                        .no-print { display: none !important; }
-                                    }
-                                `}</style>
-                                <div style={{ width: 320 }}>
-                                    <ReceiptTemplate order={selectedBill} />
-                                </div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                <p className="text-sm text-muted-foreground">Opening print dialog...</p>
                             </div>
                         )}
 

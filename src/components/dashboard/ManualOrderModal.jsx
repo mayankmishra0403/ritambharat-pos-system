@@ -1,18 +1,16 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     X, Plus, Minus, Search, ShoppingCart,
     Table as TableIcon, Utensils, Loader2,
     Clock, Check, Printer
 } from 'lucide-react';
-import ReceiptTemplate from '../common/ReceiptTemplate';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
 
 const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
     const queryClient = useQueryClient();
-    const printRef = useRef(null);
     const [step, setStep] = useState(1); // 1: Table, 2: Items, 3: Review, 4: Success
     const [selectedTable, setSelectedTable] = useState(null);
     const [cart, setCart] = useState([]);
@@ -21,15 +19,63 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
     const [printing, setPrinting] = useState(false);
 
     useEffect(() => {
-        if (!printing) return;
-        const timer = setTimeout(() => window.print(), 300);
-        const handleAfterPrint = () => setPrinting(false);
-        window.addEventListener('afterprint', handleAfterPrint);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener('afterprint', handleAfterPrint);
-        };
-    }, [printing]);
+        if (!printing || !placedOrder) return;
+        const timer = setTimeout(() => {
+            const win = window.open('', '_blank');
+            if (!win) { toast.error('Popup blocked! Allow popups for this site.'); setPrinting(false); return; }
+            const order = placedOrder;
+            const itemsHtml = order.items.map(item =>
+                `<tr><td style="padding:4px 0;font-size:12px">${item.quantity}x ${item.name}</td><td style="padding:4px 0;font-size:12px;text-align:right;font-weight:bold">₹${(item.price * item.quantity).toFixed(2)}</td></tr>`
+            ).join('');
+            win.document.write(`
+                <html><head>
+                <style>
+                    @page { margin: 0; size: auto; }
+                    body { margin: 0; padding: 20px; font-family: monospace; color: black; background: white; }
+                    .receipt { max-width: 320px; margin: 0 auto; }
+                    .center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .border-t { border-top: 2px solid black; }
+                    .border-b { border-bottom: 2px solid black; }
+                    table { width: 100%; border-collapse: collapse; }
+                    td { padding: 4px 0; font-size: 12px; }
+                </style>
+                </head><body>
+                <div class="receipt">
+                    <div class="center mb-4">
+                        <h2 class="bold" style="font-size:18px">${order.restaurant?.name || 'Restaurant Name'}</h2>
+                        ${order.restaurant?.address ? `<p style="font-size:10px">${typeof order.restaurant.address === 'string' ? order.restaurant.address : [order.restaurant.address.street, order.restaurant.address.city].filter(Boolean).join(', ')}</p>` : ''}
+                        ${order.restaurant?.phone ? `<p style="font-size:10px">TEL: ${order.restaurant.phone}</p>` : ''}
+                    </div>
+                    <div class="border-t" style="margin-bottom:16px"></div>
+                    <div class="center" style="margin-bottom:16px">
+                        <p class="bold" style="font-size:18px">OFFICIAL INVOICE</p>
+                        <p style="font-size:11px">DATE: ${new Date(order.createdAt).toLocaleDateString()} TIME: ${new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p class="bold" style="font-size:11px;margin-top:4px">INVOICE NO: ${(order.orderNumber?.split('-')[2] || order._id?.slice(-6).toUpperCase())}</p>
+                    </div>
+                    <div class="border-b" style="margin-bottom:16px"></div>
+                    <p class="bold" style="font-size:12px;margin-bottom:16px">TABLE: ${order.table?.name || 'TAKEOUT'} &nbsp; ${order.orderSource || 'WEB'}</p>
+                    <table>${itemsHtml}</table>
+                    <div style="border-top:2px solid black;margin-top:16px;padding-top:8px">
+                        <table>
+                            <tr><td class="bold" style="font-size:12px">Subtotal</td><td style="text-align:right">₹${(order.total / 1.1).toFixed(2)}</td></tr>
+                            <tr><td class="bold" style="font-size:12px">VAT (10%)</td><td style="text-align:right">₹${(order.total - order.total / 1.1).toFixed(2)}</td></tr>
+                            <tr><td class="bold" style="font-size:24px;border-top:2px solid black;padding-top:8px">Grand Total</td><td class="bold" style="font-size:24px;border-top:2px solid black;padding-top:8px;text-align:right">₹${order.total.toFixed(2)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="center" style="margin-top:16px;border-top:1px solid #ccc;padding-top:16px">
+                        <p class="bold" style="font-size:12px">Thank You</p>
+                        <p style="font-size:10px">Please visit again</p>
+                        <p style="font-size:9px;margin-top:16px">Powered by Ritam Bharat POS</p>
+                    </div>
+                </div>
+                <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };</script>
+                </body></html>
+            `);
+            win.document.close();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [printing, placedOrder]);
 
     // Fetch Tables
     const { data: tables = [], isLoading: loadingTables } = useQuery({
@@ -327,24 +373,14 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
                                 </button>
                             </div>
 
-                            {/* Print Overlay */}
+                            {/* Print overlay - shows briefly while opening print window */}
                             {printing && (
-                                <div id="order-print-overlay" style={{
+                                <div style={{
                                     position: 'fixed', inset: 0, background: 'white', zIndex: 99999,
-                                    display: 'flex', justifyContent: 'center', paddingTop: 20
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16
                                 }}>
-                                    <style>{`
-                                        #order-print-overlay #thermal-receipt { display: block !important; }
-                                        @media print {
-                                            body * { visibility: hidden !important; }
-                                            #order-print-overlay, #order-print-overlay * { visibility: visible !important; }
-                                            #order-print-overlay { position: fixed !important; inset: 0 !important; background: white !important; z-index: 99999 !important; display: flex !important; justify-content: center !important; padding-top: 20px !important; }
-                                            .no-print { display: none !important; }
-                                        }
-                                    `}</style>
-                                    <div ref={printRef} style={{ width: 320 }}>
-                                        <ReceiptTemplate order={placedOrder} />
-                                    </div>
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                    <p className="text-sm text-muted-foreground">Opening print dialog...</p>
                                 </div>
                             )}
                         </div>
