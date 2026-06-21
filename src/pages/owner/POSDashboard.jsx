@@ -4,14 +4,16 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
-import { Printer, Plus, X, RotateCcw, Trash2, Receipt, Split, LogOut } from 'lucide-react';
+import { Plus, X, RotateCcw, Trash2, Receipt, Split, LogOut } from 'lucide-react';
 
 import POSTableGrid from '../../components/pos/POSTableGrid';
 import POSMenuPanel from '../../components/pos/POSMenuPanel';
 import POSCart from '../../components/pos/POSCart';
 import POSPaymentModal from '../../components/pos/POSPaymentModal';
+import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 
 const POSDashboard = () => {
     const { user, logout } = useAuth();
@@ -30,6 +32,9 @@ const POSDashboard = () => {
     const [sessionModalInitiallyOpened, setSessionModalInitiallyOpened] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [payingOrder, setPayingOrder] = useState(null);
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const [printOrder, setPrintOrder] = useState(null);
+    const [printMode, setPrintMode] = useState('new');
     const [showExistingOrders, setShowExistingOrders] = useState(false);
 
     useEffect(() => {
@@ -54,6 +59,8 @@ const POSDashboard = () => {
             socket.off('order:paid', handler);
         };
     }, [socket, restaurantId, queryClient]);
+
+    const { restaurant: printRestaurant, settings: invoiceSettings } = useInvoiceSettings(restaurantId);
 
     const { data: session, isFetched: sessionFetched } = useQuery({
         queryKey: ['pos-session', restaurantId],
@@ -156,11 +163,15 @@ const POSDashboard = () => {
             setServiceCharge(0);
             if (order.isUpdate) {
                 toast.success('Items added to order');
+                setPrintOrder(order);
+                setPrintMode('update');
+                setShowPrintModal(true);
             } else {
                 setCustomerName('');
                 setCustomerPhone('');
-                setPayingOrder(order);
-                setShowPaymentModal(true);
+                setPrintOrder(order);
+                setPrintMode('new');
+                setShowPrintModal(true);
                 toast.success(`Order #${order.orderNumber} created`);
             }
         },
@@ -286,6 +297,21 @@ const POSDashboard = () => {
         setShowPaymentModal(true);
     };
 
+    const handleProceedToPayment = (order) => {
+        setPayingOrder(order);
+        setShowPaymentModal(true);
+    };
+
+    const handleClosePrintModal = () => {
+        setShowPrintModal(false);
+        setPrintOrder(null);
+    };
+
+    const handlePrintModalClose = () => {
+        setShowPrintModal(false);
+        setPrintOrder(null);
+    };
+
     const subtotal = cartItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
     const discountAmount = discount ? (subtotal * discount) / 100 : 0;
     const taxRate = posData?.taxRate || 0;
@@ -316,13 +342,6 @@ const POSDashboard = () => {
                                 Bill & Pay
                             </button>
                         )}
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-                        >
-                            <Printer size={14} />
-                            Print
-                        </button>
                         {(user?.role === 'OWNER' || user?.role === 'ADMIN') && (
                             <button
                                 onClick={() => window.location.href = '/dashboard'}
@@ -493,6 +512,17 @@ const POSDashboard = () => {
                 onCloseSession={closeSessionMutation.mutate}
                 loading={openSessionMutation.isPending || closeSessionMutation.isPending}
             />
+
+            {printOrder && (
+                <POSPrintModal
+                    order={printOrder}
+                    restaurant={printRestaurant}
+                    settings={invoiceSettings}
+                    open={showPrintModal}
+                    onClose={handlePrintModalClose}
+                    onProceedToPayment={printMode === 'new' ? handleProceedToPayment : null}
+                />
+            )}
 
             {payingOrder && (
                 <POSPaymentModal

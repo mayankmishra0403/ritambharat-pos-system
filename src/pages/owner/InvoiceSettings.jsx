@@ -58,7 +58,8 @@ const defaultSettings = {
     footerEmail: '',
     footerWebsite: '',
     customFooterNote: '',
-    showPoweredBy: true
+    showPoweredBy: true,
+    monospaceFont: false
 };
 
 const InvoiceSettings = () => {
@@ -307,7 +308,8 @@ const InvoiceSettings = () => {
                                                 ['showServiceCharge', 'Show Service Charge'],
                                                 ['showPax', 'Show PAX'],
                                                 ['showQRCode', 'Show QR Code'],
-                                                ['showFooter', 'Show Footer']
+                                                ['showFooter', 'Show Footer'],
+                                                ['monospaceFont', 'Monospace Font (Courier)']
                                             ].map(([key, label]) => (
                                                 <label key={key} className="flex items-center gap-3 cursor-pointer">
                                                     <div className={toggleClass(form.invoiceSettings[key])} onClick={() => handleSettingsField(key, !form.invoiceSettings[key])}>

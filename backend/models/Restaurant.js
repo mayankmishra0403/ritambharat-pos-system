@@ -150,7 +150,8 @@ const restaurantSchema = new mongoose.Schema({
         footerEmail: { type: String, default: '' },
         footerWebsite: { type: String, default: '' },
         customFooterNote: { type: String, default: '' },
-        showPoweredBy: { type: Boolean, default: true }
+        showPoweredBy: { type: Boolean, default: true },
+        monospaceFont: { type: Boolean, default: false }
     }
 }, {
     timestamps: true

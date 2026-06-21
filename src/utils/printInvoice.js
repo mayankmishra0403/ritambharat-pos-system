@@ -9,6 +9,7 @@ function renderToString(order, restaurant, settings) {
     const invoiceNum = order.orderNumber || order._id?.slice(-6).toUpperCase() || '';
     const isPaid = order.paymentStatus === 'PAID';
     const total = order.total || 0;
+    const fontFamily = s.monospaceFont ? "'Courier New', Courier, monospace" : "Arial, Helvetica, sans-serif";
 
     const itemsHtml = (order.items || []).map(item => {
         const name = item.name || (item.menuItem && item.menuItem.name) || '';
@@ -17,19 +18,19 @@ function renderToString(order, restaurant, settings) {
         const amount = rate * qty;
         const extras = [];
         if (item.specialInstructions) {
-            extras.push(`<tr><td colspan="4" style="padding:0 0 0 6px;font-size:7.5pt;font-weight:bold;color:#000">— ${item.specialInstructions}</td></tr>`);
+            extras.push(`<tr><td colspan="4" style="padding:0 0 0 6px;font-size:9pt;font-weight:bold;color:#000">— ${item.specialInstructions}</td></tr>`);
         }
         if (item.modifiers) {
             item.modifiers.forEach(m => {
-                extras.push(`<tr><td colspan="4" style="padding:0 0 0 6px;font-size:7.5pt;font-weight:bold;color:#000">+ ${m.name}${m.price > 0 ? ' (' + currency + m.price.toFixed(2) + ')' : ''}</td></tr>`);
+                extras.push(`<tr><td colspan="4" style="padding:0 0 0 6px;font-size:9pt;font-weight:bold;color:#000">+ ${m.name}${m.price > 0 ? ' (' + currency + m.price.toFixed(2) + ')' : ''}</td></tr>`);
             });
         }
         return `
             <tr>
-                <td style="padding:1.5pt 0;word-break:break-word;font-size:8.5pt;font-weight:bold;color:#000">${name}</td>
-                <td style="padding:1.5pt 0;text-align:center;font-size:8.5pt;font-weight:bold;color:#000">${qty}</td>
-                <td style="padding:1.5pt 0;text-align:right;font-size:8.5pt;font-weight:bold;color:#000">${currency}${rate.toFixed(2)}</td>
-                <td style="padding:1.5pt 0;text-align:right;font-size:8.5pt;font-weight:bold;color:#000">${currency}${amount.toFixed(2)}</td>
+                <td style="padding:1.5pt 0;word-break:break-word;font-size:9.5pt;font-weight:bold;color:#000">${name}</td>
+                <td style="padding:1.5pt 0;text-align:center;font-size:9.5pt;font-weight:bold;color:#000">${qty}</td>
+                <td style="padding:1.5pt 0;text-align:right;font-size:9.5pt;font-weight:bold;color:#000">${currency}${rate.toFixed(2)}</td>
+                <td style="padding:1.5pt 0;text-align:right;font-size:9.5pt;font-weight:bold;color:#000">${currency}${amount.toFixed(2)}</td>
             </tr>
             ${extras.join('')}
         `;
@@ -40,21 +41,21 @@ function renderToString(order, restaurant, settings) {
             let h = '';
             if (order.gstBreakdown.cgst > 0) {
                 const pct = ((order.gstBreakdown.cgst / (order.subtotal || 1)) * 100).toFixed(1);
-                h += `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">CGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${order.gstBreakdown.cgst.toFixed(2)}</td></tr>`;
+                h += `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">CGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${order.gstBreakdown.cgst.toFixed(2)}</td></tr>`;
             }
             if (order.gstBreakdown.sgst > 0) {
                 const pct = ((order.gstBreakdown.sgst / (order.subtotal || 1)) * 100).toFixed(1);
-                h += `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">SGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${order.gstBreakdown.sgst.toFixed(2)}</td></tr>`;
+                h += `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">SGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${order.gstBreakdown.sgst.toFixed(2)}</td></tr>`;
             }
             if (order.gstBreakdown.igst > 0) {
                 const pct = ((order.gstBreakdown.igst / (order.subtotal || 1)) * 100).toFixed(1);
-                h += `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">IGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${order.gstBreakdown.igst.toFixed(2)}</td></tr>`;
+                h += `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">IGST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${order.gstBreakdown.igst.toFixed(2)}</td></tr>`;
             }
             return h;
         }
         if ((order.tax || 0) > 0) {
             const pct = order.subtotal > 0 ? ((order.tax / order.subtotal) * 100).toFixed(1) : '0';
-            return `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">GST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${(order.tax || 0).toFixed(2)}</td></tr>`;
+            return `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">GST @ ${pct}%</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${(order.tax || 0).toFixed(2)}</td></tr>`;
         }
         return '';
     })();
@@ -63,14 +64,14 @@ function renderToString(order, restaurant, settings) {
         const raw = (order.subtotal || 0) - (order.discountAmount || 0) + (order.tax || 0) + (order.serviceChargeAmount || 0) + (order.tipAmount || 0);
         const ro = total - raw;
         if (Math.abs(ro) > 0.01) {
-            return `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">Round Off</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${ro.toFixed(2)}</td></tr>`;
+            return `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">Round Off</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${ro.toFixed(2)}</td></tr>`;
         }
         return '';
     })();
 
     const qrUrl = s.showQRCode && s.qrUrl ? s.qrUrl : '';
     const qrTag = qrUrl
-        ? `<div class="c" style="margin:2.5pt 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrUrl)}&ecc=H&margin=4" style="width:30mm;height:30mm;image-rendering:pixelated" /></div>`
+        ? `<div class="c" style="margin:2.5pt 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(qrUrl)}&ecc=H&margin=4" style="width:30mm;height:30mm" /></div>`
         : '';
 
     return `
@@ -78,21 +79,27 @@ function renderToString(order, restaurant, settings) {
     <html>
     <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=80mm">
     <title>Invoice - ${invoiceNum}</title>
     <style>
         @page { size: 80mm auto; margin: 0; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { margin: 0; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: none; -moz-osx-font-smoothing: unset; text-rendering: geometricPrecision; }
         body {
             width: 72mm;
             margin: 0 auto;
             padding: 2mm 2.5mm;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: ${fontFamily};
             color: #000;
             background: #fff;
             font-size: 9pt;
-            line-height: 1.2;
+            line-height: 1.3;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
+        }
+        @media print {
+            body { width: 72mm; margin: 0; padding: 2mm 2.5mm; }
+            @page { size: 80mm auto; margin: 0; }
         }
         table { width: 100%; border-collapse: collapse; }
         td { vertical-align: top; }
@@ -110,11 +117,15 @@ function renderToString(order, restaurant, settings) {
         .invoice-number-lg { font-size: 10pt; font-weight: bold; color: #000; }
         .grand-total-label { font-size: 12pt; font-weight: bold; text-align: center; color: #000; letter-spacing: 1pt; }
         .grand-total-amount { font-size: 16pt; font-weight: bold; text-align: center; color: #000; }
-        .amount-words { font-size: 8.5pt; font-weight: bold; color: #000; }
+        .amount-words { font-size: 9.5pt; font-weight: bold; color: #000; }
         .paid-badge { font-size: 9pt; font-weight: bold; color: #008000; }
+        .print-guide { font-size: 7pt; font-weight: bold; color: #888; text-align: center; padding: 2pt 0; }
     </style>
     </head>
     <body>
+
+        <!-- PRINT GUIDE -->
+        <div class="print-guide">Set Scale to 100%, Margins to None</div>
 
         <!-- HEADER -->
         <div class="c" style="padding-bottom:3pt">
@@ -123,12 +134,12 @@ function renderToString(order, restaurant, settings) {
                 : ''}
             <div class="restaurant-name">${restaurant.name || 'Restaurant'}</div>
             ${restaurant.tagline
-                ? `<div style="font-size:8pt;font-weight:bold;color:#000;margin-top:1pt">${restaurant.tagline}</div>`
+                ? `<div style="font-size:9pt;font-weight:bold;color:#000;margin-top:1pt">${restaurant.tagline}</div>`
                 : ''}
-            <div style="font-size:7.5pt;font-weight:bold;color:#000;margin-top:2pt">${[restaurant.address?.street, restaurant.address?.city, restaurant.address?.state, restaurant.address?.zipCode].filter(Boolean).join(', ')}</div>
-            ${restaurant.contact?.phone ? `<div style="font-size:7.5pt;font-weight:bold;color:#000">${restaurant.contact.phone}</div>` : ''}
-            ${restaurant.alternatePhone ? `<div style="font-size:7.5pt;font-weight:bold;color:#000">${restaurant.alternatePhone}</div>` : ''}
-            ${s.showGstin && restaurant.gstin ? `<div style="font-size:8pt;font-weight:bold;color:#000;margin-top:1pt">GSTIN: ${restaurant.gstin}</div>` : ''}
+            <div style="font-size:9pt;font-weight:bold;color:#000;margin-top:2pt">${[restaurant.address?.street, restaurant.address?.city, restaurant.address?.state, restaurant.address?.zipCode].filter(Boolean).join(', ')}</div>
+            ${restaurant.contact?.phone ? `<div style="font-size:9pt;font-weight:bold;color:#000">${restaurant.contact.phone}</div>` : ''}
+            ${restaurant.alternatePhone ? `<div style="font-size:9pt;font-weight:bold;color:#000">${restaurant.alternatePhone}</div>` : ''}
+            ${s.showGstin && restaurant.gstin ? `<div style="font-size:9pt;font-weight:bold;color:#000;margin-top:1pt">GSTIN: ${restaurant.gstin}</div>` : ''}
         </div>
 
         <!-- DOUBLE LINE + TAX INVOICE -->
@@ -140,26 +151,26 @@ function renderToString(order, restaurant, settings) {
         <!-- ORDER INFO -->
         <table style="margin-bottom:2.5pt">
             <tr>
-                <td style="width:50%;font-size:8pt;font-weight:bold;color:#000">Invoice No</td>
+                <td style="width:50%;font-size:9pt;font-weight:bold;color:#000">Invoice No</td>
                 <td class="r invoice-number-lg">${invoiceNum}</td>
             </tr>
             <tr>
-                <td style="font-size:8pt;font-weight:bold;color:#000">Date</td>
-                <td class="r b" style="font-size:8.5pt;color:#000">${dateStr}</td>
+                <td style="font-size:9pt;font-weight:bold;color:#000">Date</td>
+                <td class="r b" style="font-size:9.5pt;color:#000">${dateStr}</td>
             </tr>
             <tr>
-                <td style="font-size:8pt;font-weight:bold;color:#000">Time</td>
-                <td class="r b" style="font-size:8.5pt;color:#000">${timeStr}</td>
+                <td style="font-size:9pt;font-weight:bold;color:#000">Time</td>
+                <td class="r b" style="font-size:9.5pt;color:#000">${timeStr}</td>
             </tr>
             <tr>
-                <td style="font-size:8pt;font-weight:bold;color:#000">Type</td>
-                <td class="r b" style="font-size:8.5pt;color:#000">${order.orderType || 'DINE IN'}</td>
+                <td style="font-size:9pt;font-weight:bold;color:#000">Type</td>
+                <td class="r b" style="font-size:9.5pt;color:#000">${order.orderType || 'DINE IN'}</td>
             </tr>
-            ${order.table?.name ? `<tr><td style="font-size:8pt;font-weight:bold;color:#000">Table</td><td class="r b" style="font-size:8.5pt;color:#000">${order.table.name}</td></tr>` : ''}
-            ${s.showPax && order.pax ? `<tr><td style="font-size:8pt;font-weight:bold;color:#000">PAX</td><td class="r b" style="font-size:8.5pt;color:#000">${order.pax}</td></tr>` : ''}
-            ${s.showWaiterName && order.waiterName ? `<tr><td colspan="2" style="font-size:8pt;font-weight:bold;color:#000">Waiter: <span class="b" style="font-size:8.5pt;color:#000">${order.waiterName}</span></td></tr>` : ''}
-            ${s.showCashierName && order.cashierName ? `<tr><td colspan="2" style="font-size:8pt;font-weight:bold;color:#000">Cashier: <span class="b" style="font-size:8.5pt;color:#000">${order.cashierName}</span></td></tr>` : ''}
-            ${s.showCustomerDetails && order.customerName ? `<tr><td colspan="2" style="font-size:8pt;font-weight:bold;color:#000">Customer: ${order.customerName}${order.customerPhone ? ' (' + order.customerPhone + ')' : ''}</td></tr>` : ''}
+            ${order.table?.name ? `<tr><td style="font-size:9pt;font-weight:bold;color:#000">Table</td><td class="r b" style="font-size:9.5pt;color:#000">${order.table.name}</td></tr>` : ''}
+            ${s.showPax && order.pax ? `<tr><td style="font-size:9pt;font-weight:bold;color:#000">PAX</td><td class="r b" style="font-size:9.5pt;color:#000">${order.pax}</td></tr>` : ''}
+            ${s.showWaiterName && order.waiterName ? `<tr><td colspan="2" style="font-size:9pt;font-weight:bold;color:#000">Waiter: <span class="b" style="font-size:9.5pt;color:#000">${order.waiterName}</span></td></tr>` : ''}
+            ${s.showCashierName && order.cashierName ? `<tr><td colspan="2" style="font-size:9pt;font-weight:bold;color:#000">Cashier: <span class="b" style="font-size:9.5pt;color:#000">${order.cashierName}</span></td></tr>` : ''}
+            ${s.showCustomerDetails && order.customerName ? `<tr><td colspan="2" style="font-size:9pt;font-weight:bold;color:#000">Customer: ${order.customerName}${order.customerPhone ? ' (' + order.customerPhone + ')' : ''}</td></tr>` : ''}
         </table>
         <div class="sep-dashed" style="margin-bottom:2.5pt"></div>
 
@@ -167,7 +178,7 @@ function renderToString(order, restaurant, settings) {
         <table style="margin-bottom:2.5pt">
             <thead>
                 <tr><td colspan="4" style="padding:0"><div class="sep-thick"></div></td></tr>
-                <tr style="font-size:8.5pt;font-weight:bold;color:#000">
+                <tr style="font-size:9.5pt;font-weight:bold;color:#000">
                     <td style="width:44%;padding:2pt 0">Item</td>
                     <td style="width:14%;text-align:center;padding:2pt 0">Qty</td>
                     <td style="width:20%;text-align:right;padding:2pt 0">Rate</td>
@@ -182,13 +193,13 @@ function renderToString(order, restaurant, settings) {
         <!-- TOTALS -->
         <table style="margin-bottom:2.5pt">
             <tr>
-                <td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">Sub Total</td>
-                <td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${(order.subtotal || 0).toFixed(2)}</td>
+                <td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">Sub Total</td>
+                <td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${(order.subtotal || 0).toFixed(2)}</td>
             </tr>
-            ${order.discountAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#c00">Discount</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt;color:#c00">-${currency}${order.discountAmount.toFixed(2)}</td></tr>` : ''}
-            ${s.showServiceCharge && order.serviceChargeAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">Service Charge</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${order.serviceChargeAmount.toFixed(2)}</td></tr>` : ''}
+            ${order.discountAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#c00">Discount</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt;color:#c00">-${currency}${order.discountAmount.toFixed(2)}</td></tr>` : ''}
+            ${s.showServiceCharge && order.serviceChargeAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">Service Charge</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${order.serviceChargeAmount.toFixed(2)}</td></tr>` : ''}
             ${gstHtml}
-            ${order.tipAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:8.5pt;font-weight:bold;color:#000">Tip</td><td class="r b" style="padding:1.5pt 0;font-size:8.5pt">${currency}${order.tipAmount.toFixed(2)}</td></tr>` : ''}
+            ${order.tipAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:9.5pt;font-weight:bold;color:#000">Tip</td><td class="r b" style="padding:1.5pt 0;font-size:9.5pt">${currency}${order.tipAmount.toFixed(2)}</td></tr>` : ''}
             ${roundOffHtml}
         </table>
 
@@ -207,10 +218,10 @@ function renderToString(order, restaurant, settings) {
 
         <!-- PAYMENT -->
         <div style="display:flex;justify-content:space-between;align-items:center;padding:2.5pt 0;border-top:1px solid #000;border-bottom:1px solid #000;margin-bottom:2.5pt">
-            <span class="b" style="font-size:8.5pt;color:#000">${order.paymentMethod || '-'}</span>
+            <span class="b" style="font-size:9.5pt;color:#000">${order.paymentMethod || '-'}</span>
             ${isPaid
                 ? `<span class="paid-badge" style="background:#e8f5e9;padding:1.5pt 5pt;border:1px solid #008000">\u2713 PAID</span>`
-                : `<span class="b" style="font-size:8.5pt;color:#000">${order.paymentStatus || 'PENDING'}</span>`}
+                : `<span class="b" style="font-size:9.5pt;color:#000">${order.paymentStatus || 'PENDING'}</span>`}
         </div>
 
         <!-- QR CODE -->
@@ -219,8 +230,8 @@ function renderToString(order, restaurant, settings) {
         <!-- FOOTER -->
         ${s.showFooter
             ? `<div class="sep-thick" style="margin-bottom:2.5pt"></div>
-               <div class="c" style="font-size:7.5pt;font-weight:bold;color:#000;padding-bottom:2pt">
-                   <div style="font-size:8pt;font-weight:bold;color:#000">${s.thankYouMessage || 'Thank You For Visiting'}</div>
+               <div class="c" style="font-size:9pt;font-weight:bold;color:#000;padding-bottom:2pt">
+                   <div style="font-size:9pt;font-weight:bold;color:#000">${s.thankYouMessage || 'Thank You For Visiting'}</div>
                    <div style="margin-top:1pt;font-weight:bold;color:#000">${s.visitAgainMessage || 'Please Visit Again'}</div>
                    ${s.customerCareNumber ? `<div style="margin-top:1pt;font-weight:bold;color:#000">${s.customerCareNumber}</div>` : ''}
                    ${s.footerEmail ? `<div style="margin-top:1pt;font-weight:bold;color:#000">${s.footerEmail}</div>` : ''}
@@ -232,7 +243,9 @@ function renderToString(order, restaurant, settings) {
 
     <script>
     window.onload = function() {
-        window.print();
+        setTimeout(function() {
+            window.print();
+        }, 300);
         window.onafterprint = function() { window.close(); };
     };
     </script>
