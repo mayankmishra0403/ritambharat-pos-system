@@ -7,7 +7,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import morgan from 'morgan';
-import { logger } from './config/logger.js';
 import { connectDB } from './config/db.js';
 import { connectRedis } from './config/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
