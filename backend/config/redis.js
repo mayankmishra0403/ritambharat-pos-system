@@ -4,9 +4,14 @@ import logger from '../utils/logger.js';
 let redisClient;
 
 const connectRedis = async () => {
+    if (!process.env.REDIS_URL) {
+        logger.info('Redis not configured — skipping connection');
+        return;
+    }
+
     try {
         redisClient = createClient({
-            url: process.env.REDIS_URL || 'redis://localhost:6379'
+            url: process.env.REDIS_URL
         });
 
         redisClient.on('error', (err) => {
@@ -14,13 +19,12 @@ const connectRedis = async () => {
         });
 
         redisClient.on('connect', () => {
-            logger.info('🚀 Redis Client Connected');
+            logger.info('Redis Client Connected');
         });
 
         await redisClient.connect();
     } catch (error) {
         logger.error('Could not connect to Redis:', error);
-        // We don't exit process here because the app can still function without cache
     }
 };
 
