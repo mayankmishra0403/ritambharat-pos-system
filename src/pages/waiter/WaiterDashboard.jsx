@@ -29,11 +29,22 @@ const WaiterDashboard = () => {
 
     const { permissionStatus, subscribed, loading, subscribe, unsubscribe } = usePushNotifications();
 
-    useEffect(() => {
-        if (user && permissionStatus === 'default') {
-            subscribe();
+    const handleBellClick = async () => {
+        if (loading) return;
+        if (subscribed) {
+            await unsubscribe();
+            toast.success('Notifications disabled');
+        } else {
+            if (permissionStatus === 'denied') {
+                toast.error('Notifications blocked — enable in browser settings');
+                return;
+            }
+            await subscribe();
+            if (Notification.permission === 'granted') {
+                toast.success('Notifications enabled');
+            }
         }
-    }, [user, permissionStatus, subscribe]);
+    };
 
     const { data: tables = [] } = useQuery({
         queryKey: ['waiter-tables', restaurantId],
@@ -141,14 +152,28 @@ const WaiterDashboard = () => {
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{user?.name}</span>
                     <button
-                        onClick={subscribed ? unsubscribe : subscribe}
-                        disabled={loading || permissionStatus === 'denied'}
-                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors relative"
-                        title={subscribed ? 'Notifications on' : 'Enable notifications'}
+                        onClick={handleBellClick}
+                        disabled={loading}
+                        className="p-1.5 rounded-lg transition-colors relative disabled:opacity-50"
+                        title={
+                            subscribed ? 'Notifications on — tap to disable' :
+                            permissionStatus === 'denied' ? 'Notifications blocked' :
+                            'Enable notifications'
+                        }
                     >
-                        <Bell size={16} className={subscribed ? 'text-green-500' : ''} />
-                        {subscribed && (
+                        <Bell size={16} className={
+                            subscribed ? 'text-green-500' :
+                            permissionStatus === 'denied' ? 'text-red-500/50' :
+                            'text-muted-foreground hover:text-foreground'
+                        } />
+                        {loading && (
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+                        {subscribed && !loading && (
                             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+                        )}
+                        {permissionStatus === 'denied' && !loading && (
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
                         )}
                     </button>
                     <button

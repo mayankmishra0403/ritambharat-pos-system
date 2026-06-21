@@ -19,12 +19,27 @@ export const usePushNotifications = () => {
         fetchVapidKey();
     }, []);
 
+    useEffect(() => {
+        const checkExisting = async () => {
+            if (!('serviceWorker' in navigator)) return;
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const sub = await registration.pushManager.getSubscription();
+                setSubscribed(!!sub);
+            } catch (e) {}
+        };
+        checkExisting();
+    }, []);
+
     const subscribe = useCallback(async () => {
         if (!('Notification' in window) || !('serviceWorker' in navigator) || !vapidPublicKey) return;
 
         setLoading(true);
         try {
-            if (Notification.permission === 'denied') return;
+            if (Notification.permission === 'denied') {
+                setPermissionStatus('denied');
+                return;
+            }
 
             let permission = Notification.permission;
             if (permission === 'default') {
