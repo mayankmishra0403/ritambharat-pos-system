@@ -22,12 +22,13 @@ const GstBill = () => {
     });
 
     const { data: restaurant } = useQuery({
-        queryKey: ['restaurant', invoice?.restaurant],
+        queryKey: ['restaurant', invoice?.restaurant?._id || invoice?.restaurant],
         queryFn: async () => {
-            const res = await api.get(`/restaurant/${invoice.restaurant}`);
+            const restId = invoice.restaurant?._id || invoice.restaurant;
+            const res = await api.get(`/restaurant/${restId}`);
             return res.data.data;
         },
-        enabled: !!invoice?.restaurant
+        enabled: !!(invoice?.restaurant?._id || invoice?.restaurant)
     });
 
     const handlePrint = () => {
