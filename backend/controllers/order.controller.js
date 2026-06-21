@@ -4,6 +4,7 @@ import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -178,6 +179,16 @@ export const createOrder = async (req, res, next) => {
                 message: `New order #${order.orderNumber} from ${order.table?.name || 'Table'}`
             });
         }
+
+        sendPushToRestaurantStaff(restaurant, {
+            title: 'New Order',
+            body: `Order #${order.orderNumber} placed`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/notification.mp3',
+            data: { url: '/waiter-app/orders', type: 'new-order' }
+        }, ['OWNER', 'WAITER']);
 
         logger.info(`Order created: #${order.orderNumber} for Table ${order.table?.name}`);
 
@@ -442,6 +453,16 @@ export const cancelOrder = async (req, res, next) => {
             orderId: order._id,
             orderNumber: order.orderNumber
         });
+
+        sendPushToRestaurantStaff(order.restaurant, {
+            title: 'Order Cancelled',
+            body: `Order #${order.orderNumber} was cancelled`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/notification.mp3',
+            data: { url: '/waiter-app/orders', type: 'order-cancelled' }
+        }, ['OWNER', 'WAITER']);
 
         logger.info(`Order cancelled: #${order.orderNumber}`);
 

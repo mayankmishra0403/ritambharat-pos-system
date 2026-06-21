@@ -68,6 +68,17 @@ const userSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    pushSubscriptions: {
+        type: [{
+            endpoint: { type: String, required: true },
+            keys: {
+                p256dh: { type: String, required: true },
+                auth: { type: String, required: true }
+            }
+        }],
+        select: false,
+        default: []
     }
 }, {
     timestamps: true
@@ -146,6 +157,7 @@ userSchema.methods.toJSON = function () {
     delete user.password;
     delete user.pin;
     delete user.refreshToken;
+    delete user.pushSubscriptions;
     delete user.passwordResetToken;
     delete user.passwordResetExpires;
     delete user.verificationToken;

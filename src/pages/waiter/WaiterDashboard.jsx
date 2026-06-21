@@ -3,6 +3,9 @@ import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
+import { useSoundAlert } from '../../hooks/useSoundAlert';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
+import PWAInstallPrompt from '../../components/common/PWAInstallPrompt';
 import api from '../../config/api';
 import {
     UtensilsCrossed, ShoppingBag, Clock, ChevronRight, LogOut, Bell
@@ -23,6 +26,14 @@ const WaiterDashboard = () => {
             joinRestaurant(id);
         }
     }, [user, joinRestaurant]);
+
+    const { permissionStatus, subscribed, loading, subscribe, unsubscribe } = usePushNotifications();
+
+    useEffect(() => {
+        if (user && permissionStatus === 'default') {
+            subscribe();
+        }
+    }, [user, permissionStatus, subscribe]);
 
     const { data: tables = [] } = useQuery({
         queryKey: ['waiter-tables', restaurantId],
@@ -46,23 +57,65 @@ const WaiterDashboard = () => {
         refetchInterval: 10000
     });
 
+    useSoundAlert(socket, restaurantId, {
+        event: 'order:created',
+        soundProfile: 'new-order',
+    });
+
+    useSoundAlert(socket, restaurantId, {
+        event: 'service:new',
+        soundProfile: 'waiter-call',
+        onAlert: (data) => {
+            const tableName = data.tableName || data.table?.name || 'a table';
+            const requestType = (data.type || data.request?.type || '').replace(/_/g, ' ');
+            toast.custom(
+                (t) => (
+                    <div className="bg-card border border-orange-500/30 rounded-xl p-4 shadow-xl max-w-xs">
+                        <p className="font-bold text-orange-500 text-sm uppercase tracking-wider">
+                            {requestType || 'Service Request'}
+                        </p>
+                        <p className="text-foreground font-semibold mt-1">{data.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Table: {tableName}</p>
+                    </div>
+                ),
+                { duration: 5000, position: 'top-center' }
+            );
+        },
+    });
+
+    useSoundAlert(socket, restaurantId, {
+        event: 'waiter:order-ready',
+        soundProfile: 'new-order',
+        onAlert: (data) => {
+            toast.success(`Order #${data.orderNumber} is ready to serve!`, { duration: 5000 });
+        },
+    });
+
+    useSoundAlert(socket, restaurantId, {
+        event: 'complaint:new',
+        soundProfile: 'waiter-call',
+        onAlert: (data) => {
+            toast.error(data.message || 'New complaint received', { duration: 5000 });
+        },
+    });
+
     useEffect(() => {
         if (!socket) return;
 
-        socket.on('order:created', () => {
-            toast.success('New order placed');
-        });
         socket.on('order:status-changed', () => {
             toast.success('Order status updated');
         });
-        socket.on('waiter:order-ready', (data) => {
-            toast.success(`Order #${data.orderNumber} is ready to serve!`);
+        socket.on('order:cancelled', () => {
+            toast.error('An order was cancelled');
+        });
+        socket.on('order:paid', () => {
+            toast.success('Payment received for an order');
         });
 
         return () => {
-            socket.off('order:created');
             socket.off('order:status-changed');
-            socket.off('waiter:order-ready');
+            socket.off('order:cancelled');
+            socket.off('order:paid');
         };
     }, [socket]);
 
@@ -87,6 +140,17 @@ const WaiterDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{user?.name}</span>
+                    <button
+                        onClick={subscribed ? unsubscribe : subscribe}
+                        disabled={loading || permissionStatus === 'denied'}
+                        className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors relative"
+                        title={subscribed ? 'Notifications on' : 'Enable notifications'}
+                    >
+                        <Bell size={16} className={subscribed ? 'text-green-500' : ''} />
+                        {subscribed && (
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+                        )}
+                    </button>
                     <button
                         onClick={logout}
                         className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
@@ -164,6 +228,8 @@ const WaiterDashboard = () => {
             <div className={isHome ? 'hidden' : 'p-4'}>
                 <Outlet context={{ restaurantId, tables }} />
             </div>
+
+            <PWAInstallPrompt />
         </div>
     );
 };

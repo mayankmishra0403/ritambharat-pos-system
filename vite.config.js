@@ -14,6 +14,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'og-image.svg', 'robots.txt'],
       manifest: {
         name: 'Ritam Bharat POS',
@@ -47,35 +50,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
-          }
-        ]
-      },
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\/api\/menu.*/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'menu-api-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/.*\/api\/restaurant.*/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'restaurant-api-cache',
-              expiration: {
-                maxEntries: 5,
-                maxAgeSeconds: 60 * 60 * 24
-              }
-            }
           }
         ]
       }

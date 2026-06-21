@@ -3,6 +3,7 @@ import safepayService from '../services/safepay.service.js';
 import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import logger from '../utils/logger.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 
 export const createPaymentIntent = async (req, res, next) => {
     try {
@@ -145,6 +146,16 @@ export const handleSafepayWebhook = async (req, res, next) => {
                         orderNumber: order.orderNumber
                     });
                 }
+
+                sendPushToRestaurantStaff(payment.restaurant, {
+                    title: 'Payment Received',
+                    body: `Payment received for order #${order.orderNumber}`,
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/badge-72.png',
+                    vibrate: [200, 100, 200],
+                    sound: '/sounds/notification.mp3',
+                    data: { url: '/waiter-app/orders', type: 'payment' }
+                }, ['OWNER', 'WAITER']);
             }
         }
 

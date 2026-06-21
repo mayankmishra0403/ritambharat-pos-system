@@ -1,5 +1,6 @@
 import Complaint from '../models/Complaint.js';
 import logger from '../utils/logger.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 
 // @desc    Create complaint
 // @route   POST /api/complaints
@@ -24,6 +25,16 @@ export const createComplaint = async (req, res, next) => {
             complaint,
             message: `New ${severity} complaint from ${customerName}`
         });
+
+        sendPushToRestaurantStaff(restaurant, {
+            title: 'New Complaint',
+            body: `${severity} complaint from ${customerName}: ${type}`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/notification.mp3',
+            data: { url: '/complaints', type: 'complaint' }
+        }, ['OWNER', 'WAITER', 'CHEF']);
 
         res.status(201).json({
             success: true,

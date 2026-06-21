@@ -3,6 +3,7 @@ import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 
@@ -241,6 +242,16 @@ export const createPosOrder = async (req, res, next) => {
                 orderId: order._id, orderNumber: order.orderNumber
             });
         }
+
+        sendPushToRestaurantStaff(restaurantId, {
+            title: 'New Order',
+            body: `Order #${order.orderNumber} placed`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/notification.mp3',
+            data: { url: '/waiter-app/orders', type: 'new-order' }
+        }, ['OWNER', 'WAITER']);
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {

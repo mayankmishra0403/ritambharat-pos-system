@@ -42,6 +42,7 @@ import customerRoutes from './routes/customer.routes.js';
 import takeawayRoutes from './routes/takeaway.routes.js';
 import roomRoutes from './routes/room.routes.js';
 import syncRoutes from './routes/sync.routes.js';
+import pushRoutes from './routes/push.routes.js';
 
 // Load environment variables
 logger.info('Starting server...');
@@ -174,6 +175,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/takeaway', takeawayRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/push', pushRoutes);
 const uploadsDir = path.join(__dirname, 'uploads');
 
 // Serve uploaded images through API pipeline (bypasses Cloudflare static cache, applies CORS/security headers)

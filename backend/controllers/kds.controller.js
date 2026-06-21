@@ -2,6 +2,7 @@ import Order from '../models/Order.js';
 import KitchenNotification from '../models/KitchenNotification.js';
 import Table from '../models/Table.js';
 import logger from '../utils/logger.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 
 export const getActiveOrders = async (req, res, next) => {
     try {
@@ -106,6 +107,16 @@ export const updateOrderStatus = async (req, res, next) => {
                     orderNumber: order.orderNumber,
                     tableName: order.table?.name
                 });
+
+                sendPushToRestaurantStaff(order.restaurant, {
+                    title: 'Order Ready',
+                    body: `Order #${order.orderNumber} is ready to serve!`,
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/badge-72.png',
+                    vibrate: [200, 100, 200],
+                    sound: '/sounds/notification.mp3',
+                    data: { url: '/waiter-app/orders', type: 'order-ready' }
+                }, ['WAITER', 'OWNER']);
             }
         }
 

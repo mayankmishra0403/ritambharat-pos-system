@@ -1,5 +1,6 @@
 import ServiceRequest from '../models/ServiceRequest.js';
 import Table from '../models/Table.js';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
 
 // @desc    Create service request
 // @route   POST /api/service/request
@@ -40,6 +41,16 @@ export const createServiceRequest = async (req, res, next) => {
             tableName: tableDoc ? tableDoc.name : 'Unknown Table',
             message: `New ${type.replace('_', ' ')} from ${tableDoc ? tableDoc.name : 'table'}`
         });
+
+        sendPushToRestaurantStaff(restaurant, {
+            title: 'Customer Request',
+            body: `New ${type.replace('_', ' ').toLowerCase()} from ${tableDoc ? tableDoc.name : 'a table'}`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/notification.mp3',
+            data: { url: '/waiter-app', type: 'waiter-call' }
+        }, ['WAITER', 'OWNER']);
 
         res.status(201).json({
             success: true,

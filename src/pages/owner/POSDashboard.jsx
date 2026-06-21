@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
+import { useSoundAlert } from '../../hooks/useSoundAlert';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
 import { Plus, X, RotateCcw, Trash2, Receipt, Split, LogOut } from 'lucide-react';
@@ -43,6 +44,11 @@ const POSDashboard = () => {
             setRestaurantId(id);
         }
     }, [user]);
+
+    useSoundAlert(socket, restaurantId, {
+        event: 'order:created',
+        soundProfile: 'new-order',
+    });
 
     useEffect(() => {
         if (!socket || !restaurantId) return;
