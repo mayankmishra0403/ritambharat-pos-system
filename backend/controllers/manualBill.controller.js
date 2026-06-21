@@ -9,7 +9,7 @@ import logger from '../utils/logger.js';
 // @access  Private (Owner/Admin)
 export const createManualBill = async (req, res, next) => {
     try {
-        const { restaurantId, items, subtotal, tax, total, paymentMethod = 'CASH' } = req.body;
+        const { restaurantId, items, subtotal, tax, total, customerName, customerPhone, paymentMethod = 'CASH' } = req.body;
         console.log('Manual Bill Request Data:', { restaurantId, itemCount: items?.length, subtotal, tax, total });
 
         // Validation
@@ -38,6 +38,8 @@ export const createManualBill = async (req, res, next) => {
             status: 'SERVED',
             paymentStatus: 'PAID',
             paymentMethod: paymentMethod,
+            customerName: customerName || undefined,
+            customerPhone: customerPhone || undefined,
             orderSource: 'MANUAL' // Mark as manual billing
         });
 

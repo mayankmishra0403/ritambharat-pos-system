@@ -9,6 +9,8 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [cart, setCart] = useState([]);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     // Fetch menu items
@@ -95,6 +97,8 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
                 subtotal,
                 tax,
                 total,
+                customerName: customerName || undefined,
+                customerPhone: customerPhone || undefined,
                 paymentMethod: 'CASH',
                 paymentStatus: 'PAID'
             };
@@ -262,6 +266,22 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
                                     </div>
                                 ))
                             )}
+                        </div>
+
+                        {/* Customer Details */}
+                        <div className="p-4 border-t border-border space-y-2">
+                            <input
+                                value={customerName}
+                                onChange={e => setCustomerName(e.target.value)}
+                                placeholder="Customer name (optional)"
+                                className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                            />
+                            <input
+                                value={customerPhone}
+                                onChange={e => setCustomerPhone(e.target.value)}
+                                placeholder="Phone number (optional)"
+                                className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                            />
                         </div>
 
                         {/* Totals */}

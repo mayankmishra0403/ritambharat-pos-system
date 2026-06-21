@@ -141,8 +141,8 @@ const POSDashboard = () => {
                 restaurantId,
                 table: selectedTable?._id,
                 items,
-                customerName: !selectedTable ? customerName : undefined,
-                customerPhone: !selectedTable ? customerPhone : undefined
+                customerName: customerName || undefined,
+                customerPhone: customerPhone || undefined
             });
             return res.data.data;
         },
@@ -438,22 +438,20 @@ const POSDashboard = () => {
                         )}
                     </div>
 
-                    {!selectedTable && (
-                        <div className="mb-3 space-y-2">
-                            <input
-                                value={customerName}
-                                onChange={e => setCustomerName(e.target.value)}
-                                placeholder="Customer name"
-                                className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                            />
-                            <input
-                                value={customerPhone}
-                                onChange={e => setCustomerPhone(e.target.value)}
-                                placeholder="Phone number"
-                                className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                            />
-                        </div>
-                    )}
+                    <div className="mb-3 space-y-2">
+                        <input
+                            value={customerName}
+                            onChange={e => setCustomerName(e.target.value)}
+                            placeholder="Customer name"
+                            className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                        />
+                        <input
+                            value={customerPhone}
+                            onChange={e => setCustomerPhone(e.target.value)}
+                            placeholder="Phone number"
+                            className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                        />
+                    </div>
 
                     <POSCart
                         cartItems={cartItems}
