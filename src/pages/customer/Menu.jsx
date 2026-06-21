@@ -286,6 +286,7 @@ const MenuItemCard = ({ item, currency, onClick }) => {
                         alt={item.name}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => { e.target.style.display = 'none'; }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-600 bg-gradient-to-br from-gray-800 to-gray-900">
@@ -373,7 +374,7 @@ const ItemDetailModal = ({ item, currency, onClose }) => {
                             className="w-full h-full object-cover"
                         />
                     ) : item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                             <UtensilsCrossed size={48} className="text-gray-600" />

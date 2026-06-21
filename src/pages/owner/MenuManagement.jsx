@@ -249,7 +249,7 @@ const MenuManagement = () => {
                                     >
                                         <div className="relative h-56 bg-muted overflow-hidden">
                                             {item.image ? (
-                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" onError={(e) => { e.target.style.display = 'none'; }} />
                                             ) : (
                                                 <div className="flex items-center justify-center h-full text-muted-foreground/30">
                                                     <Box size={48} strokeWidth={1.5} />
