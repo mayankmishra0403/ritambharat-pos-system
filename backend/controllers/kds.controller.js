@@ -67,6 +67,8 @@ export const updateOrderStatus = async (req, res, next) => {
             CANCELLED: []
         };
 
+        const transitions = validTransitions[order.status] || validTransitions.PENDING;
+
         if (!transitions.includes(status)) {
             return res.status(400).json({
                 success: false,
