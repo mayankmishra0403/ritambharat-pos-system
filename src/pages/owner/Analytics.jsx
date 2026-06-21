@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../config/api';
 import {
@@ -11,6 +11,31 @@ import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+
+class AnalyticsErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+    componentDidCatch(error) {
+        console.error('[Analytics] Render error:', error);
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <p className="text-muted-foreground font-bold text-sm mb-2">Could not load analytics chart</p>
+                    <button onClick={() => this.setState({ hasError: false })} className="text-primary text-xs underline">Retry</button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
 const Analytics = () => {
     const { user } = useAuth();
     const { theme } = useTheme();

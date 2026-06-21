@@ -105,7 +105,7 @@ const Menu = () => {
 
     return (
         <div className="pb-32 px-0 sm:px-0 md:px-0">
-            <PromoCarousel items={promoItems} currency={currency} />
+            {!searchTerm && <PromoCarousel items={promoItems} currency={currency} />}
 
             <div className="sticky top-14 sm:top-16 bg-black/95 backdrop-blur-md z-30 py-3 sm:py-4 px-4 space-y-3 sm:space-y-4 shadow-lg shadow-black/20 border-b border-white/5">
                 <div className="flex items-center gap-2">

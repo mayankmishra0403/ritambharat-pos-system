@@ -23,6 +23,7 @@ const invalidateMenuCache = (req, res, next) => {
 router.post('/', protect, authorize(['OWNER', 'ADMIN'], ['menu']), invalidateMenuCache, createMenuItem);
 router.get('/', cacheMiddleware(3600), getMenuItems);
 router.get('/restaurant/:id', cacheMiddleware(3600), getMenuItems);
+router.get('/restaurant/:id/active', (req, res, next) => { req.query.available = 'true'; next(); }, cacheMiddleware(3600), getMenuItems);
 router.get('/categories/:restaurantId', cacheMiddleware(3600), getCategories);
 router.get('/:id', cacheMiddleware(3600), getMenuItem);
 router.patch('/:id', protect, authorize(['OWNER', 'ADMIN'], ['menu']), invalidateMenuCache, updateMenuItem);

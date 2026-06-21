@@ -5,8 +5,7 @@ import { Receipt, Banknote, ArrowLeft, Loader2, Share2, Download } from 'lucide-
 import api from '../../config/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+
 
 const CustomerBill = () => {
     const params = useParams();
@@ -77,86 +76,8 @@ const CustomerBill = () => {
         }
     };
 
-    const handleDownload = async () => {
-        const element = document.getElementById('bill-receipt');
-        if (!element) return;
-
-        toast.loading("Preparing PDF...", { id: 'pdf-gen' });
-
-        try {
-            const canvas = await html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                onclone: (clonedDoc) => {
-                    const head = clonedDoc.getElementsByTagName('head')[0];
-                    const styles = clonedDoc.getElementsByTagName('style');
-                    const links = clonedDoc.getElementsByTagName('link');
-
-                    // Remove ALL existing styles to prevent oklch parsing errors
-                    while (styles.length > 0) styles[0].parentNode.removeChild(styles[0]);
-                    while (links.length > 0) links[0].parentNode.removeChild(links[0]);
-
-                    // Inject absolute minimum CSS for receipt layout
-                    const safeStyle = clonedDoc.createElement('style');
-                    safeStyle.innerHTML = `
-                        #bill-receipt {
-                            background: white !important;
-                            color: black !important;
-                            padding: 40px !important;
-                            font-family: 'Courier New', Courier, monospace !important;
-                            width: 500px !important;
-                            position: relative !important;
-                            border-radius: 20px !important;
-                            box-shadow: none !important;
-                        }
-                        .text-2xl { font-size: 24px !important; font-weight: 900 !important; }
-                        .text-sm { font-size: 14px !important; }
-                        .text-xs { font-size: 12px !important; }
-                        .font-mono { font-family: monospace !important; }
-                        .flex { display: flex !important; }
-                        .justify-between { justify-content: space-between !important; }
-                        .text-center { text-align: center !important; }
-                        .mb-6 { margin-bottom: 24px !important; }
-                        .mb-1 { margin-bottom: 4px !important; }
-                        .mt-1 { margin-top: 4px !important; }
-                        .pt-4 { padding-top: 16px !important; }
-                        .border-b-2 { border-bottom: 2px dashed #e5e7eb !important; }
-                        .border-t-2 { border-top: 2px solid #000000 !important; }
-                        .space-y-3 > * + * { margin-top: 12px !important; }
-                        .space-y-2 > * + * { margin-top: 8px !important; }
-                        .font-bold { font-weight: bold !important; }
-                        .text-gray-500 { color: #6b7280 !important; }
-                        .text-gray-600 { color: #4b5563 !important; }
-                        .no-print { display: none !important; }
-                    `;
-                    head.appendChild(safeStyle);
-
-                    const clonedElement = clonedDoc.getElementById('bill-receipt');
-                    if (clonedElement) {
-                        clonedElement.style.display = 'block';
-                        clonedElement.style.opacity = '1';
-                    }
-                }
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'px',
-                format: [canvas.width / 2, canvas.height / 2]
-            });
-
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-            pdf.save(`bill-${order._id.slice(-6).toUpperCase()}.pdf`);
-
-            toast.success("PDF Downloaded!", { id: 'pdf-gen' });
-        } catch (error) {
-            console.error('PDF Generation Error:', error);
-            toast.error("Failed to generate PDF. Trying standard download...");
-            window.print();
-        }
+    const handleDownload = () => {
+        window.print();
     };
 
     if (isLoading) return (
@@ -187,15 +108,25 @@ const CustomerBill = () => {
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
-                    body * { visibility: hidden !important; background: white !important; }
-                    #bill-receipt, #bill-receipt * { visibility: visible !important; }
-                    #bill-receipt { 
-                        position: absolute !important; 
-                        left: 0 !important; 
-                        top: 0 !important; 
-                        width: 100% !important; 
-                        padding: 20px !important;
+                    @page { margin: 10mm; }
+                    html, body { background: white !important; }
+                    body > *:not(#bill-receipt-container) { display: none !important; }
+                    #bill-receipt-container { display: block !important; }
+                    #bill-receipt {
+                        background: white !important;
                         color: black !important;
+                        padding: 20px !important;
+                        width: 100% !important;
+                        max-width: 400px !important;
+                        margin: 0 auto !important;
+                        font-family: 'Courier New', Courier, monospace !important;
+                        border-radius: 0 !important;
+                        box-shadow: none !important;
+                    }
+                    #bill-receipt * {
+                        visibility: visible !important;
+                        color: black !important;
+                        background: transparent !important;
                     }
                     .no-print { display: none !important; }
                 }
@@ -210,6 +141,7 @@ const CustomerBill = () => {
             </div>
 
             {/* Receipt Card */}
+            <div id="bill-receipt-container">
             <motion.div
                 id="bill-receipt"
                 initial={{ y: 20, opacity: 0 }}
@@ -269,6 +201,7 @@ const CustomerBill = () => {
                 {/* Torn Paper Effect Bottom */}
                 <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#121212] no-print" style={{ clipPath: 'polygon(0% 100%, 5% 0%, 10% 100%, 15% 0%, 20% 100%, 25% 0%, 30% 100%, 35% 0%, 40% 100%, 45% 0%, 50% 100%, 55% 0%, 60% 100%, 65% 0%, 70% 100%, 75% 0%, 80% 100%, 85% 0%, 90% 100%, 95% 0%, 100% 100%)' }}></div>
             </motion.div>
+            </div>
 
             {/* Actions */}
             <div className="mt-8 space-y-4 no-print">

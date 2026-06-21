@@ -15,10 +15,7 @@ class ErrorBoundary extends Component {
         // Log to analytics
         trackError(error, errorInfo);
 
-        // Log to console in development
-        if (import.meta.env.DEV) {
-            console.error('Error Boundary caught:', error, errorInfo);
-        }
+        console.error('[ErrorBoundary] Caught:', error, errorInfo);
     }
 
     render() {
