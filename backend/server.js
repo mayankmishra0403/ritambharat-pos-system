@@ -16,6 +16,8 @@ import { rateLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 import { validateEnvironment } from './utils/validateEnv.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 // Import routes
 import authRoutes from './routes/auth.routes.js';
 import restaurantRoutes from './routes/restaurant.routes.js';
