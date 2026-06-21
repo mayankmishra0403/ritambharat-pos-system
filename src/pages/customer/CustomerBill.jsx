@@ -180,16 +180,53 @@ const CustomerBill = () => {
                 <div className="space-y-2 font-mono text-sm mb-6">
                     <div className="flex justify-between text-gray-600">
                         <span>Subtotal</span>
-                        <span>{((order.total || 0) / 1.1).toFixed(2)}</span>
+                        <span>{(order.subtotal || 0).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-600">
-                        <span>Tax (10%)</span>
-                        <span>{((order.total || 0) - ((order.total || 0) / 1.1)).toFixed(2)}</span>
-                    </div>
+                    {order.gstBreakdown?.cgst > 0 && (
+                        <div className="flex justify-between text-gray-600 text-[11px]">
+                            <span>CGST @ {((order.gstBreakdown.cgst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
+                            <span>{order.gstBreakdown.cgst.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {order.gstBreakdown?.sgst > 0 && (
+                        <div className="flex justify-between text-gray-600 text-[11px]">
+                            <span>SGST @ {((order.gstBreakdown.sgst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
+                            <span>{order.gstBreakdown.sgst.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {order.gstBreakdown?.igst > 0 && (
+                        <div className="flex justify-between text-gray-600 text-[11px]">
+                            <span>IGST @ {((order.gstBreakdown.igst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
+                            <span>{order.gstBreakdown.igst.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {!order.gstBreakdown && (order.tax || 0) > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                            <span>GST @ {((order.tax / (order.subtotal || 1)) * 100).toFixed(0)}%</span>
+                            <span>{(order.tax || 0).toFixed(2)}</span>
+                        </div>
+                    )}
+                    {order.discountAmount > 0 && (
+                        <div className="flex justify-between text-red-500">
+                            <span>Discount</span>
+                            <span>-{(order.discountAmount || 0).toFixed(2)}</span>
+                        </div>
+                    )}
+                    {order.serviceChargeAmount > 0 && (
+                        <div className="flex justify-between text-gray-600">
+                            <span>Service Charge</span>
+                            <span>{(order.serviceChargeAmount || 0).toFixed(2)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-xl font-bold mt-4 pt-4 border-t-2 border-black">
                         <span>TOTAL</span>
                         <span>{(order.total || 0).toFixed(2)}</span>
                     </div>
+                    {order.paymentStatus === 'PAID' && (
+                        <div className="text-center mt-3 text-green-600 font-bold text-xs uppercase tracking-widest">
+                            ✓ Paid
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer Message */}

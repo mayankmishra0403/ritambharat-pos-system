@@ -142,8 +142,11 @@ const Billing = () => {
                     </table>
                     <div class="border-t mt-4 pt-2">
                         <table>
-                            <tr><td class="bold text-sm">Subtotal</td><td style="text-align:right">₹${(order.total / 1.1).toFixed(2)}</td></tr>
-                            <tr><td class="bold text-sm">VAT (10%)</td><td style="text-align:right">₹${(order.total - order.total / 1.1).toFixed(2)}</td></tr>
+                            <tr><td class="bold text-sm">Subtotal</td><td style="text-align:right">₹${(order.subtotal || 0).toFixed(2)}</td></tr>
+                            ${order.gstBreakdown?.cgst > 0 ? `<tr><td class="text-sm">CGST @ ${((order.gstBreakdown.cgst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.cgst.toFixed(2)}</td></tr>` : ''}
+                            ${order.gstBreakdown?.sgst > 0 ? `<tr><td class="text-sm">SGST @ ${((order.gstBreakdown.sgst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.sgst.toFixed(2)}</td></tr>` : ''}
+                            ${order.gstBreakdown?.igst > 0 ? `<tr><td class="text-sm">IGST @ ${((order.gstBreakdown.igst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.igst.toFixed(2)}</td></tr>` : ''}
+                            ${!order.gstBreakdown && (order.tax || 0) > 0 ? `<tr><td class="text-sm">GST @ ${((order.tax / (order.subtotal || 1)) * 100).toFixed(0)}%</td><td style="text-align:right">₹${(order.tax || 0).toFixed(2)}</td></tr>` : ''}
                             <tr><td class="bold text-2xl border-t pt-2">Grand Total</td><td class="bold text-2xl border-t pt-2" style="text-align:right">₹${order.total.toFixed(2)}</td></tr>
                         </table>
                     </div>

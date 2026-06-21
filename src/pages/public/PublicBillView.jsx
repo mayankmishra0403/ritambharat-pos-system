@@ -117,10 +117,40 @@ const PublicBillView = () => {
                             <span>Subtotal</span>
                             <span>{currency}{subtotal.toFixed(2)}</span>
                         </div>
-                        {tax > 0 && (
+                        {order.gstBreakdown?.cgst > 0 && (
+                            <div className="flex justify-between text-gray-600 text-xs">
+                                <span>CGST @ {((order.gstBreakdown.cgst / (subtotal || 1)) * 100).toFixed(1)}%</span>
+                                <span>{currency}{order.gstBreakdown.cgst.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {order.gstBreakdown?.sgst > 0 && (
+                            <div className="flex justify-between text-gray-600 text-xs">
+                                <span>SGST @ {((order.gstBreakdown.sgst / (subtotal || 1)) * 100).toFixed(1)}%</span>
+                                <span>{currency}{order.gstBreakdown.sgst.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {order.gstBreakdown?.igst > 0 && (
+                            <div className="flex justify-between text-gray-600 text-xs">
+                                <span>IGST @ {((order.gstBreakdown.igst / (subtotal || 1)) * 100).toFixed(1)}%</span>
+                                <span>{currency}{order.gstBreakdown.igst.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {!order.gstBreakdown && tax > 0 && (
                             <div className="flex justify-between text-gray-600">
-                                <span>Tax</span>
+                                <span>GST @ {((tax / (subtotal || 1)) * 100).toFixed(0)}%</span>
                                 <span>{currency}{tax.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {order.discountAmount > 0 && (
+                            <div className="flex justify-between text-red-500">
+                                <span>Discount</span>
+                                <span>-{currency}{(order.discountAmount || 0).toFixed(2)}</span>
+                            </div>
+                        )}
+                        {order.serviceChargeAmount > 0 && (
+                            <div className="flex justify-between text-gray-600">
+                                <span>Service Charge</span>
+                                <span>{currency}{(order.serviceChargeAmount || 0).toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-xl font-bold mt-4 pt-4 border-t-2 border-black">
@@ -129,7 +159,7 @@ const PublicBillView = () => {
                         </div>
                         {order.paymentStatus === 'PAID' && (
                             <div className="text-center mt-3 text-green-600 font-bold text-xs uppercase tracking-wider">
-                                Paid
+                                ✓ Paid
                             </div>
                         )}
                     </div>
