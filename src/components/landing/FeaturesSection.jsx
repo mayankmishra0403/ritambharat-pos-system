@@ -61,7 +61,7 @@ export const FeaturesSection = () => {
                         Engineered for <span className="text-gradient italic">Total Mastery</span>
                     </h2>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto italic font-medium">
-                        Standard POS systems just track sales. ChefOS manages your entire business logic
+                        Standard POS systems just track sales. Ritam Bharat POS manages your entire business logic
                         to maximize every square inch of your restaurant.
                     </p>
                 </AnimatedSection>

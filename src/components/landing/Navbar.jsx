@@ -9,7 +9,7 @@ const navLinks = [
     { name: "Features", href: "#features", isHash: true },
     { name: "ROI", href: "#roi", isHash: true },
     { name: "Demo", href: "#demo", isHash: true },
-    { name: "Pricing", href: "#pricing", isHash: true },
+
     { name: "Contact", href: "#contact", isHash: true },
 ];
 

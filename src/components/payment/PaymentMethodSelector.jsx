@@ -2,64 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Smartphone, Building2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const PaymentMethodSelector = ({ currency = 'USD', onSelect, selectedMethod }) => {
+const PaymentMethodSelector = ({ currency = 'PKR', onSelect, selectedMethod }) => {
     const [availableMethods, setAvailableMethods] = useState([]);
-    const [gateway, setGateway] = useState('STRIPE');
+    const gateway = 'SAFEPAY';
 
     useEffect(() => {
-        // Determine available payment methods based on currency
-        if (currency === 'PKR') {
-            setGateway('SAFEPAY');
-            setAvailableMethods([
-                {
-                    id: 'jazzcash',
-                    name: 'JazzCash',
-                    icon: Smartphone,
-                    description: 'Pay with your JazzCash wallet'
-                },
-                {
-                    id: 'easypaisa',
-                    name: 'EasyPaisa',
-                    icon: Smartphone,
-                    description: 'Pay with your EasyPaisa account'
-                },
-                {
-                    id: 'card',
-                    name: 'Debit/Credit Card',
-                    icon: CreditCard,
-                    description: 'Visa, Mastercard, UnionPay'
-                },
-                {
-                    id: 'bank',
-                    name: 'Bank Transfer',
-                    icon: Building2,
-                    description: '1Link direct transfer'
-                }
-            ]);
-        } else {
-            setGateway('STRIPE');
-            setAvailableMethods([
-                {
-                    id: 'card',
-                    name: 'Card Payment',
-                    icon: CreditCard,
-                    description: 'Credit or debit card'
-                },
-                {
-                    id: 'apple_pay',
-                    name: 'Apple Pay',
-                    icon: Smartphone,
-                    description: 'Available on Apple devices'
-                },
-                {
-                    id: 'google_pay',
-                    name: 'Google Pay',
-                    icon: Smartphone,
-                    description: 'Quick and secure'
-                }
-            ]);
-        }
-    }, [currency]);
+        setAvailableMethods([
+            {
+                id: 'jazzcash',
+                name: 'JazzCash',
+                icon: Smartphone,
+                description: 'Pay with your JazzCash wallet'
+            },
+            {
+                id: 'easypaisa',
+                name: 'EasyPaisa',
+                icon: Smartphone,
+                description: 'Pay with your EasyPaisa account'
+            },
+            {
+                id: 'card',
+                name: 'Debit/Credit Card',
+                icon: CreditCard,
+                description: 'Visa, Mastercard, UnionPay'
+            },
+            {
+                id: 'bank',
+                name: 'Bank Transfer',
+                icon: Building2,
+                description: '1Link direct transfer'
+            }
+        ]);
+    }, []);
 
     return (
         <div className="space-y-4">
@@ -121,7 +95,7 @@ const PaymentMethodSelector = ({ currency = 'USD', onSelect, selectedMethod }) =
 
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <span>Secured by {gateway === 'SAFEPAY' ? 'Safepay' : 'Stripe'}</span>
+                <span>Secured by Safepay</span>
             </div>
         </div>
     );

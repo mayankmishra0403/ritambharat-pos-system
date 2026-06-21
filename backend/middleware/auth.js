@@ -93,7 +93,7 @@ export const verifyRestaurantOwnership = async (req, res, next) => {
         let restaurantId = req.params.restaurantId || req.params.id || req.body.restaurant || req.query.restaurant;
 
         // Fallback for OWNER/CHEF/WAITER if restaurantId is missing from request
-        if (!restaurantId && ['OWNER', 'CHEF', 'WAITER'].includes(req.user.role)) {
+        if (!restaurantId && ['OWNER', 'CHEF', 'WAITER', 'CASHIER'].includes(req.user.role)) {
             restaurantId = req.user.restaurant?.toString();
         }
 
@@ -115,7 +115,7 @@ export const verifyRestaurantOwnership = async (req, res, next) => {
         // Check if user is associated with the restaurant
         const userRestaurantId = req.user.restaurant?.toString();
 
-        if (['OWNER', 'CHEF', 'WAITER'].includes(req.user.role) && userRestaurantId !== restaurantId) {
+        if (['OWNER', 'CHEF', 'WAITER', 'CASHIER'].includes(req.user.role) && userRestaurantId !== restaurantId) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to access this restaurant'

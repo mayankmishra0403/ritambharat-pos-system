@@ -69,7 +69,7 @@ export const DemoSection = () => {
                     </h2>
 
                     <p className="text-xl text-white/60 font-medium leading-relaxed max-w-xl italic">
-                        Join hundreds of restaurants using ChefOS. Get an exclusive look at the
+                        Join hundreds of restaurants using Ritam Bharat POS. Get an exclusive look at the
                         platform: From smart menus to real-time order management.
                     </p>
 

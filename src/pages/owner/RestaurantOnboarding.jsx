@@ -59,7 +59,7 @@ const RestaurantOnboarding = () => {
                 // Refresh user in context
                 await fetchMe();
 
-                toast.success('Welcome to ChefOS! Your restaurant is ready.');
+                toast.success('Welcome to Ritam Bharat POS! Your restaurant is ready.');
                 // Navigate to dashboard after a brief delay
                 setTimeout(() => navigate('/dashboard'), 1500);
             }

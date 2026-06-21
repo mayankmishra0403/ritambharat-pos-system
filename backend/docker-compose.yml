@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: chefos-mongodb
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    environment:
+      MONGO_INITDB_DATABASE: ritam_bharat_pos
+    healthcheck:
+      test: mongosh --eval 'db.runCommand("ping").ok' --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chefos-backend
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:5000:5000'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    env_file: .env
+    volumes:
+      - backend-uploads:/app/uploads
+      - backend-logs:/app/logs
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/ritam_bharat_pos
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo-data:
+  mongo-config:
+  backend-uploads:
+  backend-logs:

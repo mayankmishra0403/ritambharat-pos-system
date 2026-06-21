@@ -7,33 +7,35 @@ import { useCart } from '../../context/CartContext';
 import CustomerSidebar from '../../components/customer/CustomerSidebar';
 import FloatingActionMenu from '../../components/customer/FloatingActionMenu';
 import RestaurantInfoModal from '../../components/customer/RestaurantInfoModal';
-import ChefAI from '../../components/customer/ChefAI';
 import PWAInstallPrompt from '../../components/common/PWAInstallPrompt';
 
 const CustomerLayout = () => {
     const params = useParams();
     const [searchParams] = useSearchParams();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [chefAIOpen, setChefAIOpen] = useState(false);
     const [isRestaurantInfoOpen, setIsRestaurantInfoOpen] = useState(false);
 
     // Extract parameters
     const { restaurantId: pathRestaurantId, tableId: pathTableId } = params;
     const queryTableId = searchParams.get('table');
+    const qrToken = searchParams.get('token');
 
     // Effective IDs
-    const restaurantId = pathRestaurantId || localStorage.getItem('chefos_restaurant_id');
-    const tableId = pathTableId || queryTableId || localStorage.getItem('chefos_table_id');
+    const restaurantId = pathRestaurantId || localStorage.getItem('ritam_bharat_pos_restaurant_id');
+    const tableId = pathTableId || queryTableId || localStorage.getItem('ritam_bharat_pos_table_id');
 
     // Sync to localStorage
     useEffect(() => {
         if (pathRestaurantId) {
-            localStorage.setItem('chefos_restaurant_id', pathRestaurantId);
+            localStorage.setItem('ritam_bharat_pos_restaurant_id', pathRestaurantId);
         }
         if (pathTableId || queryTableId) {
-            localStorage.setItem('chefos_table_id', pathTableId || queryTableId);
+            localStorage.setItem('ritam_bharat_pos_table_id', pathTableId || queryTableId);
         }
-    }, [pathRestaurantId, pathTableId, queryTableId]);
+        if (qrToken) {
+            localStorage.setItem('ritam_bharat_pos_security_token', qrToken);
+        }
+    }, [pathRestaurantId, pathTableId, queryTableId, qrToken]);
 
     const navigate = useNavigate();
     // Fetch Restaurant Details
@@ -48,15 +50,12 @@ const CustomerLayout = () => {
         retry: 1
     });
 
-    // Fetch Table Details (To get securityToken for session protection)
+    // Fetch Table Details
     const { data: table, isLoading: tableLoading } = useQuery({
         queryKey: ['table', tableId],
         queryFn: async () => {
             if (!tableId) return null;
             const res = await api.get(`/tables/${tableId}`);
-            if (res.data.data?.currentSession?.securityToken) {
-                localStorage.setItem('chefos_security_token', res.data.data.currentSession.securityToken);
-            }
             return res.data.data;
         },
         enabled: !!tableId,
@@ -145,9 +144,7 @@ const CustomerLayout = () => {
                 <Outlet context={{
                     restaurant,
                     tableId,
-                    isPremium: restaurant?.subscription?.plan?.name === 'PREMIUM',
                     openRestaurantInfo: () => setIsRestaurantInfoOpen(true),
-                    openChefAI: () => setChefAIOpen(true)
                 }} />
             </main>
 
@@ -157,7 +154,6 @@ const CustomerLayout = () => {
             <FloatingActionMenu
                 restaurant={restaurant}
                 tableId={tableId}
-                openChefAI={() => setChefAIOpen(true)}
             />
 
             {/* Global Restaurant Info Modal */}
@@ -167,14 +163,6 @@ const CustomerLayout = () => {
                 restaurant={restaurant}
             />
 
-            {/* Chef AI Digital Assistant - Render only for Premium */}
-            {restaurant?.subscription?.plan?.name === 'PREMIUM' && (
-                <ChefAI
-                    restaurant={restaurant}
-                    externalOpen={chefAIOpen}
-                    onClose={() => setChefAIOpen(false)}
-                />
-            )}
         </div>
     );
 };

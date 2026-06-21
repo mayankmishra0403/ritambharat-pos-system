@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Users, Plus, Trash2, Star, MessageSquare,
     Calendar, Mail, User as UserIcon, Shield,
-    TrendingUp, Award, Clock, Upload, Camera,
+    TrendingUp, Award, Clock, Upload, Camera, KeyRound,
     Store, Table, LayoutDashboard, Settings, ShoppingCart,
     Menu as MenuIcon, BarChart3, Sparkles, Pencil
 } from 'lucide-react';
@@ -23,10 +23,13 @@ const StaffManagement = () => {
         name: '',
         email: '',
         password: '',
+        pin: '',
         role: 'WAITER',
         profileImage: '',
         permissions: []
     });
+
+    const isPinRole = ['WAITER', 'CASHIER', 'CHEF'].includes(newStaff.role);
     const [uploading, setUploading] = useState(false);
     const [editingStaff, setEditingStaff] = useState(null);
 
@@ -43,7 +46,6 @@ const StaffManagement = () => {
         { id: 'reviews', label: 'Reviews', icon: Star },
         { id: 'complaints', label: 'Complaints', icon: Shield },
         { id: 'settings', label: 'Settings', icon: Settings },
-        { id: 'subscription', label: 'Subscription', icon: Sparkles },
     ];
 
     const togglePermission = (permId) => {
@@ -83,7 +85,7 @@ const StaffManagement = () => {
             toast.success('Staff member authorized successfully');
             setIsAddModalOpen(false);
             setNewStaff({
-                name: '', email: '', password: '', role: 'WAITER', profileImage: '', permissions: []
+                name: '', email: '', password: '', pin: '', role: 'WAITER', profileImage: '', permissions: []
             });
         },
         onError: (err) => {
@@ -100,7 +102,7 @@ const StaffManagement = () => {
             setIsAddModalOpen(false);
             setEditingStaff(null);
             setNewStaff({
-                name: '', email: '', password: '', role: 'WAITER', profileImage: '', permissions: []
+                name: '', email: '', password: '', pin: '', role: 'WAITER', profileImage: '', permissions: []
             });
         },
         onError: (err) => {
@@ -122,10 +124,18 @@ const StaffManagement = () => {
 
     const handleAddStaff = (e) => {
         e.preventDefault();
-        if (editingStaff) {
-            updateStaffMutation.mutate({ id: editingStaff._id, data: newStaff });
+        const payload = { ...newStaff };
+        if (isPinRole) {
+            delete payload.email;
+            delete payload.password;
         } else {
-            addStaffMutation.mutate(newStaff);
+            delete payload.pin;
+        }
+        if (editingStaff) {
+            delete payload.password;
+            updateStaffMutation.mutate({ id: editingStaff._id, data: payload });
+        } else {
+            addStaffMutation.mutate(payload);
         }
     };
 
@@ -133,8 +143,9 @@ const StaffManagement = () => {
         setEditingStaff(member);
         setNewStaff({
             name: member.name,
-            email: member.email,
-            password: '', // Keep empty unless changing
+            email: member.email || '',
+            password: '',
+            pin: '',
             role: member.role,
             profileImage: member.profileImage,
             permissions: member.permissions || []
@@ -145,7 +156,7 @@ const StaffManagement = () => {
     const handleOpenAddModal = () => {
         setEditingStaff(null);
         setNewStaff({
-            name: '', email: '', password: '', role: 'WAITER', profileImage: '', permissions: []
+            name: '', email: '', password: '', pin: '', role: 'WAITER', profileImage: '', permissions: []
         });
         setIsAddModalOpen(true);
     };
@@ -301,46 +312,76 @@ const StaffManagement = () => {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Email Address</label>
-                                            <input
-                                                required
-                                                type="email"
-                                                value={newStaff.email}
-                                                onChange={e => setNewStaff({ ...newStaff, email: e.target.value })}
-                                                className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
-                                                placeholder="sarah@example.com"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Designated Role</label>
                                             <select
                                                 required
                                                 value={newStaff.role}
-                                                onChange={e => setNewStaff({ ...newStaff, role: e.target.value })}
+                                                onChange={e => {
+                                                    const role = e.target.value;
+                                                    setNewStaff({
+                                                        ...newStaff,
+                                                        role,
+                                                        email: ['WAITER', 'CASHIER', 'CHEF'].includes(role) ? '' : newStaff.email,
+                                                        password: ['WAITER', 'CASHIER', 'CHEF'].includes(role) ? '' : newStaff.password,
+                                                        pin: ['WAITER', 'CASHIER', 'CHEF'].includes(role) ? newStaff.pin : ''
+                                                    });
+                                                }}
                                                 className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all appearance-none cursor-pointer font-bold"
                                             >
                                                 <option value="WAITER">WAITER / SERVER</option>
+                                                <option value="CASHIER">CASHIER / POS</option>
                                                 <option value="CHEF">CHEF / KITCHEN</option>
                                                 <option value="ADMIN">ADMINISTRATOR</option>
                                             </select>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
-                                                {editingStaff ? 'Change Password (Optional)' : 'Login Password'}
-                                            </label>
-                                            <input
-                                                required={!editingStaff}
-                                                type="password"
-                                                value={newStaff.password}
-                                                onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
-                                                className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
-                                                placeholder={editingStaff ? "••••••••" : "Min 6 characters"}
-                                            />
-                                        </div>
                                     </div>
+
+                                    {isPinRole ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Staff PIN</label>
+                                                <input
+                                                    required
+                                                    type="password"
+                                                    inputMode="numeric"
+                                                    maxLength={6}
+                                                    value={newStaff.pin}
+                                                    onChange={e => setNewStaff({ ...newStaff, pin: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                                                    className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all tracking-[0.3em] text-center font-bold"
+                                                    placeholder="••••••"
+                                                />
+                                                <p className="text-[9px] text-muted-foreground px-1">4-6 digit PIN for staff login</p>
+                                            </div>
+                                            <div />
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Email Address</label>
+                                                <input
+                                                    required
+                                                    type="email"
+                                                    value={newStaff.email}
+                                                    onChange={e => setNewStaff({ ...newStaff, email: e.target.value })}
+                                                    className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
+                                                    placeholder="admin@restaurant.com"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                                                    {editingStaff ? 'Change Password (Optional)' : 'Login Password'}
+                                                </label>
+                                                <input
+                                                    required={!editingStaff}
+                                                    type="password"
+                                                    value={newStaff.password}
+                                                    onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
+                                                    className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
+                                                    placeholder={editingStaff ? "Leave blank to keep" : "Min 6 characters"}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">Profile Photo</label>
                                         <div className="flex gap-6 items-center">
@@ -447,9 +488,15 @@ const StaffCard = ({ member, onRemove, onEdit, index, availableFeatures }) => {
                             </span>
                         </div>
                         <div className="space-y-1">
-                            <p className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
-                                <Mail size={14} className="text-primary" /> {member.email}
-                            </p>
+                            {['WAITER', 'CASHIER', 'CHEF'].includes(member.role) ? (
+                                <p className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
+                                    <KeyRound size={14} className="text-primary" /> PIN-based login
+                                </p>
+                            ) : (
+                                <p className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
+                                    <Mail size={14} className="text-primary" /> {member.email}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>

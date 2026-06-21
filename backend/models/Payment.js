@@ -22,12 +22,12 @@ const paymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['CASH', 'STRIPE', 'SAFEPAY'],
+        enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
         required: true
     },
     paymentType: {
         type: String,
-        enum: ['ORDER', 'SUBSCRIPTION'],
+        enum: ['ORDER'],
         default: 'ORDER'
     },
     status: {
@@ -36,7 +36,6 @@ const paymentSchema = new mongoose.Schema({
         default: 'PENDING'
     },
     transactionId: String, // Payment gateway transaction ID
-    paymentIntentId: String, // Stripe payment intent ID
     safepayTracker: String, // Safepay tracker ID
     safepayCheckoutUrl: String, // Safepay checkout URL
     receiptUrl: String,

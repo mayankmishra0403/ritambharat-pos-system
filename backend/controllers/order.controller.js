@@ -2,6 +2,7 @@ import Order from '../models/Order.js';
 import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
+import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 
 // @desc    Create order
@@ -19,7 +20,7 @@ export const createOrder = async (req, res, next) => {
             });
         }
 
-        // Fetch Table for security validation
+        // Fetch Table for security validation and restaurant boundary check
         const tableDoc = await Table.findById(table);
         if (!tableDoc) {
             return res.status(404).json({
@@ -28,12 +29,33 @@ export const createOrder = async (req, res, next) => {
             });
         }
 
-        // Security Validation (Scan-to-Order)
-        if (tableDoc.currentSession?.securityToken && tableDoc.currentSession.securityToken !== securityToken) {
-            logger.warn(`Security token mismatch for table ${table}. Possible unauthorized order attempt.`);
+        // Security Validation using QR secret (embedded in QR code URL)
+        // Only applies when securityToken is provided (customer scan-to-order flow)
+        if (securityToken) {
+            if (tableDoc.qrSecret && tableDoc.qrSecret !== securityToken) {
+                logger.warn(`QR token mismatch for table ${table}. Possible unauthorized order attempt.`);
+                return res.status(403).json({
+                    success: false,
+                    message: 'Security validation failed. Please re-scan table QR code to order.'
+                });
+            }
+
+            // Fallback: validate against session securityToken for legacy QR codes
+            if (!tableDoc.qrSecret && tableDoc.currentSession?.securityToken && tableDoc.currentSession.securityToken !== securityToken) {
+                logger.warn(`Session security token mismatch for table ${table}. Possible unauthorized order attempt.`);
+                return res.status(403).json({
+                    success: false,
+                    message: 'Security validation failed. Please re-scan table QR code to order.'
+                });
+            }
+        }
+
+        // Cross-restaurant boundary check
+        if (tableDoc.restaurant?.toString() !== restaurant) {
+            logger.warn(`Cross-restaurant order attempt: table ${table} does not belong to restaurant ${restaurant}`);
             return res.status(403).json({
                 success: false,
-                message: 'Security validation failed. Please re-scan table QR code to order.'
+                message: 'Table does not belong to this restaurant.'
             });
         }
 
@@ -82,7 +104,9 @@ export const createOrder = async (req, res, next) => {
         }
 
         // Calculate tax and total
-        const tax = (subtotal * (restaurantDoc.taxRate || 0)) / 100;
+        const taxInfo = await getTaxInfo(restaurant, restaurantDoc);
+        const tax = calculateTax(subtotal, taxInfo.slabRate);
+        const gstBreakdown = calculateGstBreakdown(subtotal, taxInfo.cgstRate, taxInfo.sgstRate, taxInfo.igstRate);
 
         // Handle Promo Code (Simple Logic for now)
         let discountAmount = 0;
@@ -103,7 +127,7 @@ export const createOrder = async (req, res, next) => {
         const order = await Order.create({
             restaurant,
             table,
-            sessionId, // Link to session
+            sessionId,
             items: orderItems,
             subtotal,
             tax,
@@ -111,11 +135,17 @@ export const createOrder = async (req, res, next) => {
             discountAmount,
             promoCode,
             total,
+            gstBreakdown: {
+                cgst: gstBreakdown.cgst,
+                sgst: gstBreakdown.sgst,
+                igst: gstBreakdown.igst,
+                taxSlab: taxInfo.taxSlabId
+            },
             customerName,
             customerPhone,
             specialInstructions: orderNote || specialInstructions,
             paymentMethod: paymentMethod || 'CASH',
-            orderSource: 'QR' // Mark as QR source for scan-based orders
+            orderSource: 'QR'
         });
 
         // Populate order details for response

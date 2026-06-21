@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, ChevronDown, ChevronUp, CheckCircle, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useOfflineSync } from '../../context/OfflineSyncContext';
@@ -11,13 +11,15 @@ const Checkout = () => {
     const { cart, cartTotal, clearCart } = useCart();
     const { isOnline, addToQueue } = useOfflineSync();
     const { restaurant, tableId } = useOutletContext();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [isOrderSummaryOpen, setIsOrderSummaryOpen] = useState(true);
 
-    // Simplified Calculations (No tips/promos)
+    // Simplified Calculations
+    const taxRate = restaurant?.taxRate || 0;
     const subtotal = cartTotal;
-    const tax = subtotal * 0.1;
+    const tax = subtotal * (taxRate / 100);
     const finalTotal = subtotal + tax;
 
     const handleSubmit = async () => {
@@ -26,7 +28,7 @@ const Checkout = () => {
             return;
         }
 
-        const securityToken = localStorage.getItem('chefos_security_token');
+        const securityToken = searchParams.get('token') || localStorage.getItem('ritam_bharat_pos_security_token');
 
         const orderData = {
             restaurant: restaurant._id,
@@ -57,7 +59,7 @@ const Checkout = () => {
 
             if (res.data.success) {
                 clearCart();
-                localStorage.setItem('chefos_last_order_id', res.data.data._id);
+                localStorage.setItem('ritam_bharat_pos_last_order_id', res.data.data._id);
                 toast.success("Order placed successfully!");
                 navigate(`/menu/${restaurant._id}/order-tracking/${res.data.data._id}`);
             }
@@ -147,10 +149,12 @@ const Checkout = () => {
                         <span>Subtotal</span>
                         <span>{subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-400 text-sm">
-                        <span>Tax (10%)</span>
-                        <span>{tax.toFixed(2)}</span>
-                    </div>
+                    {taxRate > 0 && (
+                        <div className="flex justify-between text-gray-400 text-sm">
+                            <span>Tax ({taxRate}%)</span>
+                            <span>{tax.toFixed(2)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/10 mt-2">
                         <span>Total</span>
                         <span className="text-primary">{finalTotal.toFixed(2)}</span>

@@ -155,7 +155,7 @@ export const DemoMenuSection = () => {
                         Superior <span className="text-gradient italic">Guest Experience</span>
                     </h2>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto italic font-medium">
-                        ChefOS isn't just a backend tool. It's an elegant extension of your brand that
+                        Ritam Bharat POS isn't just a backend tool. It's an elegant extension of your brand that
                         removes ordering friction and maximizes table turnover while delighting your guests.
                     </p>
                 </AnimatedSection>
@@ -481,13 +481,9 @@ const CartScreen = ({ cart, totalPrice, onRemove, onAdd, onSend }) => (
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>£{totalPrice.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax (10%)</span>
-                <span>£{(totalPrice * 0.1).toFixed(2)}</span>
-            </div>
             <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
                 <span>Total</span>
-                <span>£{(totalPrice * 1.1).toFixed(2)}</span>
+                <span>£{totalPrice.toFixed(2)}</span>
             </div>
         </div>
 

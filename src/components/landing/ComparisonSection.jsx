@@ -35,8 +35,8 @@ export const ComparisonSection = () => {
                         Stop Guessing. <span className="text-gradient">Start Controlling.</span>
                     </h2>
                     <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                        Traditional restaurant management is reactive. ChefOS makes you proactive.
-                        Compare the difference in everyday operations.
+Traditional restaurant management is reactive. Ritam Bharat POS makes you proactive.
+                         Compare the difference in everyday operations.
                     </p>
                 </AnimatedSection>
 
@@ -80,7 +80,7 @@ export const ComparisonSection = () => {
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3 text-primary">
                                             <item.newIcon className="w-5 h-5" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">With ChefOS</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">With Ritam Bharat POS</span>
                                         </div>
                                         <p className="text-sm font-medium leading-relaxed italic">
                                             {item.new}

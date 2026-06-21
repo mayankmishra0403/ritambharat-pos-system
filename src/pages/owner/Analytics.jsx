@@ -5,14 +5,12 @@ import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     AreaChart, Area
 } from 'recharts';
-import { Calendar, TrendingUp, ShoppingBag, DollarSign, Clock, Download, ArrowUpRight, ArrowDownRight, Star, Sparkles } from 'lucide-react';
+import { Calendar, TrendingUp, ShoppingBag, DollarSign, Clock, Download, ArrowUpRight, ArrowDownRight, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import PremiumGuard from '../../components/dashboard/PremiumGuard';
-
 const Analytics = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
@@ -25,12 +23,6 @@ const Analytics = () => {
         peakHours: [],
         topItems: []
     });
-    const [lockedStates, setLockedStates] = useState({
-        orders: false,
-        revenue: false,
-        peakHours: false
-    });
-
     const restaurantId = user?.restaurant?._id || user?.restaurant;
 
     useEffect(() => {
@@ -57,39 +49,21 @@ const Analytics = () => {
             const startStr = startDate.toISOString();
             const endStr = now.toISOString();
 
-            // Safe fetch wrapper to handle premium locking
-            const safeFetch = async (url) => {
+            const fetchData = async (url) => {
                 try {
                     const res = await api.get(url, { _skipErrorToast: true });
                     return { success: true, data: res.data.data };
                 } catch (err) {
-                    if (err.response?.status === 403) {
-                        return { success: false, locked: true };
-                    }
                     return { success: false, data: [] };
                 }
             };
 
-            const isPremium = user?.restaurant?.subscription?.plan?.name === 'PREMIUM';
-
             const [ordersRes, revenueRes, peakHoursRes, topItemsRes] = await Promise.all([
-                isPremium
-                    ? safeFetch(`/analytics/orders/${restaurantId}?startDate=${startStr}&endDate=${endStr}&groupBy=${dateRange === 'today' ? 'hour' : 'day'}&timezone=${timezone}`)
-                    : Promise.resolve({ success: false, locked: true }),
-                isPremium
-                    ? safeFetch(`/analytics/revenue/${restaurantId}?startDate=${startStr}&endDate=${endStr}`)
-                    : Promise.resolve({ success: false, locked: true }),
-                isPremium
-                    ? safeFetch(`/analytics/peak-hours/${restaurantId}?startDate=${startStr}&endDate=${endStr}&timezone=${timezone}`)
-                    : Promise.resolve({ success: false, locked: true }),
-                safeFetch(`/analytics/top-items/${restaurantId}?startDate=${startStr}&endDate=${endStr}&limit=5`)
+                fetchData(`/analytics/orders/${restaurantId}?startDate=${startStr}&endDate=${endStr}&groupBy=${dateRange === 'today' ? 'hour' : 'day'}&timezone=${timezone}`),
+                fetchData(`/analytics/revenue/${restaurantId}?startDate=${startStr}&endDate=${endStr}`),
+                fetchData(`/analytics/peak-hours/${restaurantId}?startDate=${startStr}&endDate=${endStr}&timezone=${timezone}`),
+                fetchData(`/analytics/top-items/${restaurantId}?startDate=${startStr}&endDate=${endStr}&limit=5`)
             ]);
-
-            setLockedStates({
-                orders: ordersRes.locked || false,
-                revenue: revenueRes.locked || false,
-                peakHours: peakHoursRes.locked || false
-            });
 
             setData({
                 orders: ordersRes.data || [],
@@ -103,27 +77,6 @@ const Analytics = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const downloadCSV = () => {
-        if (!data.topItems || data.topItems.length === 0) {
-            toast.error('No data to export');
-            return;
-        }
-
-        const headers = ['Item Name', 'Category', 'Total Orders', 'Revenue'];
-        const rows = data.topItems.map(item => [item.itemName, item.category, item.totalOrdered, item.totalRevenue]);
-        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `analytics_top_items_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Report downloaded');
     };
 
     const StatsCard = ({ title, value, icon: Icon, trend }) => (
@@ -195,21 +148,12 @@ const Analytics = () => {
                                 ))}
                             </div>
 
-                            {user?.restaurant?.subscription?.plan?.name === 'PREMIUM' ? (
-                                <button
-                                    onClick={downloadCSV}
-                                    className="flex-1 sm:flex-none px-8 py-4 bg-muted/50 border-4 border-border rounded-[2rem] text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex items-center justify-center gap-3"
-                                >
-                                    <Download size={18} /> Export
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => navigate('/subscription')}
-                                    className="flex-1 sm:flex-none px-8 py-4 bg-primary/10 border-4 border-primary/20 rounded-[2rem] text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/20 transition-all flex items-center justify-center gap-3"
-                                >
-                                    <Sparkles size={18} /> Pro Export
-                                </button>
-                            )}
+                            <button
+                                onClick={downloadCSV}
+                                className="flex-1 sm:flex-none px-8 py-4 bg-muted/50 border-4 border-border rounded-[2rem] text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex items-center justify-center gap-3"
+                            >
+                                <Download size={18} /> Export
+                            </button>
                         </div>
                     </div>
 
@@ -251,11 +195,6 @@ const Analytics = () => {
                             </div>
 
                             {/* Main Charts */}
-                            <PremiumGuard
-                                isLocked={lockedStates.orders || lockedStates.revenue || lockedStates.peakHours}
-                                featureName="Advanced Behavioral Analytics"
-                                description="Unlock historical trends, peak hour mapping, and deep revenue forecasting to optimize your kitchen performance."
-                            >
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
                                     {/* Revenue Trend Area Chart */}
                                     <div className="bg-card border-4 border-border rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
@@ -345,7 +284,7 @@ const Analytics = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </PremiumGuard>
+
 
                             {/* Top Items List */}
                             <div className="bg-card border-4 border-border rounded-[3rem] p-8 lg:p-12 shadow-2xl relative overflow-hidden">

@@ -20,7 +20,7 @@ const PageLoader = () => (
         </div>
       </div>
       <div className="flex flex-col items-center gap-1">
-        <p className="animate-pulse text-sm font-semibold text-foreground tracking-[0.2em] uppercase">ChefOS</p>
+        <p className="animate-pulse text-sm font-semibold text-foreground tracking-[0.2em] uppercase">Ritam Bharat POS</p>
         <p className="text-xs text-muted-foreground/80">System Initializing...</p>
       </div>
     </div>
@@ -53,11 +53,22 @@ const ServiceRequests = lazy(() => import('./pages/owner').then(m => ({ default:
 const Complaints = lazy(() => import('./pages/owner').then(m => ({ default: m.Complaints })));
 const RestaurantOnboarding = lazy(() => import('./pages/owner').then(m => ({ default: m.RestaurantOnboarding })));
 const ChefAI = lazy(() => import('./pages/owner').then(m => ({ default: m.ChefAI })));
-const Subscription = lazy(() => import('./pages/owner').then(m => ({ default: m.Subscription })));
-const SubscriptionSuccess = lazy(() => import('./pages/owner/SubscriptionSuccess'));
 const StaffManagement = lazy(() => import('./pages/owner').then(m => ({ default: m.StaffManagement })));
 const Billing = lazy(() => import('./pages/owner/Billing'));
 const QRCodeManagement = lazy(() => import('./pages/owner/QRCodeManagement'));
+const POSDashboard = lazy(() => import('./pages/owner/POSDashboard'));
+const GstSettings = lazy(() => import('./pages/owner/GstSettings'));
+const CustomerList = lazy(() => import('./pages/owner/CustomerList'));
+const TakeawayDashboard = lazy(() => import('./pages/owner/TakeawayDashboard'));
+
+// --- Kitchen Pages (Lazy) ---
+const KitchenDisplay = lazy(() => import('./pages/kitchen/KitchenDisplay'));
+
+// --- Waiter Pages (Lazy) ---
+const WaiterDashboard = lazy(() => import('./pages/waiter/WaiterDashboard'));
+const OrderCreate = lazy(() => import('./pages/waiter/OrderCreate'));
+const OrderDetail = lazy(() => import('./pages/waiter/OrderDetail'));
+const ActiveOrders = lazy(() => import('./pages/waiter/ActiveOrders'));
 
 // --- Customer Pages (Lazy) ---
 const Menu = lazy(() => import('./pages/customer').then(m => ({ default: m.Menu })));
@@ -70,6 +81,7 @@ const CustomerBill = lazy(() => import('./pages/customer').then(m => ({ default:
 const CustomerReviews = lazy(() => import('./pages/customer').then(m => ({ default: m.CustomerReviews })));
 const ReviewFeedback = lazy(() => import('./pages/customer').then(m => ({ default: m.ReviewFeedback })));
 const RateStaff = lazy(() => import('./pages/customer').then(m => ({ default: m.RateStaff })));
+const PublicBillView = lazy(() => import('./pages/public/PublicBillView'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -150,6 +162,30 @@ function App() {
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
 
+                  {/* Waiter App Routes - Protected for WAITER role */}
+                  <Route
+                    path="/waiter-app"
+                    element={
+                      <ProtectedRoute roles={['WAITER', 'OWNER', 'ADMIN']}>
+                        <WaiterDashboard />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route path="order/new" element={<OrderCreate />} />
+                    <Route path="order/:orderId" element={<OrderDetail />} />
+                    <Route path="orders" element={<ActiveOrders />} />
+                  </Route>
+
+                  {/* Kitchen Routes - Protected for CHEF role */}
+                  <Route
+                    path="/kitchen"
+                    element={
+                      <ProtectedRoute roles={['CASHIER', 'CHEF', 'OWNER', 'ADMIN']}>
+                        <KitchenDisplay />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   {/* Customer Routes - Public */}
                   <Route path="/menu/:restaurantId" element={<CustomerLayout />}>
                     <Route index element={<Menu />} />
@@ -165,6 +201,9 @@ function App() {
                     <Route path="feedback" element={<ReviewFeedback />} />
                     <Route path="rate-staff" element={<RateStaff />} />
                   </Route>
+
+                  {/* Public Bill View - standalone, no layout needed */}
+                  <Route path="/bill/:orderId" element={<PublicBillView />} />
 
                   {/* Owner Routes - Protected */}
                   <Route
@@ -229,7 +268,7 @@ function App() {
                   <Route
                     path="/orders"
                     element={
-                      <ProtectedRoute permission="orders">
+                      <ProtectedRoute roles={['CASHIER', 'OWNER', 'ADMIN']} permission="orders">
                         <OwnerGuard>
                           <OrderManagement />
                         </OwnerGuard>
@@ -307,21 +346,41 @@ function App() {
                     }
                   />
                   <Route
-                    path="/subscription"
+                    path="/admin/pos"
                     element={
-                      <ProtectedRoute roles={['OWNER', 'ADMIN']}>
+                      <ProtectedRoute roles={['CASHIER', 'OWNER', 'ADMIN']}>
                         <OwnerGuard>
-                          <Subscription />
+                          <POSDashboard />
                         </OwnerGuard>
                       </ProtectedRoute>
                     }
                   />
                   <Route
-                    path="/subscription/success"
+                    path="/gst-settings"
                     element={
-                      <ProtectedRoute roles={['OWNER', 'ADMIN']}>
+                      <ProtectedRoute permission="menu">
                         <OwnerGuard>
-                          <SubscriptionSuccess />
+                          <GstSettings />
+                        </OwnerGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/customers"
+                    element={
+                      <ProtectedRoute permission="dashboard">
+                        <OwnerGuard>
+                          <CustomerList />
+                        </OwnerGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/takeaway"
+                    element={
+                      <ProtectedRoute permission="orders">
+                        <OwnerGuard>
+                          <TakeawayDashboard />
                         </OwnerGuard>
                       </ProtectedRoute>
                     }

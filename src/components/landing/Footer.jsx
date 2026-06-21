@@ -29,7 +29,7 @@ export const Footer = ({ onOpenContactModal }) => {
                             Scale Your <span className="text-primary italic">Restaurant</span> Today
                         </h2>
                         <p className="text-background/60 text-lg max-w-xl mx-auto mb-8 italic font-medium">
-                            Join high-growth restaurants using ChefOS to automate operations,
+                            Join high-growth restaurants using Ritam Bharat POS to automate operations,
                             reduce waste, and maximize revenue.
                         </p>
                         <div className="flex flex-row flex-wrap gap-3 sm:gap-4 justify-center">
@@ -63,7 +63,7 @@ export const Footer = ({ onOpenContactModal }) => {
                             <Logo className="w-auto h-8" iconOnly={true} />
                         </Link>
                         <p className="text-background/40 text-sm">
-                            © {new Date().getFullYear()} ChefOS. All rights reserved.
+                            © {new Date().getFullYear()} Ritam Bharat POS. All rights reserved.
                         </p>
                     </div>
 

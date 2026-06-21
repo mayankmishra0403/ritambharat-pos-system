@@ -59,7 +59,7 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
-        enum: ['CASH', 'ONLINE'],
+        enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
         default: 'CASH'
     },
     orderSource: {
@@ -81,6 +81,32 @@ const orderSchema = new mongoose.Schema({
         min: 0
     },
     promoCode: String,
+    orderType: {
+        type: String,
+        enum: ['DINE_IN', 'TAKEAWAY', 'DELIVERY'],
+        default: 'DINE_IN'
+    },
+    serviceCharge: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    serviceChargeAmount: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    discountType: {
+        type: String,
+        enum: ['PERCENTAGE', 'FIXED'],
+        default: 'FIXED'
+    },
+    gstBreakdown: {
+        cgst: { type: Number, default: 0 },
+        sgst: { type: Number, default: 0 },
+        igst: { type: Number, default: 0 },
+        taxSlab: { type: mongoose.Schema.Types.ObjectId, ref: 'TaxSlab' }
+    },
     statusHistory: [{
         status: String,
         timestamp: {
@@ -105,8 +131,8 @@ const orderSchema = new mongoose.Schema({
 // Generate order number before saving
 orderSchema.pre('save', async function (next) {
     if (!this.orderNumber) {
-        const count = await mongoose.model('Order').countDocuments({ restaurant: this.restaurant });
-        this.orderNumber = `ORD-${Date.now()}-${count + 1}`;
+        const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+        this.orderNumber = `ORD-${Date.now()}-${rand}`;
     }
     next();
 });

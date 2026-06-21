@@ -4,6 +4,16 @@ import Payment from '../models/Payment.js';
 import Restaurant from '../models/Restaurant.js';
 import QRCode from 'qrcode';
 
+// Derive frontend URL from request (works on any domain, localhost, or deploy)
+function getFrontendUrl(req) {
+    if (req.headers.origin) return req.headers.origin;
+    if (req.headers.host) {
+        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+        return `${protocol}://${req.headers.host}`;
+    }
+    return process.env.CLIENT_URL || 'https://ritambharat.com';
+}
+
 // @desc    Create table
 // @route   POST /api/tables
 // @access  Private (Owner)
@@ -22,28 +32,6 @@ export const createTable = async (req, res, next) => {
             });
         }
 
-        // Plan limits check
-        const restaurantDoc = await Restaurant.findById(restaurant).populate('subscription');
-        if (restaurantDoc) {
-            const currentTableCount = await Table.countDocuments({ restaurant, isActive: true });
-
-            // Get plan limits (default to FREE if no subscription)
-            const plan = restaurantDoc.subscription?.plan?.name || 'FREE';
-            const limits = {
-                'FREE': 2,
-                'PREMIUM': Infinity
-            };
-
-            const maxTables = limits[plan] || 2;
-
-            if (currentTableCount >= maxTables) {
-                return res.status(403).json({
-                    success: false,
-                    message: `You have reached the maximum number of tables (${maxTables}) for your ${plan} plan. Please upgrade to add more.`
-                });
-            }
-        }
-
         const table = await Table.create({
             restaurant,
             name,
@@ -51,9 +39,9 @@ export const createTable = async (req, res, next) => {
             location
         });
 
-        // Generate QR code image with full URL
-        const frontendUrl = process.env.CLIENT_URL || 'https://chefos.pro';
-        const fullQrUrl = `${frontendUrl}${table.qrCode}`;
+        // Generate QR code image with domain from request
+        const createFrontendUrl = getFrontendUrl(req);
+        const fullQrUrl = `${createFrontendUrl}${table.qrCode}`;
         const qrCodeDataUrl = await QRCode.toDataURL(fullQrUrl);
 
         res.status(201).json({
@@ -85,13 +73,17 @@ export const getTables = async (req, res, next) => {
 
         const tables = await Table.find({ restaurant, isActive: true });
 
-        // Generate QR code images for all tables (for dashboard visibility)
-        const frontendUrl = process.env.CLIENT_URL || 'https://chefos.pro';
+        // Generate QR code images with domain from request
+        const listFrontendUrl = getFrontendUrl(req);
         const tablesWithQR = await Promise.all(tables.map(async (table) => {
-            const fullQrUrl = `${frontendUrl}${table.qrCode}`;
+            const fullQrUrl = `${listFrontendUrl}${table.qrCode}`;
             const qrCodeImage = await QRCode.toDataURL(fullQrUrl);
+            const tableData = table.toObject();
+            if (tableData.currentSession) {
+                delete tableData.currentSession.securityToken;
+            }
             return {
-                ...table.toObject(),
+                ...tableData,
                 qrCodeImage
             };
         }));
@@ -120,22 +112,21 @@ export const getTable = async (req, res, next) => {
             });
         }
 
-        // Generate/Retrieve Security Token for protection
-        if (!table.currentSession?.securityToken || table.status === 'FREE') {
-            if (!table.currentSession) table.currentSession = {};
-            table.currentSession.securityToken = Math.random().toString(36).substring(2, 10).toUpperCase();
-            await table.save();
-        }
-
-        // Generate QR code image with full URL
-        const frontendUrl = process.env.CLIENT_URL || 'https://chefos.pro';
-        const fullQrUrl = `${frontendUrl}${table.qrCode}`;
+        // Generate QR code image with domain from request
+        const singleFrontendUrl = getFrontendUrl(req);
+        const fullQrUrl = `${singleFrontendUrl}${table.qrCode}`;
         const qrCodeDataUrl = await QRCode.toDataURL(fullQrUrl);
+
+        // Return table data WITHOUT exposing security tokens
+        const tableData = table.toObject();
+        if (tableData.currentSession) {
+            delete tableData.currentSession.securityToken;
+        }
 
         res.status(200).json({
             success: true,
             data: {
-                ...table.toObject(),
+                ...tableData,
                 qrCodeImage: qrCodeDataUrl
             }
         });
@@ -240,9 +231,9 @@ export const downloadQRCode = async (req, res, next) => {
             });
         }
 
-        // Generate QR code as buffer with full URL
-        const frontendUrl = process.env.CLIENT_URL || 'https://chefos.pro';
-        const fullQrUrl = `${frontendUrl}${table.qrCode}`;
+        // Generate QR code as buffer with domain from request
+        const downloadFrontendUrl = getFrontendUrl(req);
+        const fullQrUrl = `${downloadFrontendUrl}${table.qrCode}`;
         const qrCodeBuffer = await QRCode.toBuffer(fullQrUrl, {
             width: 500,
             margin: 2

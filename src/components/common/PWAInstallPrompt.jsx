@@ -69,7 +69,7 @@ const PWAInstallPrompt = () => {
                         </div>
 
                         <div className="flex-1">
-                            <h3 className="font-bold text-white text-sm">Install ChefOS</h3>
+                            <h3 className="font-bold text-white text-sm">Install Ritam Bharat POS</h3>
                             <p className="text-xs text-gray-400">Add to home screen for faster access and offline ordering.</p>
                         </div>
 

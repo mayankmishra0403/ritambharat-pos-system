@@ -4,4 +4,4 @@ Disallow: /dashboard/
 Disallow: /menu/*/manage
 Disallow: /api/
 
-Sitemap: https://chefos.pro/sitemap.xml
+Sitemap: https://ritambharat.com/sitemap.xml

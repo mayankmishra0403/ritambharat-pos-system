@@ -67,7 +67,7 @@ export const HeroSection = () => {
                             className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-6 sm:mb-8 leading-relaxed"
                         >
                             Cut wait times by 15%, reduce staff errors, and increase average order value.
-                            Transform your restaurant into a data-driven powerhouse with ChefOS.
+                            Transform your restaurant into a data-driven powerhouse with Ritam Bharat POS.
                         </motion.p>
 
                         {/* CTA Buttons */}

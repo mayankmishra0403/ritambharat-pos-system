@@ -125,7 +125,7 @@ const SmartWaiter = () => {
                                     <Bot size={18} className="text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-sm text-white">ChefOS AI</h3>
+                                    <h3 className="font-bold text-sm text-white">Ritam Bharat POS AI</h3>
                                     <p className="text-xs text-green-400 flex items-center gap-1">
                                         <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Online
                                     </p>

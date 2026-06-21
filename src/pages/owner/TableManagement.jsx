@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
-import { Table as TableIcon, Plus, QrCode, Trash2, X, Download, RefreshCw, Users, Clock, Filter, MoreVertical, Armchair, Coffee, MapPin } from 'lucide-react';
+import { Table as TableIcon, Plus, QrCode, Trash2, X, Download, RefreshCw, Users, Clock, Filter, MoreVertical, Armchair, Coffee, MapPin, Layers, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
+import RoomForm from '../../components/room/RoomForm';
+import RoomSelector from '../../components/room/RoomSelector';
 
 const TableManagement = () => {
     const { user } = useAuth();
@@ -21,6 +24,45 @@ const TableManagement = () => {
     // Filter State
     const [filterLocation, setFilterLocation] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
+    const [filterRoom, setFilterRoom] = useState(null);
+
+    // Room State
+    const [showRoomForm, setShowRoomForm] = useState(false);
+    const [editingRoom, setEditingRoom] = useState(null);
+
+    const queryClient = useQueryClient();
+
+    const { data: rooms = [] } = useQuery({
+        queryKey: ['rooms', restaurantId],
+        queryFn: async () => {
+            const res = await api.get(`/rooms?restaurantId=${restaurantId}`);
+            return res.data.data || [];
+        },
+        enabled: !!restaurantId
+    });
+
+    const roomMutation = useMutation({
+        mutationFn: async ({ id, data }) => {
+            if (id) return api.patch(`/rooms/${id}`, data);
+            return api.post('/rooms', { restaurantId, ...data });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rooms', restaurantId] });
+            setShowRoomForm(false);
+            setEditingRoom(null);
+            toast.success('Room saved');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Failed to save room')
+    });
+
+    const deleteRoomMutation = useMutation({
+        mutationFn: async (id) => api.delete(`/rooms/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['rooms', restaurantId] });
+            toast.success('Room deleted');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete room')
+    });
 
     // Modal State
     const [showAddModal, setShowAddModal] = useState(false);
@@ -29,7 +71,8 @@ const TableManagement = () => {
     const [formData, setFormData] = useState({
         name: '',
         capacity: 4,
-        location: 'Indoor'
+        location: 'Indoor',
+        room: ''
     });
 
     useEffect(() => {
@@ -72,13 +115,12 @@ const TableManagement = () => {
     const handleAddTable = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/tables', {
-                ...formData,
-                restaurant: restaurantId
-            });
+            const payload = { ...formData, restaurant: restaurantId };
+            if (!payload.room) delete payload.room;
+            await api.post('/tables', payload);
             toast.success('Table created successfully');
             setShowAddModal(false);
-            setFormData({ name: '', capacity: 4, location: 'Indoor' });
+            setFormData({ name: '', capacity: 4, location: 'Indoor', room: '' });
             fetchTables();
         } catch (error) {
             console.error('Error creating table:', error);
@@ -196,9 +238,9 @@ const TableManagement = () => {
     // Filtering Logic
     const filteredTables = tables.filter(table => {
         const matchLocation = filterLocation === 'All' || table.location === filterLocation;
-        // Map backend statuses to filter if needed, assuming direct match for now
         const matchStatus = filterStatus === 'All' || table.status === filterStatus;
-        return matchLocation && matchStatus;
+        const matchRoom = !filterRoom || table.room === filterRoom || table.room?._id === filterRoom || table.room?.toString() === filterRoom;
+        return matchLocation && matchStatus && matchRoom;
     });
 
     // Stats Calculation
@@ -297,6 +339,52 @@ const TableManagement = () => {
                         </div>
                     </div>
 
+                    {/* Rooms Section */}
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                <Layers size={14} />
+                                Rooms / Zones
+                            </h3>
+                            <button
+                                onClick={() => { setEditingRoom(null); setShowRoomForm(true); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-primary/10 text-primary rounded-lg text-[10px] font-bold hover:bg-primary/20 transition-colors"
+                            >
+                                <Plus size={10} />
+                                Add Room
+                            </button>
+                        </div>
+                        <RoomSelector
+                            restaurantId={restaurantId}
+                            selectedRoom={filterRoom}
+                            onSelect={setFilterRoom}
+                        />
+                        {rooms.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                {rooms.map(room => (
+                                    <div key={room._id} className="flex items-center gap-1 bg-muted/20 px-2 py-1 rounded-lg">
+                                        <span className="text-[10px] font-bold text-muted-foreground">{room.name}</span>
+                                        <button
+                                            onClick={() => { setEditingRoom(room); setShowRoomForm(true); }}
+                                            className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            <Pencil size={10} />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Delete "${room.name}"? Tables in this room will be unlinked.`))
+                                                    deleteRoomMutation.mutate(room._id);
+                                            }}
+                                            className="p-0.5 text-red-500 hover:text-red-400 transition-colors"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Tables Grid */}
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -355,6 +443,12 @@ const TableManagement = () => {
                                                         <MapPin size={12} strokeWidth={3} />
                                                         {table.location}
                                                     </div>
+                                                    {table.room?.name && (
+                                                        <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-primary/60">
+                                                            <Layers size={10} strokeWidth={3} />
+                                                            {table.room.name}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -495,6 +589,19 @@ const TableManagement = () => {
                                         </select>
                                     </div>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Room / Zone</label>
+                                    <select
+                                        value={formData.room}
+                                        onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                                        className="input w-full bg-muted/30 border-2 border-transparent focus:border-primary/50 transition-all font-bold py-4 appearance-none"
+                                    >
+                                        <option value="">None</option>
+                                        {rooms.map(room => (
+                                            <option key={room._id} value={room._id}>{room.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
                                 <div className="pt-6 flex gap-4">
                                     <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 bg-muted/50 text-foreground font-black uppercase tracking-widest rounded-2xl border-2 border-border/50 hover:bg-muted transition-all active:scale-95">
@@ -550,6 +657,15 @@ const TableManagement = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {showRoomForm && (
+                <RoomForm
+                    room={editingRoom}
+                    onClose={() => { setShowRoomForm(false); setEditingRoom(null); }}
+                    onSubmit={(data) => roomMutation.mutate({ id: editingRoom?._id, data })}
+                    loading={roomMutation.isPending}
+                />
+            )}
         </div>
     );
 };

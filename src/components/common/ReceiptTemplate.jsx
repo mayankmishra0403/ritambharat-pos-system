@@ -101,7 +101,7 @@ const ReceiptTemplate = forwardRef(({ order }, ref) => {
                     </div>
                     <span className="text-[8px] opacity-40 uppercase">Scan to provide feedback</span>
                 </div>
-                <p className="text-[8px] mt-4 opacity-30 uppercase font-bold tracking-widest">Powered by ChefOS</p>
+                <p className="text-[8px] mt-4 opacity-30 uppercase font-bold tracking-widest">Powered by Ritam Bharat POS</p>
             </div>
         </div>
     );

@@ -8,12 +8,12 @@ const OfflineSyncContext = createContext();
 export const OfflineSyncProvider = ({ children }) => {
     const isOnline = useOnline();
     const [queue, setQueue] = useState(() => {
-        const saved = localStorage.getItem('chefos_offline_queue');
+        const saved = localStorage.getItem('ritam_bharat_pos_offline_queue');
         return saved ? JSON.parse(saved) : [];
     });
 
     useEffect(() => {
-        localStorage.setItem('chefos_offline_queue', JSON.stringify(queue));
+        localStorage.setItem('ritam_bharat_pos_offline_queue', JSON.stringify(queue));
     }, [queue]);
 
     // Attempt to sync when back online

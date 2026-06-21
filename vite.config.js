@@ -14,23 +14,38 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['chefos-logo.svg', 'favicon.png', 'apple-touch-icon.png', 'og-image.svg', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'og-image.svg', 'robots.txt'],
       manifest: {
-        name: 'ChefOS - Smart Restaurant Management',
-        short_name: 'ChefOS',
-        description: 'Premium QR Menu & Kitchen Operating System',
+        name: 'Ritam Bharat POS',
+        short_name: 'Ritam POS',
+        description: 'Smart Restaurant Management System',
         theme_color: '#ca8a04',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
-            src: 'chefos-logo.svg',
+            src: 'favicon.svg',
             sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any'
           },
           {
-            src: 'chefos-logo.svg',
+            src: 'favicon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
+            purpose: 'maskable'
+          },
+          {
+            src: 'favicon.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'favicon.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'maskable'
           }
         ]
@@ -75,7 +90,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/uploads': {
+        target: 'http://localhost:5001',
         changeOrigin: true,
       },
     },

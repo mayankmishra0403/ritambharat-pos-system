@@ -11,12 +11,10 @@ import {
 import {
     TrendingUp, ShoppingCart, DollarSign, Users,
     ArrowUpRight, Clock, MoreHorizontal, Calendar,
-    Menu, BarChart3, RefreshCw, AlertTriangle, Package, Sparkles, Lock,
-    QrCode
+    Menu, BarChart3, RefreshCw, AlertTriangle, Package,     QrCode, ChefHat, UtensilsCrossed, CreditCard, Percent, ShoppingBag
 } from 'lucide-react';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
-import PremiumGuard from '../../components/dashboard/PremiumGuard';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -32,7 +30,7 @@ const Dashboard = () => {
     const [peakHoursData, setPeakHoursData] = useState([]);
     const [lowStockItems, setLowStockItems] = useState([]);
     const [notifications, setNotifications] = useState([]);
-    const [isPeakHoursLocked, setIsPeakHoursLocked] = useState(false);
+
 
     // Chart Data State
     const [chartData, setChartData] = useState([]);
@@ -55,19 +53,13 @@ const Dashboard = () => {
             try {
                 setLoading(true);
 
-                // Use safe wrappers to prevent one failure from breaking everything
-                const safeFetch = async (url, fallback = { data: { success: false } }) => {
+                const fetchData = async (url, fallback = { data: { success: false } }) => {
                     try {
                         return await api.get(url, { _skipErrorToast: true });
                     } catch (err) {
-                        if (err.response?.status === 403) {
-                            return { data: { success: false, locked: true }, status: 403 };
-                        }
                         return fallback;
                     }
                 };
-
-                const isPremium = user?.restaurant?.subscription?.plan?.name === 'PREMIUM';
 
                 const [
                     summaryRes,
@@ -76,11 +68,11 @@ const Dashboard = () => {
                     notificationsRes,
                     topItemsRes
                 ] = await Promise.all([
-                    safeFetch(`/analytics/dashboard/${restaurantId}`),
-                    isPremium ? safeFetch(`/analytics/peak-hours/${restaurantId}`) : Promise.resolve({ data: { success: false, locked: true }, status: 403 }),
-                    safeFetch(`/inventory/${restaurantId}`),
-                    safeFetch(`/analytics/notifications/${restaurantId}`),
-                    safeFetch(`/analytics/top-items/${restaurantId}?limit=5`)
+                    fetchData(`/analytics/dashboard/${restaurantId}`),
+                    fetchData(`/analytics/peak-hours/${restaurantId}`),
+                    fetchData(`/inventory/${restaurantId}`),
+                    fetchData(`/analytics/notifications/${restaurantId}`),
+                    fetchData(`/analytics/top-items/${restaurantId}?limit=5`)
                 ]);
 
                 // 1. Summary & Trends
@@ -92,36 +84,31 @@ const Dashboard = () => {
                 }
 
                 // 2. Peak Hours Chart
-                if (peakHoursRes.status === 403 || peakHoursRes.data.locked) {
-                    setIsPeakHoursLocked(true);
+                let formattedPeakHours = [];
+                const hourly = peakHoursRes.data.success ? (peakHoursRes.data.data.hourlyBreakdown || []) : [];
+
+                if (hourly.length > 0) {
+                    formattedPeakHours = hourly.map(h => ({
+                        name: h._id > 12 ? `${h._id - 12}pm` : h._id === 12 ? '12pm' : h._id === 0 ? '12am' : `${h._id}am`,
+                        orders: h.orderCount,
+                        revenue: h.totalRevenue
+                    })).sort((a, b) => 0);
                 } else {
-                    setIsPeakHoursLocked(false);
-                    let formattedPeakHours = [];
-                    const hourly = peakHoursRes.data.success ? (peakHoursRes.data.data.hourlyBreakdown || []) : [];
+                    // Default Skeleton Data (11am - 10pm)
+                    formattedPeakHours = Array.from({ length: 12 }, (_, i) => {
+                        const hour = i + 11;
+                        return {
+                            name: hour > 12 ? `${hour - 12}pm` : hour === 12 ? '12pm' : hour === 24 ? '12am' : `${hour}am`,
+                            orders: 0,
+                            revenue: 0
+                        };
+                    });
+                }
+                setPeakHoursData(formattedPeakHours);
 
-                    if (hourly.length > 0) {
-                        formattedPeakHours = hourly.map(h => ({
-                            name: h._id > 12 ? `${h._id - 12}pm` : h._id === 12 ? '12pm' : h._id === 0 ? '12am' : `${h._id}am`,
-                            orders: h.orderCount,
-                            revenue: h.totalRevenue
-                        })).sort((a, b) => 0);
-                    } else {
-                        // Default Skeleton Data (11am - 10pm)
-                        formattedPeakHours = Array.from({ length: 12 }, (_, i) => {
-                            const hour = i + 11;
-                            return {
-                                name: hour > 12 ? `${hour - 12}pm` : hour === 12 ? '12pm' : hour === 24 ? '12am' : `${hour}am`,
-                                orders: 0,
-                                revenue: 0
-                            };
-                        });
-                    }
-                    setPeakHoursData(formattedPeakHours);
-
-                    // Set initial chart data (Today)
-                    if (timeRange === 'Today') {
-                        setChartData(formattedPeakHours.map(d => ({ name: d.name, sales: d.revenue })));
-                    }
+                // Set initial chart data (Today)
+                if (timeRange === 'Today') {
+                    setChartData(formattedPeakHours.map(d => ({ name: d.name, sales: d.revenue })));
                 }
 
                 // 3. Low Stock Items
@@ -295,17 +282,7 @@ const Dashboard = () => {
                         </motion.div>
 
                         <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-                            {user?.restaurant?.subscription?.plan?.name !== 'PREMIUM' && (
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => navigate('/subscription')}
-                                    className="bg-primary/10 text-primary border border-primary/20 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-primary/20 transition-all shadow-sm"
-                                >
-                                    <Sparkles size={16} />
-                                    Upgrade to Premium
-                                </motion.button>
-                            )}
+
                             <button onClick={handleRefresh} className="btn-outline gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm hover:bg-primary/5">
                                 <RefreshCw size={14} className="hidden sm:inline" />
                                 <RefreshCw size={12} className="sm:hidden" />
@@ -452,54 +429,48 @@ const Dashboard = () => {
                                             ))}
                                         </div>
                                     ) : (
-                                        <PremiumGuard
-                                            isLocked={isPeakHoursLocked}
-                                            featureName="Peak Hours Analysis"
-                                            compact
-                                        >
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={peakHoursData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.8} />
-                                                    <XAxis
-                                                        dataKey="name"
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
-                                                        dy={5}
-                                                    />
-                                                    <YAxis
-                                                        axisLine={false}
-                                                        tickLine={false}
-                                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
-                                                        width={25}
-                                                    />
-                                                    <Bar dataKey="orders" radius={[4, 4, 0, 0]}>
-                                                        {peakHoursData.map((entry, index) => (
-                                                            <Cell
-                                                                key={`cell-${index}`}
-                                                                fill={entry.isSkeleton ? 'hsl(var(--muted))' : (entry.orders > 60 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.5)')}
-                                                            />
-                                                        ))}
-                                                    </Bar>
-                                                    <Tooltip
-                                                        content={({ active, payload }) => {
-                                                            if (active && payload && payload.length) {
-                                                                const data = payload[0].payload;
-                                                                if (data.isSkeleton) return null;
-                                                                return (
-                                                                    <div className="bg-popover border border-border p-2 rounded-lg shadow-md">
-                                                                        <p className="text-sm font-semibold text-foreground">{data.name}</p>
-                                                                        <p className="text-sm text-primary">Orders: {data.orders}</p>
-                                                                    </div>
-                                                                );
-                                                            }
-                                                            return null;
-                                                        }}
-                                                        cursor={{ fill: 'transparent' }}
-                                                    />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </PremiumGuard>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={peakHoursData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.8} />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
+                                                    dy={5}
+                                                />
+                                                <YAxis
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10, fontWeight: 500 }}
+                                                    width={25}
+                                                />
+                                                <Bar dataKey="orders" radius={[4, 4, 0, 0]}>
+                                                    {peakHoursData.map((entry, index) => (
+                                                        <Cell
+                                                            key={`cell-${index}`}
+                                                            fill={entry.isSkeleton ? 'hsl(var(--muted))' : (entry.orders > 60 ? 'hsl(var(--primary))' : 'hsl(var(--primary)/0.5)')}
+                                                        />
+                                                    ))}
+                                                </Bar>
+                                                <Tooltip
+                                                    content={({ active, payload }) => {
+                                                        if (active && payload && payload.length) {
+                                                            const data = payload[0].payload;
+                                                            if (data.isSkeleton) return null;
+                                                            return (
+                                                                <div className="bg-popover border border-border p-2 rounded-lg shadow-md">
+                                                                    <p className="text-sm font-semibold text-foreground">{data.name}</p>
+                                                                    <p className="text-sm text-primary">Orders: {data.orders}</p>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    }}
+                                                    cursor={{ fill: 'transparent' }}
+                                                />
+                                            </BarChart>
+                                        </ResponsiveContainer>
                                     )}
                                 </div>
                             </motion.div>
@@ -603,6 +574,12 @@ const Dashboard = () => {
                                 { label: 'Financial Report', icon: BarChart3, color: 'text-green-500', bg: 'bg-green-500/10', to: '/analytics' },
                                 { label: 'Live Orders', icon: ShoppingCart, color: 'text-blue-500', bg: 'bg-blue-500/10', to: '/orders' },
                                 { label: 'QR Management', icon: QrCode, color: 'text-primary', bg: 'bg-primary/10', to: '/qr-codes' },
+                                { label: 'POS Billing', icon: CreditCard, color: 'text-emerald-500', bg: 'bg-emerald-500/10', to: '/admin/pos' },
+                                { label: 'Kitchen Display', icon: ChefHat, color: 'text-orange-500', bg: 'bg-orange-500/10', to: '/kitchen' },
+                                { label: 'Waiter App', icon: UtensilsCrossed, color: 'text-purple-500', bg: 'bg-purple-500/10', to: '/waiter-app' },
+                                { label: 'GST Settings', icon: Percent, color: 'text-cyan-500', bg: 'bg-cyan-500/10', to: '/gst-settings' },
+                                { label: 'Customers', icon: Users, color: 'text-pink-500', bg: 'bg-pink-500/10', to: '/customers' },
+                                { label: 'Takeaway/Delivery', icon: ShoppingBag, color: 'text-teal-500', bg: 'bg-teal-500/10', to: '/takeaway' },
                             ].map((action, i) => (
                                 <button
                                     key={i}

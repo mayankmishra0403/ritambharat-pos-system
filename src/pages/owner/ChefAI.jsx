@@ -5,7 +5,6 @@ import api from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/dashboard/Header';
 import Sidebar from '../../components/dashboard/Sidebar';
-import PremiumGuard from '../../components/dashboard/PremiumGuard';
 
 const ChefAIPage = () => {
     const { user } = useAuth();
@@ -72,10 +71,6 @@ const ChefAIPage = () => {
 
                 <main className="flex-1 overflow-hidden p-4 lg:p-12">
                     <div className="max-w-5xl mx-auto h-[calc(100vh-200px)] flex flex-col">
-                        <PremiumGuard
-                            featureName="Chef AI: Kitchen Intelligence"
-                            description="Access your personal Culinary AI assistant. Optimize menus, generate high-converting item descriptions, and get expert kitchen management advice in real-time."
-                        >
                             <div className="flex-1 bg-card border-4 border-border rounded-[3rem] shadow-2xl flex flex-col overflow-hidden">
                                 {/* Header */}
                                 <div className="p-8 border-b-4 border-border bg-gradient-to-r from-primary/10 to-transparent flex items-center justify-between">
@@ -189,7 +184,6 @@ const ChefAIPage = () => {
                                     </div>
                                 </div>
                             </div>
-                        </PremiumGuard>
                     </div>
                 </main>
             </div>

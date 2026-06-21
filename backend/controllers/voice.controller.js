@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
+import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 
 // Simple NLP parser for voice orders
 const parseVoiceTranscript = (transcript, menuItems) => {
@@ -129,10 +130,11 @@ export const processVoiceOrder = async (req, res, next) => {
             }
         }
 
-        const tax = (subtotal * restaurantDoc.taxRate) / 100;
+        const taxInfo = await getTaxInfo(restaurant, restaurantDoc);
+        const tax = calculateTax(subtotal, taxInfo.slabRate);
+        const gstBreakdown = calculateGstBreakdown(subtotal, taxInfo.cgstRate, taxInfo.sgstRate, taxInfo.igstRate);
         const total = subtotal + tax;
 
-        // Create order
         const order = await Order.create({
             restaurant,
             table,
@@ -140,6 +142,12 @@ export const processVoiceOrder = async (req, res, next) => {
             subtotal,
             tax,
             total,
+            gstBreakdown: {
+                cgst: gstBreakdown.cgst,
+                sgst: gstBreakdown.sgst,
+                igst: gstBreakdown.igst,
+                taxSlab: taxInfo.taxSlabId
+            },
             customerName,
             customerPhone,
             specialInstructions: `Voice order: "${transcript}"`,

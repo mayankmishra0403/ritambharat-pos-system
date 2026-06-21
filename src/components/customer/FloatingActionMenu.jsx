@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Bell, Receipt, X, Send, Bot, Sparkles, ChefHat } from 'lucide-react';
+import { ShoppingBag, Bell, Receipt, X, Send, Bot, ChefHat } from 'lucide-react';
 import { Link, useOutletContext, useLocation } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
 import api from '../../config/api';
 
-const FloatingActionMenu = ({ restaurant, tableId, openChefAI }) => {
+const FloatingActionMenu = ({ restaurant, tableId }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isCallingWaiter, setIsCallingWaiter] = useState(false);
 
@@ -19,7 +19,7 @@ const FloatingActionMenu = ({ restaurant, tableId, openChefAI }) => {
     };
 
     const handleCallWaiter = async () => {
-        const orderId = localStorage.getItem('chefos_last_order_id');
+        const orderId = localStorage.getItem('ritam_bharat_pos_last_order_id');
         if (!orderId) {
             toast.error("Please place an order first to call a waiter.");
             return;
@@ -50,7 +50,7 @@ const FloatingActionMenu = ({ restaurant, tableId, openChefAI }) => {
     };
 
     const handleRequestBill = async () => {
-        const orderId = localStorage.getItem('chefos_last_order_id');
+        const orderId = localStorage.getItem('ritam_bharat_pos_last_order_id');
         if (!orderId) {
             toast.error("Please place an order first to request the bill.");
             return;
@@ -123,26 +123,6 @@ const FloatingActionMenu = ({ restaurant, tableId, openChefAI }) => {
                                         View Cart <ShoppingBag size={18} className="text-primary" />
                                     </Link>
                                 </motion.div>
-
-                                {/* Ask AI Chef - Premium only */}
-                                {restaurant?.subscription?.plan?.name === 'PREMIUM' && (
-                                    <motion.div
-                                        initial={{ scale: 0, x: 20 }}
-                                        animate={{ scale: 1, x: 0 }}
-                                        exit={{ scale: 0, x: 20 }}
-                                        transition={{ delay: 0.15 }}
-                                    >
-                                        <button
-                                            onClick={() => {
-                                                openChefAI();
-                                                setIsOpen(false);
-                                            }}
-                                            className="bg-white text-black px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 active:scale-95 transition-all font-semibold text-sm min-h-[48px] whitespace-nowrap"
-                                        >
-                                            Ask AI Chef <Sparkles size={18} className="text-purple-600" />
-                                        </button>
-                                    </motion.div>
-                                )}
 
                                 {/* Call Waiter */}
                                 {tableId && (

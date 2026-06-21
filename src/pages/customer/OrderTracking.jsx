@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, Clock, Utensils, ChefHat, RefreshCw, Star, Users, GlassWater, HelpCircle, UtensilsCrossed, PartyPopper, Banknote, Loader2, Share2, Crown, Award, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, Clock, Utensils, ChefHat, RefreshCw, Star, Users, GlassWater, HelpCircle, UtensilsCrossed, PartyPopper, Banknote, Loader2, Share2, ArrowUpRight } from 'lucide-react';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +10,7 @@ import { useSocket } from '../../hooks/useSocket';
 const OrderTracking = () => {
     const params = useParams();
     const { socket } = useSocket();
-    const [storedOrderId, setStoredOrderId] = useState(() => localStorage.getItem('chefos_last_order_id'));
+    const [storedOrderId, setStoredOrderId] = useState(() => localStorage.getItem('ritam_bharat_pos_last_order_id'));
     const orderId = params.orderId || storedOrderId;
 
     const [showSplitter, setShowSplitter] = useState(false);
@@ -89,7 +89,7 @@ const OrderTracking = () => {
             <h2 className="text-xl font-bold mb-2">No Active Order</h2>
             <p className="text-gray-400 mb-6">Looks like you haven't placed an order yet.</p>
             <Link
-                to={`/menu/${localStorage.getItem('chefos_restaurant_id') || ''}${localStorage.getItem('chefos_table_id') ? `/${localStorage.getItem('chefos_table_id')}` : ''}`}
+                to={`/menu/${localStorage.getItem('ritam_bharat_pos_restaurant_id') || ''}${localStorage.getItem('ritam_bharat_pos_table_id') ? `/${localStorage.getItem('ritam_bharat_pos_table_id')}` : ''}`}
                 className="bg-primary text-black font-bold px-6 py-3 rounded-xl hover:bg-primary/90 transition-colors"
             >
                 Browse Menu
@@ -183,12 +183,7 @@ const OrderTracking = () => {
                 </h1>
                 <div className="flex flex-col items-center gap-2">
                     <p className="text-secondary text-sm font-mono">Order #${(orderId || '').slice(-6).toUpperCase()}</p>
-                    {order.restaurant?.isPremium && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full animate-in fade-in zoom-in duration-500">
-                            <Crown size={12} className="text-primary" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Premium Restaurant</span>
-                        </div>
-                    )}
+
                 </div>
 
                 {/* Review Prompt for Served Orders */}
@@ -290,11 +285,6 @@ const OrderTracking = () => {
                     </h3>
                     <div className="flex flex-col items-end gap-1">
                         <span className="text-xs text-gray-400 font-mono">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        {order.restaurant?.isPremium && (
-                            <div className="flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
-                                <Award size={10} strokeWidth={3} /> Priority Execution
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -355,6 +345,15 @@ const OrderTracking = () => {
 
             {/* Bill / Reviews */}
             <div className="space-y-3">
+                {order.orderSource !== 'MANUAL' && (
+                    <Link
+                        to={`/bill/${orderId}`}
+                        className="w-full font-bold py-4 rounded-2xl flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 transition-all text-base border border-white/10"
+                    >
+                        <Banknote size={20} />
+                        View Bill
+                    </Link>
+                )}
                 {(order.status === 'READY' || order.status === 'SERVED') && (
                     <motion.button
                         layout

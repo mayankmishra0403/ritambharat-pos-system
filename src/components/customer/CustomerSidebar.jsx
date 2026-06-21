@@ -126,13 +126,13 @@ const CustomerSidebar = ({ isOpen, onClose, restaurant, tableId }) => {
                                 </div>
                                 <div className="text-left">
                                     <p className="font-bold text-sm text-white">Download App</p>
-                                    <p className="text-[10px] text-gray-500 font-medium tracking-tight">Use ChefOS offline</p>
+                                    <p className="text-[10px] text-gray-500 font-medium tracking-tight">Use Ritam Bharat POS offline</p>
                                 </div>
                             </button>
 
                             <div className="bg-white/5 rounded-xl p-4 text-center">
                                 <p className="text-gray-500 text-xs mb-1">Powered by</p>
-                                <h3 className="font-bold text-white tracking-widest text-lg uppercase">ChefOS</h3>
+                                <h3 className="font-bold text-white tracking-widest text-lg uppercase">Ritam Bharat POS</h3>
                             </div>
                         </div>
                     </motion.div>

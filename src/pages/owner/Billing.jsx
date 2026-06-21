@@ -12,6 +12,7 @@ import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
 import ReceiptTemplate from '../../components/common/ReceiptTemplate';
 import ManualBillModal from '../../components/billing/ManualBillModal';
+import printToPdf from '../../utils/printToPdf';
 import toast from 'react-hot-toast';
 
 const Billing = () => {
@@ -94,10 +95,12 @@ const Billing = () => {
         setSelectedBill(bill);
         toast.success(`Preparing Receipt for Order #${bill.orderNumber.split('-')[2]}...`);
 
-        // Short timeout to ensure state update and render before printing
         setTimeout(() => {
-            window.print();
-        }, 300);
+            const el = document.querySelector('.print-container');
+            if (el) {
+                printToPdf(el, `receipt-${bill.orderNumber || 'bill'}.pdf`);
+            }
+        }, 500);
     };
 
     const exportToCSV = () => {
@@ -177,33 +180,8 @@ const Billing = () => {
     );
 
     return (
-        <div className="flex bg-background min-h-screen text-foreground print:bg-white print:text-black">
-            {/* Global Print Isolation Styles */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                @media print {
-                    @page { margin: 0.5cm; size: auto; }
-                    body { 
-                        visibility: hidden !important;
-                        background: white !important;
-                    }
-                    .print-container { 
-                        visibility: visible !important;
-                        display: block !important; 
-                        position: absolute !important; 
-                        left: 0 !important; 
-                        top: 0 !important; 
-                        width: 100% !important; 
-                        z-index: 99999 !important;
-                    }
-                    /* Ensure nested elements in print-container are visible */
-                    .print-container * {
-                        visibility: visible !important;
-                    }
-                    #root > div:first-child { display: none !important; }
-                }
-            `}} />
-            <Sidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} className="print:hidden" />
+        <div className="flex bg-background min-h-screen text-foreground">
+            <Sidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 <Header onMobileMenuClick={() => setMobileMenuOpen(true)} className="print:hidden" />
@@ -506,7 +484,7 @@ const Billing = () => {
                         </div>
 
                         {/* Hidden Receipt for Printing - Isolated from main layout */}
-                        <div className="hidden print:block print-container">
+                        <div className="print-container" style={{ position: 'absolute', left: '-9999px', top: 0, width: '400px', background: 'white', zIndex: -1 }}>
                             {selectedBill && <ReceiptTemplate order={selectedBill} />}
                         </div>
 
@@ -519,10 +497,12 @@ const Billing = () => {
                                     setSelectedBill(bill);
                                     setShowManualBillModal(false);
                                     toast.success('Manual bill created!');
-                                    // Trigger print after a short delay
                                     setTimeout(() => {
-                                        window.print();
-                                    }, 300);
+                                        const el = document.querySelector('.print-container');
+                                        if (el) {
+                                            printToPdf(el, `receipt-${bill.orderNumber || 'bill'}.pdf`);
+                                        }
+                                    }, 500);
                                 }}
                             />
                         )}

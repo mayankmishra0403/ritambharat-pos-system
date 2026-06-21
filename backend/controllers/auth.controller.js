@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import crypto from 'crypto';
 import logger from '../utils/logger.js';
-import { sendPasswordResetOTP, sendVerificationEmail, sendWelcomeEmail } from '../services/email.service.js';
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -40,31 +39,22 @@ export const register = async (req, res, next) => {
             name,
             email,
             password,
-            role: role || 'OWNER'
+            role: role || 'OWNER',
+            emailVerified: true
         });
 
-        // Generate verification OTP
-        const otp = user.generateEmailVerificationOTP();
-        await user.save({ validateBeforeSave: false });
-
-        // Send verification OTP email (Non-blocking)
-        sendVerificationEmail(user.email, otp, user.name).catch(emailError => {
-            logger.error(`Failed to send verification OTP during registration to ${user.email}: ${emailError.message}`);
-        });
-        logger.info(`Verification OTP dispatching to: ${user.email}`);
-
-        logger.info(`New user registered (verification pending): ${user.email} (${user.role})`);
+        logger.info(`New user registered: ${user.email} (${user.role})`);
 
         res.status(201).json({
             success: true,
-            message: 'Registration successful. Please check your email for the verification OTP.',
+            message: 'Registration successful. You can now login.',
             data: {
                 user: {
                     id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    emailVerified: false
+                    emailVerified: true
                 }
             }
         });
@@ -108,14 +98,20 @@ export const login = async (req, res, next) => {
             });
         }
 
-        // Check if email is verified
-        if (!user.emailVerified) {
-            logger.warn(`Login failed: Email not verified - ${email}`);
+        // PIN-based roles must use PIN login, not email/password
+        if (user.role === 'WAITER' || user.role === 'CASHIER') {
+            logger.warn(`Login failed: ${user.role} must use PIN login - ${email}`);
             return res.status(401).json({
                 success: false,
-                message: 'Your email is not verified. Please check your inbox or request a new verification link.',
-                notVerified: true
+                message: 'Staff accounts use PIN login. Please use the PIN login option.'
             });
+        }
+
+        // Auto-verify email if not already (email system removed)
+        if (!user.emailVerified) {
+            user.emailVerified = true;
+            await user.save({ validateBeforeSave: false });
+            logger.info(`Email auto-verified for existing user: ${user.email}`);
         }
 
         // Check password
@@ -129,10 +125,7 @@ export const login = async (req, res, next) => {
         }
 
         // Populate restaurant for immediate frontend benefit
-        await user.populate({
-            path: 'restaurant',
-            populate: { path: 'subscription' }
-        });
+        await user.populate('restaurant');
 
         // Generate tokens
         const token = generateToken(user._id);
@@ -155,6 +148,139 @@ export const login = async (req, res, next) => {
         });
     } catch (error) {
         logger.error(`Login error: ${error.message}`);
+        next(error);
+    }
+};
+
+// @desc    PIN Login for staff (WAITER, CASHIER)
+// @route   POST /api/auth/pin-login
+// @access  Public
+export const pinLogin = async (req, res, next) => {
+    try {
+        const { pin, restaurantId } = req.body;
+
+        if (!pin) {
+            return res.status(400).json({
+                success: false,
+                message: 'PIN is required'
+            });
+        }
+
+        // Find all staff with PINs — optionally filter by restaurant
+        const filter = {
+            role: { $in: ['WAITER', 'CASHIER', 'CHEF'] },
+            isActive: true,
+            pin: { $exists: true, $ne: null }
+        };
+        if (restaurantId) {
+            filter.restaurant = restaurantId;
+        }
+        const staffUsers = await User.find(filter).select('+pin');
+
+        let user = null;
+        for (const u of staffUsers) {
+            if (await u.comparePin(pin.toString())) {
+                user = u;
+                break;
+            }
+        }
+
+        if (!user) {
+            logger.warn(`PIN login failed${restaurantId ? ` for restaurant ${restaurantId}` : ''}`);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid PIN'
+            });
+        }
+
+        await user.populate('restaurant');
+
+        const token = generateToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        logger.info(`PIN login: ${user.name} (${user.role})`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: { user, token, refreshToken }
+        });
+    } catch (error) {
+        logger.error(`PIN login error: ${error.message}`);
+        next(error);
+    }
+};
+
+// @desc    Set/Update PIN for a staff user (OWNER only)
+// @route   POST /api/auth/set-pin
+// @access  Private/OWNER
+export const setPin = async (req, res, next) => {
+    try {
+        const { userId, pin } = req.body;
+
+        if (!userId || !pin) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID and PIN are required'
+            });
+        }
+
+        if (pin.length < 4 || pin.length > 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'PIN must be 4-6 digits'
+            });
+        }
+
+        if (!/^\d+$/.test(pin)) {
+            return res.status(400).json({
+                success: false,
+                message: 'PIN must contain only digits'
+            });
+        }
+
+        // Check PIN uniqueness across same restaurant
+        const existing = await User.findOne({
+            _id: { $ne: userId },
+            restaurant: req.user.restaurant,
+            pin: pin.toString()
+        });
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: 'This PIN is already in use by another staff member'
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        if (!['WAITER', 'CASHIER', 'CHEF'].includes(user.role)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Can only set PIN for WAITER, CASHIER, or CHEF roles'
+            });
+        }
+
+        user.pin = pin.toString();
+        await user.save({ validateBeforeSave: false });
+
+        logger.info(`PIN set for ${user.name} (${user.role})`);
+
+        res.status(200).json({
+            success: true,
+            message: 'PIN set successfully'
+        });
+    } catch (error) {
+        logger.error(`Set PIN error: ${error.message}`);
         next(error);
     }
 };
@@ -236,10 +362,7 @@ export const logout = async (req, res, next) => {
 // @access  Private
 export const getMe = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id).populate({
-            path: 'restaurant',
-            populate: { path: 'subscription' }
-        });
+        const user = await User.findById(req.user.id).populate('restaurant');
 
         res.status(200).json({
             success: true,
@@ -273,32 +396,19 @@ export const forgotPassword = async (req, res, next) => {
         const otp = user.generatePasswordResetOTP();
         await user.save({ validateBeforeSave: false });
 
-        // Send email
-        try {
-            await sendPasswordResetOTP(user.email, otp, user.name);
-
-            logger.info(`Password reset OTP sent to: ${user.email}`);
-
-            res.status(200).json({
-                success: true,
-                message: 'Password reset OTP sent to your email',
-                data: {
-                    email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Obfuscate email
-                }
-            });
-        } catch (emailError) {
-            logger.error(`Failed to send password reset email to ${user.email}: ${emailError.message}`);
-
-            // Reset fields if email fails
-            user.passwordResetToken = undefined;
-            user.passwordResetExpires = undefined;
-            await user.save({ validateBeforeSave: false });
-
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to send password reset email. Please try again later.'
-            });
+        // Dev fallback: log OTP to console
+        logger.info(`Password reset OTP for ${user.email}: ${otp}`);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`\n🔑 PASSWORD RESET OTP for ${user.email}: ${otp}\n`);
         }
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset OTP sent to your email',
+            data: {
+                email: user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3')
+            }
+        });
     } catch (error) {
         logger.error(`ForgotPassword error: ${error.message}`);
         next(error);
@@ -385,229 +495,4 @@ export const resetPassword = async (req, res, next) => {
     }
 };
 
-// @desc    Verify email
-// @route   POST /api/auth/verify-email
-// @access  Public
-export const verifyEmail = async (req, res, next) => {
-    try {
-        const { token } = req.body;
 
-        if (!token) {
-            return res.status(400).json({
-                success: false,
-                message: 'Verification token is required'
-            });
-        }
-
-        // Hash token to compare with stored version
-        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-        // Find user with matching token and valid expiry
-        const user = await User.findOne({
-            verificationToken: hashedToken,
-            verificationExpires: { $gt: Date.now() }
-        }).select('+verificationToken +verificationExpires');
-
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid or expired verification token'
-            });
-        }
-
-        // Mark as verified
-        user.emailVerified = true;
-        user.verificationToken = undefined;
-        user.verificationExpires = undefined;
-        await user.save({ validateBeforeSave: false });
-
-        logger.info(`Email verified for: ${user.email}`);
-
-        // Send welcome email
-        try {
-            await sendWelcomeEmail(user.email, user.name);
-        } catch (emailError) {
-            logger.error(`Failed to send welcome email to ${user.email}: ${emailError.message}`);
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Email verified successfully! You can now login.'
-        });
-    } catch (error) {
-        logger.error(`VerifyEmail error: ${error.message}`);
-        next(error);
-    }
-};
-
-// @desc    Verify email with OTP
-// @route   POST /api/auth/verify-email-otp
-// @access  Public
-export const verifyEmailOTP = async (req, res, next) => {
-    try {
-        const { email, otp } = req.body;
-
-        if (!email || !otp) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email and OTP are required'
-            });
-        }
-
-        // Hash OTP to compare with stored version
-        const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
-
-        // Find user with matching OTP and valid expiry
-        const user = await User.findOne({
-            email,
-            verificationToken: hashedOTP,
-            verificationExpires: { $gt: Date.now() }
-        }).select('+verificationToken +verificationExpires');
-
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid or expired OTP'
-            });
-        }
-
-        // Mark as verified
-        user.emailVerified = true;
-        user.verificationToken = undefined;
-        user.verificationExpires = undefined;
-        await user.save({ validateBeforeSave: false });
-
-        logger.info(`Email verified via OTP for: ${user.email}`);
-
-        // Send welcome email
-        try {
-            await sendWelcomeEmail(user.email, user.name);
-        } catch (emailError) {
-            logger.error(`Failed to send welcome email to ${user.email}: ${emailError.message}`);
-        }
-
-        res.status(200).json({
-            success: true,
-            message: 'Email verified successfully! You can now login.'
-        });
-    } catch (error) {
-        logger.error(`VerifyEmailOTP error: ${error.message}`);
-        next(error);
-    }
-};
-
-// @desc    Resend verification email
-// @route   POST /api/auth/resend-verification
-// @access  Public
-export const resendVerificationEmail = async (req, res, next) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({
-                success: false,
-                message: 'Email is required'
-            });
-        }
-
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            // For security, don't reveal if user exists
-            return res.status(200).json({
-                success: true,
-                message: 'If an account exists with this email, a new verification link has been sent.'
-            });
-        }
-
-        if (user.emailVerified) {
-            return res.status(400).json({
-                success: false,
-                message: 'This email is already verified. Please login.'
-            });
-        }
-
-        // Generate new token
-        const verificationToken = user.generateVerificationToken();
-        await user.save({ validateBeforeSave: false });
-
-        // Send email (Non-blocking)
-        sendVerificationEmail(user.email, verificationToken, user.name).catch(err => {
-            logger.error(`Async Resend Email Error for ${user.email}: ${err.message}`);
-        });
-        logger.info(`Verification email dispatching to: ${user.email}`);
-
-        res.status(200).json({
-            success: true,
-            message: 'A new verification link has been sent to your email.'
-        });
-    } catch (error) {
-        logger.error(`ResendVerificationEmail error: ${error.message}`);
-        next(error);
-    }
-};
-
-// @desc    Google auth callback handler
-// @route   GET /api/auth/google/callback
-// @access  Public
-export const googleAuthCallback = async (req, res) => {
-    try {
-        const user = req.user;
-        if (!user) {
-            return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=auth_failed`);
-        }
-
-        // Generate tokens
-        const token = generateToken(user._id);
-        const refreshToken = generateRefreshToken(user._id);
-
-        // Save refresh token
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        const userData = {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            profileImage: user.profileImage,
-            restaurant: user.restaurant
-        };
-
-        // Redirect to frontend with tokens
-        // Note: In production, it's safer to use a temporary code or secure cookie
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const redirectUrl = `${frontendUrl}/login?token=${token}&refreshToken=${refreshToken}&user=${encodeURIComponent(JSON.stringify(userData))}`;
-
-        res.redirect(redirectUrl);
-    } catch (error) {
-        logger.error(`Google Auth Callback Error: ${error.message}`);
-        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=server_error`);
-    }
-};
-
-// @desc    Test email configuration
-// @route   GET /api/auth/test-email
-// @access  Public
-export const testEmail = async (req, res) => {
-    try {
-        const { email } = req.query;
-        if (!email) return res.status(400).json({ success: false, message: 'Email query param required' });
-
-        logger.info(`Starting email test for: ${email}`);
-        const result = await sendVerificationEmail(email, 'TEST-1234', 'Test User');
-
-        res.status(200).json({
-            success: true,
-            message: 'Test email dispatch attempt completed. Check backend logs for result.',
-            result
-        });
-    } catch (error) {
-        logger.error(`Test Email Error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: 'Test email failed',
-            error: error.message
-        });
-    }
-};

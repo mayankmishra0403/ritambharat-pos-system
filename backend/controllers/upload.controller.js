@@ -1,8 +1,10 @@
-import cloudinary from '../config/cloudinary.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// @desc    Upload single image to Cloudinary
-// @route   POST /api/upload/image
-// @access  Private
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+
 export const uploadImage = async (req, res, next) => {
     try {
         if (!req.file) {
@@ -12,8 +14,7 @@ export const uploadImage = async (req, res, next) => {
             });
         }
 
-        // File is already uploaded to Cloudinary by multer middleware
-        const imageUrl = req.file.path;
+        const imageUrl = `/uploads/${req.file.filename}`;
 
         res.status(200).json({
             success: true,
@@ -28,17 +29,13 @@ export const uploadImage = async (req, res, next) => {
     }
 };
 
-// @desc    Delete image from Cloudinary
-// @route   DELETE /api/upload/image/:publicId
-// @access  Private
 export const deleteImage = async (req, res, next) => {
     try {
         const { publicId } = req.params;
+        const filePath = path.join(uploadsDir, publicId);
 
-        // Delete from Cloudinary
-        const result = await cloudinary.uploader.destroy(publicId);
-
-        if (result.result === 'ok') {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
             res.status(200).json({
                 success: true,
                 message: 'Image deleted successfully'

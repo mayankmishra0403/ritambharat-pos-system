@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     X, Plus, Minus, Search, ShoppingCart,
@@ -8,10 +8,12 @@ import {
 import ReceiptTemplate from '../common/ReceiptTemplate';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../config/api';
+import printToPdf from '../../utils/printToPdf';
 import toast from 'react-hot-toast';
 
 const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
     const queryClient = useQueryClient();
+    const printRef = useRef(null);
     const [step, setStep] = useState(1); // 1: Table, 2: Items, 3: Review, 4: Success
     const [selectedTable, setSelectedTable] = useState(null);
     const [cart, setCart] = useState([]);
@@ -296,7 +298,11 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
                                 <button
                                     onClick={() => {
                                         toast.success('Preparing Receipt...');
-                                        setTimeout(() => window.print(), 100);
+                                        setTimeout(() => {
+                                            if (printRef.current) {
+                                                printToPdf(printRef.current, `receipt-${placedOrder.orderNumber || 'order'}.pdf`);
+                                            }
+                                        }, 100);
                                     }}
                                     className="flex-1 bg-primary text-primary-foreground py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/30"
                                 >
@@ -318,7 +324,7 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
                             </div>
 
                             {/* Hidden Receipt for Printing */}
-                            <div className="hidden">
+                            <div ref={printRef} style={{ position: 'absolute', left: '-9999px', top: 0, width: '400px', background: 'white', zIndex: -1 }}>
                                 <ReceiptTemplate order={placedOrder} />
                             </div>
                         </div>

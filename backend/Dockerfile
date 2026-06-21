@@ -1,38 +1,26 @@
-# Build Stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && \
+    npm cache clean --force
 
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodeuser
 
-# Install dependencies (including dev dependencies for build if needed, 
-# but for backend usually clean install is enough)
-RUN npm ci
-
-# Copy source code
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Production Stage
-FROM node:18-alpine
+RUN mkdir -p /app/logs /app/uploads && \
+    chown -R nodeuser:nodejs /app/logs /app/uploads
 
-WORKDIR /app
-
-# Install production dependencies only
-COPY package*.json ./
-RUN npm ci --only=production
-
-# Copy source code from builder (or local if no build step needed for raw JS)
-# Since we are using raw JS modules, we just copy the src. 
-# If we had a build step (TypeScript), we would copy from builder.
-COPY . .
-
-# Environment setup
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Metadata
 EXPOSE 5000
 
-# Start command
+USER nodeuser
+
 CMD ["node", "server.js"]

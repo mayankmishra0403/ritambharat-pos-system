@@ -21,6 +21,17 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
         enabled: !!restaurantId
     });
 
+    const { data: restaurant } = useQuery({
+        queryKey: ['restaurant', restaurantId],
+        queryFn: async () => {
+            const res = await api.get(`/restaurant/${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId
+    });
+
+    const taxRate = restaurant?.taxRate || 0;
+
     // Get unique categories
     const categories = useMemo(() => {
         const cats = ['all', ...new Set(menuItems.map(item => item.category))];
@@ -61,7 +72,7 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
 
     // Calculate totals
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const tax = subtotal * 0.1; // 10% tax
+    const tax = subtotal * (taxRate / 100);
     const total = subtotal + tax;
 
     // Generate manual bill
@@ -260,10 +271,12 @@ const ManualBillModal = ({ restaurantId, onClose, onSuccess }) => {
                                     <span className="text-muted-foreground">Subtotal</span>
                                     <span className="font-medium">{subtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Tax (10%)</span>
-                                    <span className="font-medium">{tax.toFixed(2)}</span>
-                                </div>
+                                {taxRate > 0 && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Tax ({taxRate}%)</span>
+                                        <span className="font-medium">{tax.toFixed(2)}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
                                     <span>Total</span>
                                     <span className="text-primary">{total.toFixed(2)}</span>

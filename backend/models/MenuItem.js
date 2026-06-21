@@ -84,6 +84,10 @@ const menuItemSchema = new mongoose.Schema({
         default: 15
     },
     tags: [String],
+    hsnCode: {
+        type: String,
+        default: '9985' // Default HSN for restaurant services
+    },
     isDeleted: {
         type: Boolean,
         default: false,

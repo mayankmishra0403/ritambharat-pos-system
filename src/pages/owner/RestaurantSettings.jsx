@@ -319,11 +319,10 @@ const GeneralSettings = ({ restaurant, handleChange, handleFileUpload }) => (
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">Base Gateway</label>
                             <select
                                 name="paymentGateway"
-                                value={restaurant.paymentGateway || 'STRIPE'}
+                                value={restaurant.paymentGateway || 'SAFEPAY'}
                                 onChange={handleChange}
                                 className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none appearance-none"
                             >
-                                <option value="STRIPE">Stripe</option>
                                 <option value="SAFEPAY">Safepay</option>
                             </select>
                         </div>

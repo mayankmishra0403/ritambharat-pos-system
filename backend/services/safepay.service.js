@@ -79,9 +79,10 @@ class SafepayService {
      * @param {Object} payload - Webhook payload
      */
     verifyWebhookSignature(signature, payload) {
+        const rawPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
         const computedSignature = crypto
             .createHmac('sha256', this.secretKey)
-            .update(JSON.stringify(payload))
+            .update(rawPayload)
             .digest('hex');
 
         return signature === computedSignature;

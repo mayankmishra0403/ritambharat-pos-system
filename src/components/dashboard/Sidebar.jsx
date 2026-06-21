@@ -4,8 +4,8 @@ import {
     LayoutDashboard, Store, Table, Menu as MenuIcon, ShoppingCart,
     BarChart3, Star, LogOut, Bell, Calendar,
     MessageSquare, Settings, ChevronLeft, ChevronRight,
-    UtensilsCrossed, Sparkles, Pin, PinOff, Users, QrCode,
-    DollarSign
+    UtensilsCrossed,     Pin, PinOff, Users, QrCode,
+    DollarSign, ChefHat, FileText, Percent, UserCheck, ShoppingBag
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
@@ -42,17 +42,22 @@ const Sidebar = ({ className, open, onClose }) => {
     const allMenuItems = [
         { label: 'Overview', icon: LayoutDashboard, link: '/dashboard', permission: 'dashboard' },
         { label: 'Live Orders', icon: ShoppingCart, link: '/orders', permission: 'orders' },
-        { label: 'Billing', icon: DollarSign, link: '/billing', permission: 'revenue' },
+        { label: 'POS Billing', icon: DollarSign, link: '/admin/pos', permission: 'revenue' },
+        { label: 'Kitchen Display', icon: ChefHat, link: '/kitchen', permission: 'orders' },
+        { label: 'Waiter App', icon: UtensilsCrossed, link: '/waiter-app', permission: 'orders' },
+        { label: 'Takeaway', icon: ShoppingBag, link: '/takeaway', permission: 'orders' },
+        { label: 'Billing', icon: FileText, link: '/billing', permission: 'revenue' },
         { label: 'Menu Management', icon: MenuIcon, link: '/menu-management', permission: 'menu' },
         { label: 'Table Management', icon: Table, link: '/tables', permission: 'tables' },
         { label: 'Inventory', icon: Store, link: '/inventory', permission: 'inventory' },
         { label: 'QR Management', icon: QrCode, link: '/qr-codes', permission: 'qr-codes' },
         { label: 'Analytics', icon: BarChart3, link: '/analytics', permission: 'analytics' },
         { label: 'Staff Management', icon: Users, link: '/staff-management', permission: 'staff' },
+        { label: 'Customers', icon: UserCheck, link: '/customers', permission: 'dashboard' },
         { label: 'Reviews', icon: Star, link: '/admin/reviews', permission: 'reviews' },
         { label: 'Complaints', icon: MessageSquare, link: '/admin/complaints', permission: 'complaints' },
         { label: 'Settings', icon: Settings, link: '/settings', permission: 'settings' },
-        { label: 'Subscription', icon: Sparkles, link: '/subscription', permission: 'subscription' },
+        { label: 'GST Settings', icon: Percent, link: '/gst-settings', permission: 'menu' },
     ];
 
     const menuItems = allMenuItems.filter(item => {
@@ -105,7 +110,7 @@ const Sidebar = ({ className, open, onClose }) => {
             {/* Logo Section */}
             <div className="h-20 flex items-center px-6 relative justify-between">
                 <Link to={user?.role === 'OWNER' || user?.role === 'ADMIN' ? '/dashboard' : (user?.permissions?.includes('orders') ? '/orders' : '/dashboard')}>
-                    <Logo iconOnly={collapsed && !isPinned} className={(collapsed && !isPinned) ? "w-10 h-10" : "w-auto"} />
+                    <Logo iconOnly={collapsed && !isPinned} className={(collapsed && !isPinned) ? "w-10 h-10" : "w-auto h-10"} />
                 </Link>
 
                 {/* Mobile Close Button */}

@@ -111,7 +111,7 @@ const RestaurantInfoModal = ({ isOpen, onClose, restaurant }) => {
                                             </div>
                                             <div>
                                                 <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-0.5">Email</h4>
-                                                <p className="text-xs text-white/90 font-medium truncate">{restaurant.contact?.email || "hello@chefos.pro"}</p>
+                                                <p className="text-xs text-white/90 font-medium truncate">{restaurant.contact?.email || "hello@ritambharat.com"}</p>
                                             </div>
                                         </div>
                                     </div>

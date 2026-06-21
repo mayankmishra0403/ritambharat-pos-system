@@ -9,7 +9,7 @@ import Order from '../models/Order.js';
 // @access  Private (Owner/Admin)
 export const addStaff = async (req, res, next) => {
     try {
-        const { email, role, profileImage, name, password, permissions } = req.body;
+        const { email, role, profileImage, name, password, pin, permissions } = req.body;
         const restaurantId = req.user.restaurant;
 
         if (!restaurantId) {
@@ -19,11 +19,60 @@ export const addStaff = async (req, res, next) => {
             });
         }
 
-        // Check if user exists
+        const isPinRole = ['WAITER', 'CASHIER', 'CHEF'].includes(role);
+
+        // Validate based on role type
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name is required'
+            });
+        }
+
+        if (isPinRole) {
+            if (!pin) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'PIN is required for this role'
+                });
+            }
+            // Create or update user without email/password
+            let user = await User.findOne({ restaurant: restaurantId, name });
+            const userData = {
+                name,
+                role: role || 'WAITER',
+                restaurant: restaurantId,
+                profileImage,
+                permissions: permissions || [],
+                pin: pin.toString()
+            };
+
+            if (!user) {
+                user = await User.create(userData);
+            } else {
+                Object.assign(user, userData);
+                await user.save({ validateBeforeSave: false });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Staff member added successfully',
+                data: user
+            });
+        }
+
+        // Email/password role (ADMIN, etc.)
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is required for this role'
+            });
+        }
+
         let user = await User.findOne({ email });
 
         if (!user) {
-            if (!name || !password) {
+            if (!password) {
                 return res.status(400).json({
                     success: false,
                     message: 'Please provide name, email and password to create a staff profile.'
@@ -40,7 +89,6 @@ export const addStaff = async (req, res, next) => {
                 permissions: permissions || []
             });
         } else {
-            // Security guard: Never demote an OWNER
             if (user.role === 'OWNER') {
                 return res.status(403).json({
                     success: false,
@@ -48,18 +96,60 @@ export const addStaff = async (req, res, next) => {
                 });
             }
 
-            // Update existing user's role, restaurant and permissions
             user.role = role || user.role;
             user.restaurant = restaurantId;
             user.permissions = permissions || user.permissions;
             if (profileImage) user.profileImage = profileImage;
-            if (password) user.password = password; // Will be hashed by pre-save hook
+            if (password) user.password = password;
             await user.save();
         }
 
         res.status(200).json({
             success: true,
             message: 'Staff member added successfully',
+            data: user
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateStaff = async (req, res, next) => {
+    try {
+        const { name, role, profileImage, password, pin, permissions, email } = req.body;
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Staff member not found'
+            });
+        }
+
+        if (user.restaurant?.toString() !== req.user.restaurant?.toString()) {
+            return res.status(401).json({
+                success: false,
+                message: 'Not authorized to update this staff member'
+            });
+        }
+
+        if (name) user.name = name;
+        if (role) user.role = role;
+        if (profileImage) user.profileImage = profileImage;
+        if (permissions) user.permissions = permissions;
+        if (email) user.email = email;
+        if (password) user.password = password;
+
+        const isPinRole = ['WAITER', 'CASHIER', 'CHEF'].includes(user.role);
+        if (isPinRole && pin) {
+            user.pin = pin.toString();
+        }
+
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            message: 'Staff member updated successfully',
             data: user
         });
     } catch (error) {
@@ -84,7 +174,7 @@ export const getStaff = async (req, res, next) => {
 
         const staff = await User.find({
             restaurant: targetId,
-            role: { $in: ['WAITER', 'CHEF'] }
+            role: { $in: ['WAITER', 'CHEF', 'CASHIER'] }
         }).select('name email role profileImage permissions createdAt');
 
         // Enhance staff with real metrics
@@ -156,54 +246,7 @@ export const removeStaff = async (req, res, next) => {
 // @desc    Update staff member
 // @route   PATCH /api/staff/:id
 // @access  Private (Owner/Admin)
-export const updateStaff = async (req, res, next) => {
-    try {
-        const { name, role, profileImage, permissions, password } = req.body;
-        const staffId = req.params.id;
-        const restaurantId = req.user.restaurant;
-
-        const user = await User.findById(staffId);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'Staff member not found'
-            });
-        }
-
-        // Security check: Ensure staff belongs to the same restaurant
-        if (user.restaurant.toString() !== restaurantId.toString()) {
-            return res.status(401).json({
-                success: false,
-                message: 'Not authorized to update this staff member'
-            });
-        }
-
-        // Security guard: Never demote an OWNER
-        if (user.role === 'OWNER' && role && role !== 'OWNER') {
-            return res.status(403).json({
-                success: false,
-                message: "Owner role cannot be changed."
-            });
-        }
-
-        if (name) user.name = name;
-        if (role) user.role = role;
-        if (profileImage) user.profileImage = profileImage;
-        if (permissions) user.permissions = permissions;
-        if (password) user.password = password;
-
-        await user.save();
-
-        res.status(200).json({
-            success: true,
-            message: 'Staff member updated successfully',
-            data: user
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+// (defined above)
 
 // @desc    Submit a review for a staff member
 // @route   POST /api/staff/:id/review

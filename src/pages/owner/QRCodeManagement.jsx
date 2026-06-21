@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     QrCode, Download, Trash2, Plus,
@@ -15,6 +16,7 @@ import Header from '../../components/dashboard/Header';
 
 const QRCodeManagement = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -214,15 +216,24 @@ const QRCodeManagement = () => {
                             <div className="w-32 h-32 bg-muted/50 rounded-full flex items-center justify-center mb-6">
                                 <QrCode size={64} className="text-muted-foreground/30" />
                             </div>
-                            <h3 className="text-2xl font-black italic uppercase mb-2">No Tables Found</h3>
-                            <p className="text-muted-foreground font-medium mb-8">Generate your first table in Table Management to get a QR code.</p>
-                            <button
-                                onClick={() => navigate('/tables')}
-                                className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-                            >
-                                <Plus size={18} strokeWidth={3} />
-                                Create New Table
-                            </button>
+                            <h3 className="text-2xl font-black italic uppercase mb-2">
+                                {tables?.length > 0 ? 'No Tables Match Search' : 'No Tables Found'}
+                            </h3>
+                            <p className="text-muted-foreground font-medium mb-8">
+                                {tables?.length > 0
+                                    ? 'Try a different search term or clear the filter.'
+                                    : 'Generate your first table in Table Management to get a QR code.'
+                                }
+                            </p>
+                            {tables?.length === 0 && (
+                                <button
+                                    onClick={() => navigate('/tables')}
+                                    className="px-8 py-4 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                                >
+                                    <Plus size={18} strokeWidth={3} />
+                                    Create New Table
+                                </button>
+                            )}
                         </div>
                     )}
                 </main>

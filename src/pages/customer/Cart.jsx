@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useOutletContext, useNavigate } from 'react-router-dom';
-import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, MessageSquare, ShoppingBag, Sparkles } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ArrowLeft, MessageSquare, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import CartUpsell from '../../components/customer/CartUpsell';
@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 const Cart = () => {
     const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
-    const { restaurant, tableId, openChefAI } = useOutletContext();
+    const { restaurant, tableId } = useOutletContext();
     const navigate = useNavigate();
     const [orderNote, setOrderNote] = useState("");
     const [isNoteOpen, setIsNoteOpen] = useState(false);
@@ -52,14 +52,7 @@ const Cart = () => {
                     <h1 className="text-2xl font-bold">Your Order</h1>
                 </div>
 
-                {useOutletContext().isPremium && (
-                    <button
-                        onClick={openChefAI}
-                        className="bg-white text-black px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 active:scale-95 transition-all font-semibold text-xs whitespace-nowrap"
-                    >
-                        <Sparkles size={16} className="text-purple-600" /> Ask Chef AI
-                    </button>
-                )}
+
             </header>
 
             <div className="space-y-4">
@@ -114,13 +107,15 @@ const Cart = () => {
                             <span>Subtotal</span>
                             <span>{cartTotal.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-gray-400 text-sm">
-                            <span>Tax (10%)</span>
-                            <span>{(cartTotal * 0.1).toFixed(2)}</span>
-                        </div>
+                        {restaurant?.taxRate > 0 && (
+                            <div className="flex justify-between text-gray-400 text-sm">
+                                <span>Tax ({restaurant.taxRate}%)</span>
+                                <span>{(cartTotal * restaurant.taxRate / 100).toFixed(2)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-white/10">
                             <span>Total</span>
-                            <span className="text-primary">{(cartTotal * 1.1).toFixed(2)}</span>
+                            <span className="text-primary">{((cartTotal * (1 + (restaurant?.taxRate || 0) / 100))).toFixed(2)}</span>
                         </div>
                     </div>
 

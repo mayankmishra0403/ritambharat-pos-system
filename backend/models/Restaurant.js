@@ -115,17 +115,10 @@ const restaurantSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    subscription: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Subscription'
-    },
-    stripeCustomerId: {
-        type: String
-    },
     paymentGateway: {
         type: String,
-        enum: ['STRIPE', 'SAFEPAY'],
-        default: 'STRIPE'
+        enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
+        default: 'CASH'
     }
 }, {
     timestamps: true

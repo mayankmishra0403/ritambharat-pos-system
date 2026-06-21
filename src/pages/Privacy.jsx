@@ -1,37 +1,31 @@
-import { motion } from "framer-motion";
+import { Navbar } from '../components/landing/Navbar';
+import { Footer } from '../components/landing/Footer';
+import ScrollToTop from '../components/ui/ScrollToTop';
 
-const Privacy = () => {
-    return (
-        <div className="min-h-screen bg-background pt-32 pb-20 px-4">
-            <div className="max-w-4xl mx-auto glass-card p-8 md:p-12 rounded-3xl">
-                <h1 className="text-4xl font-display font-bold mb-8 text-gradient">Privacy Policy</h1>
-
-                <div className="space-y-6 text-muted-foreground leading-relaxed">
-                    <section>
-                        <h2 className="text-xl font-semibold text-foreground mb-3">1. Information We Collect</h2>
-                        <p>We collect restaurant details, menu data, and business contact information provided during registration. We also collect usage data to improve our service.</p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-xl font-semibold text-foreground mb-3">2. How We Use Data</h2>
-                        <p>Your data is used to provide the ChefOS platform services, process subscriptions, and communicate important updates regarding your account.</p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-xl font-semibold text-foreground mb-3">3. Payment Information</h2>
-                        <p>We do not store credit card details. All payment processing is handled securely by our licensed payment partners.</p>
-                    </section>
-
-                    <section>
-                        <h2 className="text-xl font-semibold text-foreground mb-3">4. Third-Party Services</h2>
-                        <p>We may use third-party tools for analytics (e.g. Google Analytics) and AI processing (e.g. Google Gemini for Chef AI). These services handle data according to their own privacy policies.</p>
-                    </section>
-
-                    <p className="text-sm pt-8 border-t border-border">Last updated: February 9, 2026</p>
-                </div>
-            </div>
+export default function Privacy() {
+  return (
+    <div className="min-h-screen bg-background">
+      <ScrollToTop />
+      <Navbar />
+      <main className="mx-auto max-w-4xl px-4 py-24">
+        <h1 className="mb-8 text-4xl font-bold">Privacy Policy</h1>
+        <div className="prose prose-invert max-w-none space-y-6">
+          <p>Last updated: {new Date().toLocaleDateString()}</p>
+          <h2>1. Information We Collect</h2>
+          <p>We collect account information (name, email, phone), restaurant data (menu, orders, customers), and usage data.</p>
+          <h2>2. How We Use Your Information</h2>
+          <p>Your information is used to provide and improve our services, process transactions, and communicate with you.</p>
+          <h2>3. Data Storage & Security</h2>
+          <p>All data is encrypted in transit and at rest. We use industry-standard security measures to protect your information.</p>
+          <h2>4. Data Sharing</h2>
+          <p>We do not sell your personal data. We may share data with service providers who assist in operating our platform.</p>
+          <h2>5. Your Rights</h2>
+          <p>You may access, update, or delete your data at any time through your account settings.</p>
+          <h2>6. Contact</h2>
+          <p>For privacy-related inquiries, contact us at privacy@ritambharat.com</p>
         </div>
-    );
-};
-
-export default Privacy;
+      </main>
+      <Footer />
+    </div>
+  );
+}

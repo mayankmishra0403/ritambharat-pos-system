@@ -114,19 +114,4 @@ export const refreshTokenValidation = [
     validate
 ];
 
-// Verify email validation
-export const verifyEmailValidation = [
-    body('token')
-        .notEmpty().withMessage('Verification token is required'),
-    validate
-];
 
-// Resend verification validation
-export const resendVerificationValidation = [
-    body('email')
-        .trim()
-        .notEmpty().withMessage('Email is required')
-        .isEmail().withMessage('Please provide a valid email')
-        .normalizeEmail(),
-    validate
-];

@@ -108,12 +108,31 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const resendVerification = async (email) => {
+    const pinLogin = async (pin, restaurantId) => {
         try {
-            const response = await api.post('/auth/resend-verification', { email });
-            toast.success(response.data.message || 'Verification email resent.');
-            return response.data;
+            const response = await api.post('/auth/pin-login', { pin, restaurantId });
+
+            if (!response?.data?.data) {
+                throw new Error('Server returned invalid data structure');
+            }
+
+            const { user, token, refreshToken } = response.data.data;
+
+            if (!user || !token) {
+                throw new Error('Missing user or token in response');
+            }
+
+            localStorage.setItem('token', token);
+            if (refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken);
+            }
+            localStorage.setItem('user', JSON.stringify(user));
+
+            setUser(user);
+            return user;
         } catch (error) {
+            const errorMsg = error.response?.data?.message || error.message || 'PIN login failed';
+            toast.error(errorMsg);
             throw error;
         }
     };
@@ -180,15 +199,15 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        pinLogin,
         register,
-        resendVerification,
         logout,
         checkRestaurantStatus,
         fetchMe,
         tryRefresh,
         setUser,
         isAuthenticated: !!user,
-    }), [user, loading, login, register, resendVerification, logout, checkRestaurantStatus, fetchMe, tryRefresh, setUser]);
+    }), [user, loading, login, pinLogin, register, logout, checkRestaurantStatus, fetchMe, tryRefresh, setUser]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

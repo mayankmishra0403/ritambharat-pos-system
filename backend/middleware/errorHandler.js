@@ -1,7 +1,7 @@
 import logger from '../utils/logger.js';
 
 export const errorHandler = (err, req, res, next) => {
-    logger.error(err.stack);
+    logger.error(err?.stack || err?.message || 'Unknown error');
 
     // Mongoose validation error
     if (err.name === 'ValidationError') {

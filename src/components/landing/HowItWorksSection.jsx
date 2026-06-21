@@ -52,7 +52,7 @@ export const HowItWorksSection = ({ onOpenContactModal }) => {
                         Zero Friction <span className="text-primary italic">Implementation</span>
                     </h2>
                     <p className="text-background/70 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-medium italic">
-                        Most POS transitions take weeks. With ChefOS, you can be up and running
+                        Most POS transitions take weeks. With Ritam Bharat POS, you can be up and running
                         before your next shift starts.
                     </p>
                 </AnimatedSection>
@@ -142,7 +142,7 @@ export const HowItWorksSection = ({ onOpenContactModal }) => {
                                     Ready to Transform Your Restaurant?
                                 </h3>
                                 <p className="text-background/60 mb-4 sm:mb-6 text-sm sm:text-base leading-relaxed">
-                                    Join 89+ restaurants already using ChefOS to delight their customers
+                                    Join 89+ restaurants already using Ritam Bharat POS to delight their customers
                                     and streamline operations.
                                 </p>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 sm:gap-6">

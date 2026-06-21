@@ -10,7 +10,7 @@ export const CartProvider = ({ children }) => {
     // Initialize cart from localStorage if available
     const [cart, setCart] = useState(() => {
         try {
-            const savedCart = localStorage.getItem('chefos_cart');
+            const savedCart = localStorage.getItem('ritam_bharat_pos_cart');
             return savedCart ? JSON.parse(savedCart) : [];
         } catch (err) {
             return [];
@@ -19,7 +19,7 @@ export const CartProvider = ({ children }) => {
 
     // Save to localStorage whenever cart changes
     useEffect(() => {
-        localStorage.setItem('chefos_cart', JSON.stringify(cart));
+        localStorage.setItem('ritam_bharat_pos_cart', JSON.stringify(cart));
     }, [cart]);
 
     const addToCart = (item, quantity = 1, specialInstructions = '') => {
@@ -81,7 +81,7 @@ export const CartProvider = ({ children }) => {
 
     const clearCart = () => {
         setCart([]);
-        localStorage.removeItem('chefos_cart');
+        localStorage.removeItem('ritam_bharat_pos_cart');
     };
 
     const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);

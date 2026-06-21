@@ -16,8 +16,28 @@ const tableSchema = new mongoose.Schema({
         min: 1,
         default: 4
     },
+    qrSecret: {
+        type: String
+    },
     qrCode: {
-        type: String // QR code data or URL
+        type: String
+    },
+    room: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Room'
+    },
+    shape: {
+        type: String,
+        enum: ['round', 'rect', 'square', 'oval'],
+        default: 'square'
+    },
+    posX: {
+        type: Number,
+        default: 0
+    },
+    posY: {
+        type: Number,
+        default: 0
     },
     location: {
         type: String,
@@ -51,12 +71,13 @@ tableSchema.index({ restaurant: 1, name: 1 }, { unique: true });
 // Index for filtering active tables
 tableSchema.index({ restaurant: 1, isActive: 1 });
 
-// Generate QR code data before saving
+// Generate QR secret and QR code data before saving
 tableSchema.pre('save', function (next) {
-    if (!this.qrCode) {
-        // Store relative path: /menu/:restaurantId?table=:tableId
-        this.qrCode = `/menu/${this.restaurant}?table=${this._id}`;
+    if (!this.qrSecret) {
+        this.qrSecret = Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
     }
+    // Always regenerate qrCode to include the qrSecret
+    this.qrCode = `/menu/${this.restaurant}?table=${this._id}&token=${this.qrSecret}`;
     next();
 });
 

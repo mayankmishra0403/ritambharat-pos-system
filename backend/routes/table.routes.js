@@ -9,11 +9,10 @@ import {
     resetTable
 } from '../controllers/table.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
-import { checkTableLimit } from '../middleware/subscriptionMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, authorize('OWNER', 'ADMIN'), checkTableLimit, createTable);
+router.post('/', protect, authorize('OWNER', 'ADMIN'), createTable);
 router.get('/', getTables);
 router.get('/:id', getTable);
 router.get('/:id/qr', protect, authorize('OWNER', 'ADMIN'), downloadQRCode);

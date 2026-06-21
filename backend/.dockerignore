@@ -5,8 +5,15 @@ logs
 .git
 .gitignore
 Dockerfile
+.dockerignore
+docker-compose.yml
 README.md
 API_DOCS.md
 MONGODB_SETUP.md
+ecosystem.config.cjs
 scripts/
 tests/
+test/
+__tests__/
+*.md
+.gitkeep

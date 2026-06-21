@@ -77,7 +77,7 @@ const Demo = () => {
                         </h1>
 
                         <p className="text-xl text-white/60 font-medium leading-relaxed max-w-xl italic">
-                            Join hundreds of restaurants using ChefOS. Get an exclusive deep-dive into the
+                            Join hundreds of restaurants using Ritam Bharat POS. Get an exclusive deep-dive into the
                             ecosystem: From smart menus to real-time order management.
                         </p>
 

@@ -11,7 +11,6 @@ import RestaurantOnboarding from './RestaurantOnboarding';
 import Analytics from './Analytics';
 import Reviews from './Reviews';
 import ChefAI from './ChefAI';
-import Subscription from './Subscription';
 import StaffManagement from './StaffManagement';
 import Billing from './Billing';
 
@@ -28,7 +27,6 @@ export {
     Analytics,
     Reviews,
     ChefAI,
-    Subscription,
     StaffManagement,
     Billing
 };

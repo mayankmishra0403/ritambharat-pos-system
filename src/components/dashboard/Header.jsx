@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Menu, Moon, Sun, Laptop, Sparkles } from 'lucide-react';
+import { Bell, Menu, Moon, Sun, Laptop } from 'lucide-react';
 import api from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,13 +12,13 @@ const Header = ({ onMobileMenuClick }) => {
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [lastReadTime, setLastReadTime] = useState(() => {
-        return parseInt(localStorage.getItem('chefos_notifications_last_read') || '0');
+        return parseInt(localStorage.getItem('ritam_bharat_pos_notifications_last_read') || '0');
     });
 
     const handleMarkAllRead = () => {
         const now = Date.now();
         setLastReadTime(now);
-        localStorage.setItem('chefos_notifications_last_read', now.toString());
+        localStorage.setItem('ritam_bharat_pos_notifications_last_read', now.toString());
     };
 
     const processedNotifications = notifications.map(n => ({
@@ -178,11 +178,6 @@ const Header = ({ onMobileMenuClick }) => {
                 <div className="flex items-center gap-3 cursor-pointer group">
                     <div className="text-right hidden md:block">
                         <div className="flex items-center gap-2 justify-end">
-                            {user?.restaurant?.subscription?.plan?.name === 'PREMIUM' && (
-                                <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                                    <Sparkles size={8} /> PREMIUM
-                                </span>
-                            )}
                             <div className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{user?.name}</div>
                         </div>
                         <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{user?.role}</div>

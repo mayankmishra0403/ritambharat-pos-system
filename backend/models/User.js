@@ -10,21 +10,24 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: [true, 'Email is required'],
         unique: true,
+        sparse: true,
         lowercase: true,
         trim: true,
         match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
     },
+    pin: {
+        type: String,
+        select: false
+    },
     password: {
         type: String,
-        required: [true, 'Password is required'],
         minlength: [6, 'Password must be at least 6 characters'],
-        select: false // Don't return password by default
+        select: false
     },
     role: {
         type: String,
-        enum: ['OWNER', 'CHEF', 'ADMIN', 'CUSTOMER', 'WAITER'],
+        enum: ['OWNER', 'CHEF', 'ADMIN', 'CUSTOMER', 'WAITER', 'CASHIER'],
         default: 'CUSTOMER'
     },
     restaurant: {
@@ -46,11 +49,6 @@ const userSchema = new mongoose.Schema({
     emailVerified: {
         type: Boolean,
         default: false
-    },
-    googleId: {
-        type: String,
-        unique: true,
-        sparse: true
     },
     verificationToken: {
         type: String,
@@ -77,16 +75,27 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
-
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    if (this.isModified('password') && this.password) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
+    if (this.isModified('pin') && this.pin) {
+        const salt = await bcrypt.genSalt(10);
+        this.pin = await bcrypt.hash(this.pin, salt);
+    }
     next();
 });
 
 // Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
+    if (!this.password) return false;
     return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to compare pin
+userSchema.methods.comparePin = async function (candidatePin) {
+    if (!this.pin) return false;
+    return await bcrypt.compare(candidatePin, this.pin);
 };
 
 // Generate password reset OTP
@@ -135,6 +144,7 @@ userSchema.methods.generateEmailVerificationOTP = function () {
 userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.password;
+    delete user.pin;
     delete user.refreshToken;
     delete user.passwordResetToken;
     delete user.passwordResetExpires;
