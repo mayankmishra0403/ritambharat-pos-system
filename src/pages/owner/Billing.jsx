@@ -92,6 +92,8 @@ const Billing = () => {
         }
     };
 
+    const { restaurant: printRestaurant } = useInvoiceSettings(restaurantId);
+
     useEffect(() => {
         if (!printing || !selectedBill) return;
         const timer = setTimeout(() => {
@@ -143,8 +145,6 @@ const Billing = () => {
         document.body.removeChild(link);
         toast.success('Bills exported successfully!');
     };
-
-    const { restaurant: printRestaurant } = useInvoiceSettings(restaurantId);
 
     const queryClient = useQueryClient();
 
