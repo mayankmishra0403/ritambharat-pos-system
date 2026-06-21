@@ -313,3 +313,75 @@ export const requestWaiterBill = async (req, res, next) => {
         next(error);
     }
 };
+
+export const addWaiterOrderItems = async (req, res, next) => {
+    try {
+        const { items } = req.body;
+        const orderId = req.params.id;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ success: false, message: 'Items are required' });
+        }
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (['SERVED', 'CANCELLED'].includes(order.status) || order.paymentStatus === 'PAID') {
+            return res.status(400).json({ success: false, message: 'Cannot modify a completed order' });
+        }
+
+        for (const item of items) {
+            const existingItem = order.items.find(i => i.menuItem.toString() === item.menuItem);
+            if (existingItem) {
+                existingItem.quantity += item.quantity || 1;
+            } else {
+                const menuItem = await MenuItem.findById(item.menuItem);
+                if (!menuItem) {
+                    return res.status(404).json({ success: false, message: `Menu item not found: ${item.menuItem}` });
+                }
+                order.items.push({
+                    menuItem: menuItem._id,
+                    name: menuItem.name,
+                    price: menuItem.price,
+                    quantity: item.quantity || 1,
+                    specialInstructions: item.specialInstructions || ''
+                });
+            }
+        }
+
+        let subtotal = 0;
+        for (const item of order.items) {
+            subtotal += item.price * item.quantity;
+        }
+
+        const restaurantDoc = await Restaurant.findById(order.restaurant);
+        const taxInfo = await getTaxInfo(order.restaurant, restaurantDoc);
+        const tax = calculateTax(subtotal, taxInfo.slabRate);
+        const gstBreakdown = calculateGstBreakdown(subtotal, taxInfo.cgstRate, taxInfo.sgstRate, taxInfo.igstRate);
+
+        order.subtotal = subtotal;
+        order.tax = tax;
+        order.total = subtotal + tax;
+        order.gstBreakdown = {
+            cgst: gstBreakdown.cgst,
+            sgst: gstBreakdown.sgst,
+            igst: gstBreakdown.igst,
+            taxSlab: taxInfo.taxSlabId
+        };
+
+        await order.save();
+        await order.populate('table', 'name');
+
+        logger.info(`Items added to order #${order.orderNumber} by waiter`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Items added to order',
+            data: order
+        });
+    } catch (error) {
+        next(error);
+    }
+};

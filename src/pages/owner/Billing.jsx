@@ -5,7 +5,7 @@ import api from '../../config/api';
 import {
     Receipt, Search, Filter, Download, Printer,
     Calendar, Table, DollarSign, ChevronRight,
-    ArrowLeft, MoreVertical, CheckCircle, X
+    ArrowLeft, MoreVertical, CheckCircle, X, User, Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../../components/dashboard/Sidebar';
@@ -91,6 +91,21 @@ const Billing = () => {
             toast.error('Failed to cancel order');
         }
     };
+
+    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [editName, setEditName] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+
+    const updateCustomerMutation = useMutation({
+        mutationFn: ({ orderId, customerName, customerPhone }) =>
+            api.patch(`/orders/${orderId}/customer`, { customerName, customerPhone }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['bills'] });
+            setEditingCustomer(null);
+            toast.success('Customer details updated');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Failed to update customer')
+    });
 
     const { restaurant: printRestaurant } = useInvoiceSettings(restaurantId);
 
@@ -431,34 +446,84 @@ const Billing = () => {
                                                                     <MoreVertical size={18} />
                                                                 </button>
 
-                                                                {selectedBill?._id === bill._id && (
-                                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden flex flex-col text-left">
-                                                                        <button
-                                                                            onClick={() => handlePrint(bill)}
-                                                                            className="px-4 py-3 hover:bg-muted/50 text-sm font-medium text-foreground flex items-center gap-2 transition-colors border-b border-border/50"
-                                                                        >
-                                                                            <Printer size={16} className="text-primary" /> Print Receipt
-                                                                        </button>
-
-                                                                        {bill.paymentStatus !== 'PAID' && (
+                                                                    {selectedBill?._id === bill._id && (
+                                                                        <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden flex flex-col text-left">
                                                                             <button
-                                                                                onClick={() => handleMarkPaid(bill)}
-                                                                                className="px-4 py-3 hover:bg-emerald-500/10 text-sm font-medium text-emerald-500 flex items-center gap-2 transition-colors border-b border-border/50"
+                                                                                onClick={() => handlePrint(bill)}
+                                                                                className="px-4 py-3 hover:bg-muted/50 text-sm font-medium text-foreground flex items-center gap-2 transition-colors border-b border-border/50"
                                                                             >
-                                                                                <CheckCircle size={16} /> Mark as Paid
+                                                                                <Printer size={16} className="text-primary" /> Print Receipt
                                                                             </button>
-                                                                        )}
 
-                                                                        {bill.status !== 'CANCELLED' && (
-                                                                            <button
-                                                                                onClick={() => handleCancelOrder(bill)}
-                                                                                className="px-4 py-3 hover:bg-red-500/10 text-sm font-medium text-red-500 flex items-center gap-2 transition-colors"
-                                                                            >
-                                                                                <X size={16} /> Cancel Order
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                )}
+                                                                            <div className="px-3 py-2 border-b border-border/50">
+                                                                                {editingCustomer === bill._id ? (
+                                                                                    <div className="space-y-1.5">
+                                                                                        <input
+                                                                                            value={editName}
+                                                                                            onChange={e => setEditName(e.target.value)}
+                                                                                            placeholder="Customer name"
+                                                                                            className="w-full px-2 py-1.5 bg-muted/30 border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+                                                                                        />
+                                                                                        <input
+                                                                                            value={editPhone}
+                                                                                            onChange={e => setEditPhone(e.target.value)}
+                                                                                            placeholder="Phone number"
+                                                                                            className="w-full px-2 py-1.5 bg-muted/30 border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+                                                                                        />
+                                                                                        <div className="flex gap-1">
+                                                                                            <button
+                                                                                                onClick={() => updateCustomerMutation.mutate({
+                                                                                                    orderId: bill._id,
+                                                                                                    customerName: editName,
+                                                                                                    customerPhone: editPhone
+                                                                                                })}
+                                                                                                disabled={updateCustomerMutation.isPending}
+                                                                                                className="flex-1 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-1"
+                                                                                            >
+                                                                                                <Save size={12} /> Save
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={() => setEditingCustomer(null)}
+                                                                                                className="py-1.5 px-2 bg-muted text-muted-foreground text-xs rounded-lg hover:bg-muted/80"
+                                                                                            >
+                                                                                                <X size={12} />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            setEditingCustomer(bill._id);
+                                                                                            setEditName(bill.customerName || '');
+                                                                                            setEditPhone(bill.customerPhone || '');
+                                                                                        }}
+                                                                                        className="w-full py-1.5 hover:bg-muted/50 text-sm font-medium text-foreground flex items-center gap-2 transition-colors rounded-lg"
+                                                                                    >
+                                                                                        <User size={16} className="text-primary" />
+                                                                                        {bill.customerName ? `Edit Customer (${bill.customerName})` : 'Add Customer'}
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {bill.paymentStatus !== 'PAID' && (
+                                                                                <button
+                                                                                    onClick={() => handleMarkPaid(bill)}
+                                                                                    className="px-4 py-3 hover:bg-emerald-500/10 text-sm font-medium text-emerald-500 flex items-center gap-2 transition-colors border-b border-border/50"
+                                                                                >
+                                                                                    <CheckCircle size={16} /> Mark as Paid
+                                                                                </button>
+                                                                            )}
+
+                                                                            {bill.status !== 'CANCELLED' && (
+                                                                                <button
+                                                                                    onClick={() => handleCancelOrder(bill)}
+                                                                                    className="px-4 py-3 hover:bg-red-500/10 text-sm font-medium text-red-500 flex items-center gap-2 transition-colors"
+                                                                                >
+                                                                                    <X size={16} /> Cancel Order
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                             </div>
                                                         </div>
                                                         {/* Backdrop to close menu */}

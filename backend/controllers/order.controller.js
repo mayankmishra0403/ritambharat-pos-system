@@ -634,3 +634,34 @@ export const getActiveBill = async (req, res, next) => {
         next(error);
     }
 };
+
+// @desc    Update customer details on an existing order
+// @route   PATCH /api/orders/:id/customer
+// @access  Private
+export const updateOrderCustomer = async (req, res, next) => {
+    try {
+        const { customerName, customerPhone } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.paymentStatus === 'PAID') {
+            return res.status(400).json({ success: false, message: 'Cannot update customer on a paid order' });
+        }
+
+        if (customerName !== undefined) order.customerName = customerName || undefined;
+        if (customerPhone !== undefined) order.customerPhone = customerPhone || undefined;
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Customer details updated',
+            data: { customerName: order.customerName, customerPhone: order.customerPhone }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
