@@ -333,7 +333,7 @@ export const processPayment = async (req, res, next) => {
 export const addPosOrderItems = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { items, restaurantId } = req.body;
+        const { items, restaurantId, customerName, customerPhone } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ success: false, message: 'Items are required' });
@@ -349,6 +349,9 @@ export const addPosOrderItems = async (req, res, next) => {
         if (order.status === 'CANCELLED') {
             return res.status(400).json({ success: false, message: 'Cannot modify cancelled order' });
         }
+
+        if (customerName !== undefined) order.customerName = customerName || undefined;
+        if (customerPhone !== undefined) order.customerPhone = customerPhone || undefined;
 
         let additionalSubtotal = 0;
 

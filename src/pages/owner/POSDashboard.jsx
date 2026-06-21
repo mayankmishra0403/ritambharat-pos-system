@@ -133,7 +133,9 @@ const POSDashboard = () => {
             if (activeTableOrder) {
                 const res = await api.post(`/pos/order/${activeTableOrder._id}/items`, {
                     items,
-                    restaurantId
+                    restaurantId,
+                    customerName: customerName || undefined,
+                    customerPhone: customerPhone || undefined
                 });
                 return { ...res.data.data, isUpdate: true };
             }
