@@ -488,17 +488,19 @@ const Billing = () => {
                             </div>
                         </div>
 
-                        {/* Print Overlay - visible only during browser print */}
+                        {/* Print Overlay - renders receipt and triggers browser print dialog */}
                         {printing && selectedBill && (
                             <div id="print-overlay" style={{
                                 position: 'fixed', inset: 0, background: 'white', zIndex: 9999,
                                 display: 'flex', justifyContent: 'center', paddingTop: 20
                             }}>
                                 <style>{`
+                                    #print-overlay #thermal-receipt { display: block !important; }
                                     @media print {
-                                        body > *:not(#print-overlay) { display: none !important; }
-                                        #print-overlay { display: flex !important; position: fixed !important; inset: 0 !important; background: white !important; z-index: 9999 !important; }
-                                        #print-overlay #thermal-receipt { display: block !important; }
+                                        body * { visibility: hidden !important; }
+                                        #print-overlay, #print-overlay * { visibility: visible !important; }
+                                        #print-overlay { position: fixed !important; inset: 0 !important; background: white !important; z-index: 9999 !important; display: flex !important; justify-content: center !important; padding-top: 20px !important; }
+                                        .no-print { display: none !important; }
                                     }
                                 `}</style>
                                 <div style={{ width: 320 }}>

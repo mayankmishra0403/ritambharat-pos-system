@@ -334,10 +334,12 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
                                     display: 'flex', justifyContent: 'center', paddingTop: 20
                                 }}>
                                     <style>{`
+                                        #order-print-overlay #thermal-receipt { display: block !important; }
                                         @media print {
-                                            body > *:not(#order-print-overlay) { display: none !important; }
-                                            #order-print-overlay { display: flex !important; position: fixed !important; inset: 0 !important; background: white !important; }
-                                            #order-print-overlay #thermal-receipt { display: block !important; }
+                                            body * { visibility: hidden !important; }
+                                            #order-print-overlay, #order-print-overlay * { visibility: visible !important; }
+                                            #order-print-overlay { position: fixed !important; inset: 0 !important; background: white !important; z-index: 99999 !important; display: flex !important; justify-content: center !important; padding-top: 20px !important; }
+                                            .no-print { display: none !important; }
                                         }
                                     `}</style>
                                     <div ref={printRef} style={{ width: 320 }}>
