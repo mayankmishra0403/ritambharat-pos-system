@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../config/api';
@@ -12,7 +12,6 @@ import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
 import ReceiptTemplate from '../../components/common/ReceiptTemplate';
 import ManualBillModal from '../../components/billing/ManualBillModal';
-import printToPdf from '../../utils/printToPdf';
 import toast from 'react-hot-toast';
 
 const Billing = () => {
@@ -21,6 +20,7 @@ const Billing = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('today'); // today, week, month, all
     const [selectedBill, setSelectedBill] = useState(null);
+    const [printing, setPrinting] = useState(false);
     const [showManualBillModal, setShowManualBillModal] = useState(false);
 
     const restaurantId = useMemo(() => {
@@ -91,16 +91,21 @@ const Billing = () => {
         }
     };
 
+    useEffect(() => {
+        if (!printing) return;
+        const timer = setTimeout(() => window.print(), 300);
+        const handleAfterPrint = () => setPrinting(false);
+        window.addEventListener('afterprint', handleAfterPrint);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('afterprint', handleAfterPrint);
+        };
+    }, [printing]);
+
     const handlePrint = (bill) => {
         setSelectedBill(bill);
+        setPrinting(true);
         toast.success(`Preparing Receipt for Order #${bill.orderNumber.split('-')[2]}...`);
-
-        setTimeout(() => {
-            const el = document.querySelector('.print-container');
-            if (el) {
-                printToPdf(el, `receipt-${bill.orderNumber || 'bill'}.pdf`);
-            }
-        }, 500);
     };
 
     const exportToCSV = () => {
@@ -483,10 +488,24 @@ const Billing = () => {
                             </div>
                         </div>
 
-                        {/* Hidden Receipt for Printing - Isolated from main layout */}
-                        <div className="print-container" style={{ position: 'absolute', left: '-9999px', top: 0, width: '400px', background: 'white', zIndex: -1 }}>
-                            {selectedBill && <ReceiptTemplate order={selectedBill} />}
-                        </div>
+                        {/* Print Overlay - visible only during browser print */}
+                        {printing && selectedBill && (
+                            <div id="print-overlay" style={{
+                                position: 'fixed', inset: 0, background: 'white', zIndex: 9999,
+                                display: 'flex', justifyContent: 'center', paddingTop: 20
+                            }}>
+                                <style>{`
+                                    @media print {
+                                        body > *:not(#print-overlay) { display: none !important; }
+                                        #print-overlay { display: flex !important; position: fixed !important; inset: 0 !important; background: white !important; z-index: 9999 !important; }
+                                        #print-overlay #thermal-receipt { display: block !important; }
+                                    }
+                                `}</style>
+                                <div style={{ width: 320 }}>
+                                    <ReceiptTemplate order={selectedBill} />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Manual Bill Modal */}
                         {showManualBillModal && (
@@ -495,14 +514,9 @@ const Billing = () => {
                                 onClose={() => setShowManualBillModal(false)}
                                 onSuccess={(bill) => {
                                     setSelectedBill(bill);
+                                    setPrinting(true);
                                     setShowManualBillModal(false);
                                     toast.success('Manual bill created!');
-                                    setTimeout(() => {
-                                        const el = document.querySelector('.print-container');
-                                        if (el) {
-                                            printToPdf(el, `receipt-${bill.orderNumber || 'bill'}.pdf`);
-                                        }
-                                    }, 500);
                                 }}
                             />
                         )}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     X, Plus, Minus, Search, ShoppingCart,
@@ -8,7 +8,6 @@ import {
 import ReceiptTemplate from '../common/ReceiptTemplate';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../config/api';
-import printToPdf from '../../utils/printToPdf';
 import toast from 'react-hot-toast';
 
 const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
@@ -19,6 +18,18 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [placedOrder, setPlacedOrder] = useState(null);
+    const [printing, setPrinting] = useState(false);
+
+    useEffect(() => {
+        if (!printing) return;
+        const timer = setTimeout(() => window.print(), 300);
+        const handleAfterPrint = () => setPrinting(false);
+        window.addEventListener('afterprint', handleAfterPrint);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('afterprint', handleAfterPrint);
+        };
+    }, [printing]);
 
     // Fetch Tables
     const { data: tables = [], isLoading: loadingTables } = useQuery({
@@ -296,14 +307,7 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
 
                             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md pt-6">
                                 <button
-                                    onClick={() => {
-                                        toast.success('Preparing Receipt...');
-                                        setTimeout(() => {
-                                            if (printRef.current) {
-                                                printToPdf(printRef.current, `receipt-${placedOrder.orderNumber || 'order'}.pdf`);
-                                            }
-                                        }, 100);
-                                    }}
+                                    onClick={() => setPrinting(true)}
                                     className="flex-1 bg-primary text-primary-foreground py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/30"
                                 >
                                     <Printer size={18} />
@@ -323,10 +327,24 @@ const ManualOrderModal = ({ isOpen, onClose, restaurantId }) => {
                                 </button>
                             </div>
 
-                            {/* Hidden Receipt for Printing */}
-                            <div ref={printRef} style={{ position: 'absolute', left: '-9999px', top: 0, width: '400px', background: 'white', zIndex: -1 }}>
-                                <ReceiptTemplate order={placedOrder} />
-                            </div>
+                            {/* Print Overlay */}
+                            {printing && (
+                                <div id="order-print-overlay" style={{
+                                    position: 'fixed', inset: 0, background: 'white', zIndex: 99999,
+                                    display: 'flex', justifyContent: 'center', paddingTop: 20
+                                }}>
+                                    <style>{`
+                                        @media print {
+                                            body > *:not(#order-print-overlay) { display: none !important; }
+                                            #order-print-overlay { display: flex !important; position: fixed !important; inset: 0 !important; background: white !important; }
+                                            #order-print-overlay #thermal-receipt { display: block !important; }
+                                        }
+                                    `}</style>
+                                    <div ref={printRef} style={{ width: 320 }}>
+                                        <ReceiptTemplate order={placedOrder} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
