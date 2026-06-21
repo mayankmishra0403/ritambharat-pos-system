@@ -15,7 +15,7 @@ export const uploadImage = async (req, res, next) => {
         }
 
         const baseUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
-        const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
+        const imageUrl = `${baseUrl}/api/images/${req.file.filename}`;
 
         res.status(200).json({
             success: true,

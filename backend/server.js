@@ -1,12 +1,14 @@
 import express from 'express';
-import dotenv from 'dotenv';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
-import compression from 'compression';
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import morgan from 'morgan';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import connectDB from './config/database.js';
+import { logger } from './config/logger.js';
+import { connectDB } from './config/db.js';
 import { connectRedis } from './config/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
@@ -169,6 +171,21 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/takeaway', takeawayRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/sync', syncRoutes);
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// Serve uploaded images through API pipeline (bypasses Cloudflare static cache, applies CORS/security headers)
+app.get('/api/images/:filename', (req, res) => {
+    const filePath = path.join(uploadsDir, path.basename(req.params.filename));
+    if (fs.existsSync(filePath)) {
+        res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.sendFile(filePath);
+    } else {
+        res.status(404).json({ success: false, message: 'Image not found' });
+    }
+});
+
+// Static fallback for direct /uploads access
 app.use('/uploads', express.static('uploads'));
 
 // 404 handler
