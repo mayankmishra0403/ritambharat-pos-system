@@ -3,6 +3,7 @@ import numberToWords from '../../../utils/numberToWords';
 const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
     const currency = restaurant.currency || '\u20B9';
     const isPrint = type === 'print';
+    const isPaid = order.paymentStatus === 'PAID';
 
     const formatDate = (d) =>
         new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -14,44 +15,47 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
 
     return (
         <div className={`bg-white text-black ${isPrint ? 'max-w-[72mm] mx-auto font-mono text-[8pt] leading-tight' : 'p-5 font-mono text-xs leading-snug'}`}>
-            {/* ─── HEADER ─── */}
-            <div className="text-center border-b-2 border-gray-800 pb-2 mb-2">
+            {/* ═══════════ HEADER ═══════════ */}
+            <div className="text-center pb-3">
                 {settings.showLogo && restaurant.logo && (
                     <img src={restaurant.logo} alt="" className="h-8 mx-auto mb-1 object-contain" />
                 )}
-                <h1 className={`${isPrint ? 'text-[14pt]' : 'text-lg'} font-black uppercase tracking-wider`}>
+                <h1 className={`${isPrint ? 'text-[16pt]' : 'text-lg'} font-black uppercase tracking-wider`}>
                     {restaurant.name}
                 </h1>
                 {restaurant.tagline && (
-                    <p className="text-gray-600 italic text-[8pt]">{restaurant.tagline}</p>
+                    <p className="text-gray-600 italic text-[8pt] mt-0.5">{restaurant.tagline}</p>
                 )}
-                <p className="text-gray-600 text-[7.5pt]">
+                <p className="text-gray-600 text-[7.5pt] mt-1">
                     {[restaurant.address?.street, restaurant.address?.city, restaurant.address?.state, restaurant.address?.zipCode].filter(Boolean).join(', ')}
                 </p>
                 {restaurant.contact?.phone && <p className="text-gray-600 text-[7.5pt]">{restaurant.contact.phone}</p>}
                 {restaurant.alternatePhone && <p className="text-gray-600 text-[7.5pt]">{restaurant.alternatePhone}</p>}
                 {restaurant.contact?.email && <p className="text-gray-600 text-[7.5pt]">{restaurant.contact.email}</p>}
                 {restaurant.website && <p className="text-gray-600 text-[7.5pt]">{restaurant.website}</p>}
-                {settings.showGstin && restaurant.gstin && <p className="font-bold text-[8pt]">GSTIN: {restaurant.gstin}</p>}
+                {settings.showGstin && restaurant.gstin && <p className="font-bold text-[8pt] mt-0.5">GSTIN: {restaurant.gstin}</p>}
                 {settings.showFssai && restaurant.fssai && <p className="text-gray-600 text-[7.5pt]">FSSAI: {restaurant.fssai}</p>}
             </div>
+            <div className="border-t-2 border-gray-800"></div>
 
-            {/* ─── INVOICE TITLE ─── */}
-            <div className="text-center border-b border-dashed border-gray-300 pb-1 mb-2">
-                <h2 className={`${isPrint ? 'text-[10pt]' : 'text-sm'} font-bold uppercase tracking-widest`}>
+            {/* ═══════════ INVOICE TITLE ═══════════ */}
+            <div className="border-t-2 border-gray-800 mt-1"></div>
+            <div className="text-center py-1">
+                <h2 className={`${isPrint ? 'text-[12pt]' : 'text-sm'} font-bold uppercase tracking-widest`}>
                     {settings.invoiceTitle || 'TAX INVOICE'}
                 </h2>
             </div>
+            <div className="border-t border-gray-400 mb-1"></div>
 
-            {/* ─── ORDER INFO ─── */}
+            {/* ═══════════ ORDER INFO ═══════════ */}
             <div className={`${isPrint ? 'text-[8pt]' : 'text-[10px]'} mb-2 border-b border-dashed border-gray-300 pb-2`}>
                 <div className="flex justify-between">
-                    <span>Invoice: <span className="font-bold">{order.orderNumber || order._id?.slice(-6).toUpperCase()}</span></span>
-                    <span>Date: {formatDate(order.createdAt)}</span>
+                    <span>Invoice: <span className={`${isPrint ? 'text-[10pt]' : 'text-sm'} font-bold`}>{order.orderNumber || order._id?.slice(-6).toUpperCase()}</span></span>
+                    <span>Date: <span className="font-bold">{formatDate(order.createdAt)}</span></span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Time: {formatTime(order.createdAt)}</span>
-                    {order.table?.name && <span>Table: {order.table.name}</span>}
+                    <span>Time: <span className="font-bold">{formatTime(order.createdAt)}</span></span>
+                    {order.table?.name && <span>Table: <span className="font-bold">{order.table.name}</span></span>}
                 </div>
                 {settings.showPax && order.pax && (
                     <div className="flex justify-between">
@@ -59,21 +63,23 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                         <span>Type: {order.orderType || 'DINE IN'}</span>
                     </div>
                 )}
-                {settings.showWaiterName && order.waiterName && <div>Waiter: {order.waiterName}</div>}
-                {settings.showCashierName && order.cashierName && <div>Cashier: {order.cashierName}</div>}
+                {settings.showWaiterName && order.waiterName && <div>Waiter: <span className="font-bold">{order.waiterName}</span></div>}
+                {settings.showCashierName && order.cashierName && <div>Cashier: <span className="font-bold">{order.cashierName}</span></div>}
                 {settings.showCustomerDetails && order.customerName && (
                     <div>Customer: {order.customerName}{order.customerPhone ? ` (${order.customerPhone})` : ''}</div>
                 )}
             </div>
 
-            {/* ─── ITEMS ─── */}
+            {/* ═══════════ ITEMS TABLE ═══════════ */}
             <div className="mb-2">
-                <div className={`flex border-b-2 border-gray-800 pb-1 mb-1 font-bold ${isPrint ? 'text-[8pt]' : 'text-[10px]'}`}>
+                <div className="border-t-2 border-gray-800"></div>
+                <div className={`flex pt-0.5 pb-0.5 font-bold ${isPrint ? 'text-[8pt]' : 'text-[10px]'}`}>
                     <span style={{ width: '44%' }}>Item</span>
                     <span style={{ width: '14%' }} className="text-center">Qty</span>
                     <span style={{ width: '20%' }} className="text-right">Rate</span>
                     <span style={{ width: '22%' }} className="text-right">Amt</span>
                 </div>
+                <div className="border-t border-gray-400"></div>
                 {(order.items || []).map((item, idx) => (
                     <div key={idx} className={`border-b border-dashed border-gray-200 py-1 ${isPrint ? 'text-[8pt]' : 'text-[10px]'}`}>
                         <div className="flex">
@@ -91,9 +97,10 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                     </div>
                 ))}
             </div>
+            <div className="border-t border-gray-400 mb-1"></div>
 
-            {/* ─── TOTALS ─── */}
-            <div className="border-t-2 border-gray-900 pt-1 mb-2">
+            {/* ═══════════ TOTALS ═══════════ */}
+            <div className="pt-1 mb-2">
                 <div className={`space-y-0.5 ${isPrint ? 'text-[8pt]' : 'text-[10px]'}`}>
                     <div className="flex justify-between">
                         <span>Sub Total</span>
@@ -163,8 +170,9 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                         return null;
                     })()}
 
-                    <div className="border-t-2 border-gray-900 pt-1 mt-1">
-                        <div className={`flex justify-between ${isPrint ? 'text-[11pt]' : 'text-sm'} font-black`}>
+                    {/* ─── GRAND TOTAL with thick borders ─── */}
+                    <div className="border-t-[3px] border-gray-900 mt-1 pt-1">
+                        <div className={`flex justify-between ${isPrint ? 'text-[13pt]' : 'text-base'} font-black`}>
                             <span>GRAND TOTAL</span>
                             <span>{currency}{(order.total || 0).toFixed(2)}</span>
                         </div>
@@ -172,7 +180,7 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                 </div>
             </div>
 
-            {/* ─── AMOUNT IN WORDS ─── */}
+            {/* ═══════════ AMOUNT IN WORDS ═══════════ */}
             {settings.showAmountInWords && order.total > 0 && (
                 <div className={`border-t border-dashed border-gray-300 pt-1 mb-1 ${isPrint ? 'text-[8pt]' : 'text-[10px]'} italic text-gray-700`}>
                     <span className="font-bold">Amount in Words: </span>
@@ -180,17 +188,21 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                 </div>
             )}
 
-            {/* ─── PAYMENT ─── */}
-            <div className="border-t border-dashed border-gray-300 pt-1 mb-1">
-                <div className="flex justify-between text-[8pt]">
-                    <span>{order.paymentMethod || '-'}</span>
-                    <span className={order.paymentStatus === 'PAID' ? 'text-green-700 font-bold' : ''}>
-                        {order.paymentStatus === 'PAID' ? '\u2713 PAID' : order.paymentStatus || 'PENDING'}
+            {/* ═══════════ PAYMENT ═══════════ */}
+            <div className="border-t border-gray-400 mt-1"></div>
+            <div className="flex justify-between items-center py-1">
+                <span className="font-bold text-[9pt]">{order.paymentMethod || '-'}</span>
+                {isPaid ? (
+                    <span className="text-green-800 font-bold text-[9pt] bg-green-100 px-1.5 border border-green-700">
+                        {'\u2713'} PAID
                     </span>
-                </div>
+                ) : (
+                    <span className="text-gray-500">{order.paymentStatus || 'PENDING'}</span>
+                )}
             </div>
+            <div className="border-t border-gray-400"></div>
 
-            {/* ─── QR CODE ─── */}
+            {/* ═══════════ QR CODE ═══════════ */}
             {settings.showQRCode && settings.qrUrl && (
                 <div className="text-center my-1">
                     <img
@@ -201,9 +213,10 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
                 </div>
             )}
 
-            {/* ─── FOOTER ─── */}
+            {/* ═══════════ FOOTER ═══════════ */}
             {settings.showFooter && (
-                <div className={`text-center border-t-2 border-gray-800 pt-2 ${isPrint ? 'text-[7.5pt]' : 'text-[10px]'} text-gray-700`}>
+                <div className={`text-center pt-2 ${isPrint ? 'text-[7.5pt]' : 'text-[10px]'} text-gray-700`}>
+                    <div className="border-t-2 border-gray-800 mb-2"></div>
                     <p className="font-bold text-black">{settings.thankYouMessage || 'Thank You For Visiting'}</p>
                     <p>{settings.visitAgainMessage || 'Please Visit Again'}</p>
                     {settings.customerCareNumber && <p>{settings.customerCareNumber}</p>}

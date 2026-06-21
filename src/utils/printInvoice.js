@@ -6,6 +6,7 @@ function renderToString(order, restaurant, settings) {
     const now = new Date(order.createdAt);
     const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const invoiceNum = order.orderNumber || order._id?.slice(-6).toUpperCase() || '';
 
     const itemsHtml = (order.items || []).map(item => {
         const name = item.name || (item.menuItem && item.menuItem.name) || '';
@@ -62,12 +63,14 @@ function renderToString(order, restaurant, settings) {
         return '';
     })();
 
+    const isPaid = order.paymentStatus === 'PAID';
+
     return `
     <!DOCTYPE html>
     <html>
     <head>
     <meta charset="utf-8">
-    <title>Invoice - ${order.orderNumber || order._id?.slice(-6) || ''}</title>
+    <title>Invoice - ${invoiceNum}</title>
     <style>
         @page {
             size: 80mm auto;
@@ -102,72 +105,86 @@ function renderToString(order, restaurant, settings) {
         .b { font-weight: bold; }
         .i { font-style: italic; }
         .muted { color: #555; }
-        .sep { border-top: 1px solid #000; margin: 2.5pt 0; }
-        .sep-dashed { border-top: 1px dashed #888; margin: 2pt 0; }
+
+        /* Separators — weight hierarchy: thicker > thick > solid > dashed */
+        .sep-thicker { border-top: 3px solid #000; }
         .sep-thick { border-top: 2px solid #000; }
-        .name-row { font-size: 14pt; font-weight: bold; text-align: center; letter-spacing: 0.5pt; }
-        .invoice-title { font-size: 10pt; font-weight: bold; text-align: center; }
-        .grand-total { font-size: 11pt; font-weight: bold; text-align: right; }
-        .footer-text { font-size: 7.5pt; color: #555; }
+        .sep { border-top: 1px solid #000; }
+        .sep-dashed { border-top: 1px dashed #888; }
+
+        /* Typography hierarchy */
+        .name-row { font-size: 16pt; font-weight: bold; text-align: center; letter-spacing: 0.5pt; }
+        .invoice-title { font-size: 12pt; font-weight: bold; text-align: center; letter-spacing: 1pt; }
+        .invoice-number { font-size: 10pt; font-weight: bold; }
+        .grand-total-label { font-size: 13pt; font-weight: bold; }
+        .grand-total-amount { font-size: 13pt; font-weight: bold; text-align: right; }
         .amount-words { font-size: 8pt; font-style: italic; color: #333; }
+        .footer-text { font-size: 7.5pt; color: #555; }
+        .paid-badge { font-size: 9pt; font-weight: bold; color: #008000; }
+        .pending-badge { font-size: 8pt; color: #888; }
     </style>
     </head>
     <body>
 
-        <!-- ─── HEADER ─── -->
-        <div class="c sep" style="padding-bottom:3pt">
+        <!-- ═══════════ HEADER ═══════════ -->
+        <div class="c" style="padding-bottom:4pt">
             ${s.showLogo && restaurant.logo ? `<img src="${restaurant.logo}" style="height:8mm;margin-bottom:2pt;object-fit:contain" /><br>` : ''}
             <div class="name-row">${restaurant.name || 'Restaurant'}</div>
-            ${restaurant.tagline ? `<div style="font-size:8pt;color:#555;font-style:italic">${restaurant.tagline}</div>` : ''}
-            <div style="font-size:7.5pt;color:#555">${[restaurant.address?.street, restaurant.address?.city, restaurant.address?.state, restaurant.address?.zipCode].filter(Boolean).join(', ')}</div>
+            ${restaurant.tagline ? `<div style="font-size:8pt;color:#555;font-style:italic;margin-top:1pt">${restaurant.tagline}</div>` : ''}
+            <div style="font-size:7.5pt;color:#555;margin-top:2pt">${[restaurant.address?.street, restaurant.address?.city, restaurant.address?.state, restaurant.address?.zipCode].filter(Boolean).join(', ')}</div>
             ${restaurant.contact?.phone ? `<div style="font-size:7.5pt;color:#555">${restaurant.contact.phone}</div>` : ''}
             ${restaurant.alternatePhone ? `<div style="font-size:7.5pt;color:#555">${restaurant.alternatePhone}</div>` : ''}
             ${restaurant.contact?.email ? `<div style="font-size:7.5pt;color:#555">${restaurant.contact.email}</div>` : ''}
             ${restaurant.website ? `<div style="font-size:7.5pt;color:#555">${restaurant.website}</div>` : ''}
-            ${s.showGstin && restaurant.gstin ? `<div style="font-size:8pt;font-weight:bold">GSTIN: ${restaurant.gstin}</div>` : ''}
+            ${s.showGstin && restaurant.gstin ? `<div style="font-size:8pt;font-weight:bold;margin-top:1pt">GSTIN: ${restaurant.gstin}</div>` : ''}
             ${s.showFssai && restaurant.fssai ? `<div style="font-size:7.5pt;color:#555">FSSAI: ${restaurant.fssai}</div>` : ''}
         </div>
+        <div class="sep-thick"></div>
 
-        <!-- ─── INVOICE TITLE ─── -->
-        <div class="invoice-title sep-dashed" style="padding:2.5pt 0 2.5pt 0;margin-bottom:2.5pt">
+        <!-- ═══════════ INVOICE TITLE ═══════════ -->
+        <div class="sep-thick" style="margin-top:3pt;margin-bottom:2pt"></div>
+        <div class="invoice-title" style="padding:3pt 0">
             ${s.invoiceTitle || 'TAX INVOICE'}
         </div>
+        <div class="sep" style="margin-bottom:3pt"></div>
 
-        <!-- ─── ORDER INFO ─── -->
-        <table style="font-size:8pt;margin-bottom:2.5pt">
+        <!-- ═══════════ ORDER INFO ═══════════ -->
+        <table style="font-size:8pt;margin-bottom:3pt">
             <tr>
-                <td style="width:50%">Invoice: <span class="b">${order.orderNumber || order._id?.slice(-6).toUpperCase() || ''}</span></td>
-                <td style="text-align:right">Date: ${dateStr}</td>
+                <td style="width:50%">Invoice: <span class="invoice-number">${invoiceNum}</span></td>
+                <td class="r">Date: <span class="b">${dateStr}</span></td>
             </tr>
             <tr>
-                <td>Time: ${timeStr}</td>
-                ${order.table?.name ? `<td style="text-align:right">Table: ${order.table.name}</td>` : '<td></td>'}
+                <td>Time: <span class="b">${timeStr}</span></td>
+                ${order.table?.name ? `<td class="r">Table: <span class="b">${order.table.name}</span></td>` : '<td></td>'}
             </tr>
-            ${s.showPax && order.pax ? `<tr><td>PAX: ${order.pax}</td><td style="text-align:right">Type: ${order.orderType || 'DINE IN'}</td></tr>` : ''}
-            ${s.showWaiterName && order.waiterName ? `<tr><td colspan="2">Waiter: ${order.waiterName}</td></tr>` : ''}
-            ${s.showCashierName && order.cashierName ? `<tr><td colspan="2">Cashier: ${order.cashierName}</td></tr>` : ''}
+            ${s.showPax && order.pax ? `<tr><td>PAX: ${order.pax}</td><td class="r">Type: ${order.orderType || 'DINE IN'}</td></tr>` : ''}
+            ${s.showWaiterName && order.waiterName ? `<tr><td colspan="2">Waiter: <span class="b">${order.waiterName}</span></td></tr>` : ''}
+            ${s.showCashierName && order.cashierName ? `<tr><td colspan="2">Cashier: <span class="b">${order.cashierName}</span></td></tr>` : ''}
             ${s.showCustomerDetails && order.customerName ? `<tr><td colspan="2">Customer: ${order.customerName}${order.customerPhone ? ' (' + order.customerPhone + ')' : ''}</td></tr>` : ''}
         </table>
         <div class="sep-dashed"></div>
 
-        <!-- ─── ITEMS TABLE ─── -->
-        <table style="margin-top:2.5pt;margin-bottom:2.5pt">
+        <!-- ═══════════ ITEMS TABLE ═══════════ -->
+        <table style="margin-top:3pt;margin-bottom:3pt">
             <thead>
-                <tr class="sep" style="font-size:8pt;font-weight:bold">
-                    <td style="width:44%;padding:2.5pt 0">Item</td>
-                    <td style="width:14%;text-align:center;padding:2.5pt 0">Qty</td>
-                    <td style="width:20%;text-align:right;padding:2.5pt 0">Rate</td>
-                    <td style="width:22%;text-align:right;padding:2.5pt 0">Amt</td>
+                <tr><td colspan="4" style="padding:0"><div class="sep-thick"></div></td></tr>
+                <tr style="font-size:8pt;font-weight:bold">
+                    <td style="width:44%;padding:2pt 0">Item</td>
+                    <td style="width:14%;text-align:center;padding:2pt 0">Qty</td>
+                    <td style="width:20%;text-align:right;padding:2pt 0">Rate</td>
+                    <td style="width:22%;text-align:right;padding:2pt 0">Amt</td>
                 </tr>
+                <tr><td colspan="4" style="padding:0"><div class="sep"></div></td></tr>
             </thead>
             <tbody>
                 ${itemsHtml}
             </tbody>
         </table>
-        <div class="sep-dashed"></div>
+        <div class="sep"></div>
 
-        <!-- ─── TOTALS ─── -->
-        <table style="margin-top:2.5pt;margin-bottom:2.5pt">
+        <!-- ═══════════ TOTALS ═══════════ -->
+        <table style="margin-top:3pt;margin-bottom:3pt">
             <tr>
                 <td style="width:60%;padding:1.5pt 0;font-size:8pt">Sub Total</td>
                 <td style="text-align:right;padding:1.5pt 0;font-size:8pt;font-weight:bold">${currency}${(order.subtotal || 0).toFixed(2)}</td>
@@ -177,29 +194,35 @@ function renderToString(order, restaurant, settings) {
             ${gstHtml}
             ${order.tipAmount > 0 ? `<tr><td style="padding:1.5pt 0;font-size:8pt">Tip</td><td style="text-align:right;padding:1.5pt 0;font-size:8pt">${currency}${(order.tipAmount || 0).toFixed(2)}</td></tr>` : ''}
             ${roundOffHtml}
-            <tr><td colspan="2" style="padding:0"><div class="sep-thick" style="margin:2pt 0"></div></td></tr>
+            <tr><td colspan="2" style="padding:0"><div class="sep-thicker" style="margin:3pt 0 2pt 0"></div></td></tr>
             <tr>
-                <td style="font-size:11pt;font-weight:bold;padding:2.5pt 0">GRAND TOTAL</td>
-                <td style="text-align:right;font-size:11pt;font-weight:bold;padding:2.5pt 0">${currency}${(order.total || 0).toFixed(2)}</td>
+                <td class="grand-total-label" style="padding:3pt 0">GRAND TOTAL</td>
+                <td class="grand-total-amount" style="padding:3pt 0">${currency}${(order.total || 0).toFixed(2)}</td>
             </tr>
-            <tr><td colspan="2" style="padding:0"><div class="sep-thick" style="margin:0 0 2.5pt 0"></div></td></tr>
+            <tr><td colspan="2" style="padding:0"><div class="sep-thicker" style="margin:2pt 0 0 0"></div></td></tr>
         </table>
 
-        <!-- ─── AMOUNT IN WORDS ─── -->
-        ${s.showAmountInWords && order.total > 0 ? `<div class="amount-words sep-dashed" style="padding:2pt 0;margin-bottom:2.5pt"><span class="b">Amount in Words: </span>${numberToWords(order.total)} ONLY</div>` : ''}
+        <!-- ═══════════ AMOUNT IN WORDS ═══════════ -->
+        ${s.showAmountInWords && order.total > 0 ? `<div class="amount-words sep-dashed" style="padding:2.5pt 0;margin-bottom:3pt"><span class="b">Amount in Words: </span>${numberToWords(order.total)} ONLY</div>` : ''}
 
-        <!-- ─── PAYMENT ─── -->
-        <div class="sep-dashed" style="padding:2pt 0;margin-bottom:2.5pt;display:flex;justify-content:space-between;font-size:8pt">
-            <span>${order.paymentMethod || '-'}</span>
-            <span style="${order.paymentStatus === 'PAID' ? 'color:#008000;font-weight:bold' : ''}">${order.paymentStatus === 'PAID' ? '\u2713 PAID' : (order.paymentStatus || 'PENDING')}</span>
+        <!-- ═══════════ PAYMENT ═══════════ -->
+        <div class="sep" style="margin-bottom:2pt"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:2.5pt 0;font-size:9pt">
+            <span class="b">${order.paymentMethod || '-'}</span>
+            ${isPaid
+                ? `<span class="paid-badge" style="background:#e8f5e9;padding:1.5pt 6pt;border:1px solid #008000">\u2713 PAID</span>`
+                : `<span class="pending-badge">${order.paymentStatus || 'PENDING'}</span>`
+            }
         </div>
+        <div class="sep" style="margin-top:2pt"></div>
 
-        <!-- ─── QR CODE ─── -->
-        ${s.showQRCode && s.qrUrl ? `<div class="c" style="margin:1.5pt 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.qrUrl)}" style="width:150px;image-rendering:pixelated" /></div>` : ''}
+        <!-- ═══════════ QR CODE ═══════════ -->
+        ${s.showQRCode && s.qrUrl ? `<div class="c" style="margin:2pt 0"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(s.qrUrl)}" style="width:150px;image-rendering:pixelated" /></div>` : ''}
 
-        <!-- ─── FOOTER ─── -->
+        <!-- ═══════════ FOOTER ═══════════ -->
         ${s.showFooter ? `
-        <div class="sep" style="padding-top:3pt;font-size:7.5pt;color:#555;text-align:center">
+        <div class="sep-thick" style="margin-bottom:3pt"></div>
+        <div style="font-size:7.5pt;color:#555;text-align:center">
             <div style="font-weight:bold;color:#000;font-size:8pt">${s.thankYouMessage || 'Thank You For Visiting'}</div>
             <div style="margin-top:1pt">${s.visitAgainMessage || 'Please Visit Again'}</div>
             ${s.customerCareNumber ? `<div style="margin-top:1pt">${s.customerCareNumber}</div>` : ''}
