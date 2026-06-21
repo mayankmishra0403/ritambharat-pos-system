@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Logo from '../../components/common/Logo';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import PWAInstallPrompt from '../../components/common/PWAInstallPrompt';
 
 const Login = () => {
     const [activeTab, setActiveTab] = useState('email');
@@ -317,6 +318,7 @@ const Login = () => {
                     )}
                 </div>
             </div>
+            <PWAInstallPrompt />
         </div>
     );
 };

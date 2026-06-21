@@ -17,7 +17,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
-      includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'og-image.svg', 'robots.txt'],
+      includeAssets: ['favicon.svg', 'favicon.png', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'og-image.svg', 'robots.txt'],
       manifest: {
         name: 'Ritam Bharat POS',
         short_name: 'Ritam POS',
@@ -28,25 +28,13 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'favicon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          },
-          {
-            src: 'favicon.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'maskable'
-          },
-          {
-            src: 'favicon.png',
+            src: 'icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'favicon.png',
+            src: 'icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
