@@ -225,6 +225,7 @@ export const getOrders = async (req, res, next) => {
         }
 
         const orders = await Order.find(query)
+            .populate('restaurant', 'name')
             .populate('table', 'name')
             .populate('items.menuItem', 'name image')
             .sort({ createdAt: -1 })
