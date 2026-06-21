@@ -60,6 +60,7 @@ const POSDashboard = lazy(() => import('./pages/owner/POSDashboard'));
 const GstSettings = lazy(() => import('./pages/owner/GstSettings'));
 const CustomerList = lazy(() => import('./pages/owner/CustomerList'));
 const TakeawayDashboard = lazy(() => import('./pages/owner/TakeawayDashboard'));
+const InvoiceSettings = lazy(() => import('./pages/owner/InvoiceSettings'));
 
 // --- Kitchen Pages (Lazy) ---
 const KitchenDisplay = lazy(() => import('./pages/kitchen/KitchenDisplay'));
@@ -361,6 +362,16 @@ function App() {
                       <ProtectedRoute permission="menu">
                         <OwnerGuard>
                           <GstSettings />
+                        </OwnerGuard>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/invoice-settings"
+                    element={
+                      <ProtectedRoute permission="settings">
+                        <OwnerGuard>
+                          <InvoiceSettings />
                         </OwnerGuard>
                       </ProtectedRoute>
                     }

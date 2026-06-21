@@ -56,6 +56,7 @@ const Sidebar = ({ className, open, onClose }) => {
         { label: 'Customers', icon: UserCheck, link: '/customers', permission: 'dashboard' },
         { label: 'Reviews', icon: Star, link: '/admin/reviews', permission: 'reviews' },
         { label: 'Complaints', icon: MessageSquare, link: '/admin/complaints', permission: 'complaints' },
+        { label: 'Invoice Settings', icon: FileText, link: '/invoice-settings', permission: 'settings' },
         { label: 'Settings', icon: Settings, link: '/settings', permission: 'settings' },
         { label: 'GST Settings', icon: Percent, link: '/gst-settings', permission: 'menu' },
     ];

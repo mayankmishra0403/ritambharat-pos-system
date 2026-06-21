@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Receipt, Banknote, ArrowLeft, Loader2, Share2, Download } from 'lucide-react';
+import { Receipt, Banknote, ArrowLeft, Loader2, Download } from 'lucide-react';
 import api from '../../config/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-
+import InvoiceRenderer from '../../components/billing/InvoiceRenderer';
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 
 const CustomerBill = () => {
     const params = useParams();
@@ -18,7 +19,6 @@ const CustomerBill = () => {
     const { data: order, isLoading } = useQuery({
         queryKey: ['order-bill', orderId, tableId],
         queryFn: async () => {
-            // Priority 1: Session bill for the current table
             if (tableId) {
                 try {
                     const res = await api.get(`/orders/session/active/${tableId}`);
@@ -27,14 +27,15 @@ const CustomerBill = () => {
                     console.error("Session bill fetch failed, falling back to single order", e);
                 }
             }
-
-            // Priority 2: Single specific order
             if (!orderId) return null;
             const res = await api.get(`/orders/${orderId}`);
             return res.data.data;
         },
         enabled: !!(orderId || tableId)
     });
+
+    const restaurantId = order?.restaurant?._id || order?.restaurant;
+    const { restaurant, settings } = useInvoiceSettings(restaurantId);
 
     const [isRequesting, setIsRequesting] = useState(false);
 
@@ -55,24 +56,6 @@ const CustomerBill = () => {
             toast.error(message);
         } finally {
             setIsRequesting(false);
-        }
-    };
-
-    const handleShare = async () => {
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `Bill from ${order.restaurant?.name}`,
-                    text: `Hey, here is our bill from ${order.restaurant?.name}. Total: $${(order.total || 0).toFixed(2)}`,
-                    url: window.location.href
-                });
-            } catch (error) {
-                console.error('Error sharing:', error);
-            }
-        } else {
-            // Fallback: Copy to clipboard
-            navigator.clipboard.writeText(window.location.href);
-            toast.success("Link copied to clipboard!");
         }
     };
 
@@ -104,35 +87,18 @@ const CustomerBill = () => {
 
     return (
         <div className="pb-40 px-4 md:px-0 max-w-lg mx-auto">
-            {/* Print Only Styles */}
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @media print {
-                    @page { margin: 10mm; }
+                    @page { margin: 5mm; }
                     html, body { background: white !important; }
                     body > *:not(#bill-receipt-container) { display: none !important; }
                     #bill-receipt-container { display: block !important; }
-                    #bill-receipt {
-                        background: white !important;
-                        color: black !important;
-                        padding: 20px !important;
-                        width: 100% !important;
-                        max-width: 400px !important;
-                        margin: 0 auto !important;
-                        font-family: 'Courier New', Courier, monospace !important;
-                        border-radius: 0 !important;
-                        box-shadow: none !important;
-                    }
-                    #bill-receipt * {
-                        visibility: visible !important;
-                        color: black !important;
-                        background: transparent !important;
-                    }
+                    #bill-receipt-container * { visibility: visible !important; }
                     .no-print { display: none !important; }
                 }
             `}} />
 
-            {/* Header */}
             <div className="flex items-center gap-4 py-6 no-print">
                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft size={20} />
@@ -140,107 +106,21 @@ const CustomerBill = () => {
                 <h1 className="text-2xl font-bold">Your Bill</h1>
             </div>
 
-            {/* Receipt Card */}
             <div id="bill-receipt-container">
-            <motion.div
-                id="bill-receipt"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-white text-black rounded-3xl p-6 shadow-2xl relative overflow-hidden"
-            >
-                {/* Torn Paper Effect Top */}
-                <div className="absolute top-0 left-0 right-0 h-4 bg-[#121212] no-print" style={{ clipPath: 'polygon(0% 0%, 5% 100%, 10% 0%, 15% 100%, 20% 0%, 25% 100%, 30% 0%, 35% 100%, 40% 0%, 45% 100%, 50% 0%, 55% 100%, 60% 0%, 65% 100%, 70% 0%, 75% 100%, 80% 0%, 85% 100%, 90% 0%, 95% 100%, 100% 0%)' }}></div>
-
-                <div className="text-center mb-6 pt-4">
-                    <h2 className="text-2xl font-black uppercase tracking-wider mb-1">{order.restaurant?.name || 'Restaurant'}</h2>
-                    <p className="text-gray-500 text-sm font-mono">
-                        {order.sessionId ? `Session #${order.sessionId.slice(-6).toUpperCase()}` : `Order #${(order._id || '').slice(-6).toUpperCase()}`}
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">{new Date(order.createdAt).toLocaleString()}</p>
-                </div>
-
-                <div className="border-b-2 border-dashed border-gray-200 mb-6"></div>
-
-                {/* Items */}
-                <div className="space-y-3 mb-6 font-mono text-sm">
-                    {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start">
-                            <div className="flex gap-2">
-                                <span className="font-bold">{item.quantity}x</span>
-                                <span>{item.name || item.menuItem?.name}</span>
-                            </div>
-                            <span className="font-bold">{((item.price || 0) * item.quantity).toFixed(2)}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="border-b-2 border-dashed border-gray-200 mb-6"></div>
-
-                {/* Totals */}
-                <div className="space-y-2 font-mono text-sm mb-6">
-                    <div className="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span>{(order.subtotal || 0).toFixed(2)}</span>
-                    </div>
-                    {order.gstBreakdown?.cgst > 0 && (
-                        <div className="flex justify-between text-gray-600 text-[11px]">
-                            <span>CGST @ {((order.gstBreakdown.cgst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
-                            <span>{order.gstBreakdown.cgst.toFixed(2)}</span>
-                        </div>
-                    )}
-                    {order.gstBreakdown?.sgst > 0 && (
-                        <div className="flex justify-between text-gray-600 text-[11px]">
-                            <span>SGST @ {((order.gstBreakdown.sgst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
-                            <span>{order.gstBreakdown.sgst.toFixed(2)}</span>
-                        </div>
-                    )}
-                    {order.gstBreakdown?.igst > 0 && (
-                        <div className="flex justify-between text-gray-600 text-[11px]">
-                            <span>IGST @ {((order.gstBreakdown.igst / (order.subtotal || 1)) * 100).toFixed(1)}%</span>
-                            <span>{order.gstBreakdown.igst.toFixed(2)}</span>
-                        </div>
-                    )}
-                    {!order.gstBreakdown && (order.tax || 0) > 0 && (
-                        <div className="flex justify-between text-gray-600">
-                            <span>GST @ {((order.tax / (order.subtotal || 1)) * 100).toFixed(0)}%</span>
-                            <span>{(order.tax || 0).toFixed(2)}</span>
-                        </div>
-                    )}
-                    {order.discountAmount > 0 && (
-                        <div className="flex justify-between text-red-500">
-                            <span>Discount</span>
-                            <span>-{(order.discountAmount || 0).toFixed(2)}</span>
-                        </div>
-                    )}
-                    {order.serviceChargeAmount > 0 && (
-                        <div className="flex justify-between text-gray-600">
-                            <span>Service Charge</span>
-                            <span>{(order.serviceChargeAmount || 0).toFixed(2)}</span>
-                        </div>
-                    )}
-                    <div className="flex justify-between text-xl font-bold mt-4 pt-4 border-t-2 border-black">
-                        <span>TOTAL</span>
-                        <span>{(order.total || 0).toFixed(2)}</span>
-                    </div>
-                    {order.paymentStatus === 'PAID' && (
-                        <div className="text-center mt-3 text-green-600 font-bold text-xs uppercase tracking-widest">
-                            ✓ Paid
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer Message */}
-                <div className="text-center text-xs text-gray-500 font-mono">
-                    <p>Thank you for dining with us!</p>
-                    <p>Please pay the waiter.</p>
-                </div>
-
-                {/* Torn Paper Effect Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 h-4 bg-[#121212] no-print" style={{ clipPath: 'polygon(0% 100%, 5% 0%, 10% 100%, 15% 0%, 20% 100%, 25% 0%, 30% 100%, 35% 0%, 40% 100%, 45% 0%, 50% 100%, 55% 0%, 60% 100%, 65% 0%, 70% 100%, 75% 0%, 80% 100%, 85% 0%, 90% 100%, 95% 0%, 100% 100%)' }}></div>
-            </motion.div>
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="bg-white text-black rounded-3xl p-6 shadow-2xl"
+                >
+                    <InvoiceRenderer
+                        order={order}
+                        restaurant={restaurant}
+                        settings={settings}
+                        type="display"
+                    />
+                </motion.div>
             </div>
 
-            {/* Actions */}
             <div className="mt-8 space-y-4 no-print">
                 <button
                     onClick={handleRequestBill}

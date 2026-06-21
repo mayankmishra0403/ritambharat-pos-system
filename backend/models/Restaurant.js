@@ -119,6 +119,38 @@ const restaurantSchema = new mongoose.Schema({
         type: String,
         enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
         default: 'CASH'
+    },
+    tagline: { type: String, default: '' },
+    gstin: { type: String, default: '' },
+    fssai: { type: String, default: '' },
+    alternatePhone: { type: String, default: '' },
+    website: { type: String, default: '' },
+    invoiceSettings: {
+        template: { type: String, enum: ['hotel-classic', 'premium-restaurant', 'modern-pos', 'minimal-receipt'], default: 'hotel-classic' },
+        invoiceTitle: { type: String, default: 'TAX INVOICE' },
+        showLogo: { type: Boolean, default: true },
+        showGstin: { type: Boolean, default: true },
+        showFssai: { type: Boolean, default: true },
+        showCustomerDetails: { type: Boolean, default: true },
+        showWaiterName: { type: Boolean, default: false },
+        showCashierName: { type: Boolean, default: false },
+        showAmountInWords: { type: Boolean, default: true },
+        showGstBreakdown: { type: Boolean, default: true },
+        showServiceCharge: { type: Boolean, default: false },
+        showQRCode: { type: Boolean, default: false },
+        showFooter: { type: Boolean, default: true },
+        showPax: { type: Boolean, default: false },
+        qrType: { type: String, enum: ['google-review', 'website', 'menu', 'upi'], default: 'website' },
+        qrPosition: { type: String, enum: ['footer-center', 'footer-right'], default: 'footer-center' },
+        qrSize: { type: String, enum: ['small', 'medium'], default: 'small' },
+        qrUrl: { type: String, default: '' },
+        thankYouMessage: { type: String, default: 'Thank You For Visiting' },
+        visitAgainMessage: { type: String, default: 'Please Visit Again' },
+        customerCareNumber: { type: String, default: '' },
+        footerEmail: { type: String, default: '' },
+        footerWebsite: { type: String, default: '' },
+        customFooterNote: { type: String, default: '' },
+        showPoweredBy: { type: Boolean, default: true }
     }
 }, {
     timestamps: true

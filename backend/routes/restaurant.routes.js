@@ -8,6 +8,10 @@ import {
     getMyPrimaryRestaurant,
     deleteRestaurant
 } from '../controllers/restaurant.controller.js';
+import {
+    getInvoiceSettings,
+    updateInvoiceSettings
+} from '../controllers/invoiceSettings.controller.js';
 import { protect, authorize, verifyRestaurantOwnership } from '../middleware/auth.js';
 import { cacheMiddleware, clearCache } from '../middleware/cache.middleware.js';
 
@@ -26,6 +30,8 @@ const invalidateRestaurantCache = (req, res, next) => {
 
 router.patch('/:id', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateRestaurant);
 router.patch('/:id/settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateRestaurantSettings);
+router.get('/:id/invoice-settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, getInvoiceSettings);
+router.patch('/:id/invoice-settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateInvoiceSettings);
 router.delete('/:id', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, deleteRestaurant);
 
 export default router;

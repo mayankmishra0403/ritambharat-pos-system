@@ -12,6 +12,8 @@ import Sidebar from '../../components/dashboard/Sidebar';
 import Header from '../../components/dashboard/Header';
 import ManualBillModal from '../../components/billing/ManualBillModal';
 import toast from 'react-hot-toast';
+import printInvoice from '../../utils/printInvoice';
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 
 const Billing = () => {
     const { user } = useAuth();
@@ -95,74 +97,13 @@ const Billing = () => {
         const timer = setTimeout(() => {
             const win = window.open('', '_blank');
             if (!win) { toast.error('Popup blocked! Allow popups for this site.'); setPrinting(false); return; }
-            const order = selectedBill;
-            const itemsHtml = order.items.map(item =>
-                `<tr><td style="padding:4px 0;font-size:12px">${item.quantity}x ${item.name}</td><td style="padding:4px 0;font-size:12px;text-align:right;font-weight:bold">₹${(item.price * item.quantity).toFixed(2)}</td></tr>`
-            ).join('');
-            win.document.write(`
-                <html><head>
-                <style>
-                    @page { margin: 0; size: auto; }
-                    body { margin: 0; padding: 20px; font-family: monospace; color: black; background: white; }
-                    .receipt { max-width: 320px; margin: 0 auto; }
-                    .center { text-align: center; }
-                    .bold { font-weight: bold; }
-                    .border-t { border-top: 2px solid black; }
-                    .border-b { border-bottom: 2px solid black; }
-                    .mt-2 { margin-top: 8px; }
-                    .mt-4 { margin-top: 16px; }
-                    .mb-2 { margin-bottom: 8px; }
-                    .mb-4 { margin-bottom: 16px; }
-                    .mb-6 { margin-bottom: 24px; }
-                    .text-lg { font-size: 18px; }
-                    .text-sm { font-size: 12px; }
-                    .text-xs { font-size: 10px; }
-                    .text-2xl { font-size: 24px; }
-                    table { width: 100%; border-collapse: collapse; }
-                    td { padding: 4px 0; font-size: 12px; }
-                    .no-print { display: none; }
-                </style>
-                </head><body>
-                <div class="receipt">
-                    <div class="center mb-4">
-                        <h2 class="bold text-lg">${order.restaurant?.name || 'Restaurant Name'}</h2>
-                        ${order.restaurant?.address ? `<p class="text-xs">${typeof order.restaurant.address === 'string' ? order.restaurant.address : [order.restaurant.address.street, order.restaurant.address.city].filter(Boolean).join(', ')}</p>` : ''}
-                        ${order.restaurant?.phone ? `<p class="text-xs">TEL: ${order.restaurant.phone}</p>` : ''}
-                    </div>
-                    <div class="border-t mb-4"></div>
-                    <div class="center mb-4">
-                        <p class="bold text-lg">OFFICIAL INVOICE</p>
-                        <p class="text-xs">DATE: ${new Date(order.createdAt).toLocaleDateString()} TIME: ${new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                        <p class="bold text-xs mt-2">INVOICE NO: ${(order.orderNumber?.split('-')[2] || order._id?.slice(-6).toUpperCase())}</p>
-                    </div>
-                    <div class="border-b mb-4"></div>
-                    <p class="bold text-sm mb-4">TABLE: ${order.table?.name || 'TAKEOUT'} &nbsp; ${order.orderSource || 'WEB'}</p>
-                    <table>
-                        ${itemsHtml}
-                    </table>
-                    <div class="border-t mt-4 pt-2">
-                        <table>
-                            <tr><td class="bold text-sm">Subtotal</td><td style="text-align:right">₹${(order.subtotal || 0).toFixed(2)}</td></tr>
-                            ${order.gstBreakdown?.cgst > 0 ? `<tr><td class="text-sm">CGST @ ${((order.gstBreakdown.cgst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.cgst.toFixed(2)}</td></tr>` : ''}
-                            ${order.gstBreakdown?.sgst > 0 ? `<tr><td class="text-sm">SGST @ ${((order.gstBreakdown.sgst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.sgst.toFixed(2)}</td></tr>` : ''}
-                            ${order.gstBreakdown?.igst > 0 ? `<tr><td class="text-sm">IGST @ ${((order.gstBreakdown.igst / (order.subtotal || 1)) * 100).toFixed(1)}%</td><td style="text-align:right">₹${order.gstBreakdown.igst.toFixed(2)}</td></tr>` : ''}
-                            ${!order.gstBreakdown && (order.tax || 0) > 0 ? `<tr><td class="text-sm">GST @ ${((order.tax / (order.subtotal || 1)) * 100).toFixed(0)}%</td><td style="text-align:right">₹${(order.tax || 0).toFixed(2)}</td></tr>` : ''}
-                            <tr><td class="bold text-2xl border-t pt-2">Grand Total</td><td class="bold text-2xl border-t pt-2" style="text-align:right">₹${order.total.toFixed(2)}</td></tr>
-                        </table>
-                    </div>
-                    <div class="center mt-4 border-t pt-4">
-                        <p class="bold text-sm">Thank You</p>
-                        <p class="text-xs">Please visit again</p>
-                        <p class="text-xs mt-4">Powered by Ritam Bharat POS</p>
-                    </div>
-                </div>
-                <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; };</script>
-                </body></html>
-            `);
+            const settings = printRestaurant?.invoiceSettings || {};
+            const html = printInvoice(selectedBill, printRestaurant, settings);
+            win.document.write(html);
             win.document.close();
         }, 500);
         return () => clearTimeout(timer);
-    }, [printing, selectedBill]);
+    }, [printing, selectedBill, printRestaurant]);
 
     const handlePrint = (bill) => {
         setSelectedBill(bill);
@@ -202,6 +143,8 @@ const Billing = () => {
         document.body.removeChild(link);
         toast.success('Bills exported successfully!');
     };
+
+    const { restaurant: printRestaurant } = useInvoiceSettings(restaurantId);
 
     const queryClient = useQueryClient();
 

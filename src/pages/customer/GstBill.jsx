@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../config/api';
-import { Printer, Download } from 'lucide-react';
-import GstInvoiceTemplate from '../../components/common/GstInvoiceTemplate';
+import { Printer } from 'lucide-react';
+import InvoiceRenderer from '../../components/billing/InvoiceRenderer';
 import printToPdf from '../../utils/printToPdf';
+import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 
 const GstBill = () => {
     const { orderId } = useParams();
@@ -21,15 +22,9 @@ const GstBill = () => {
         enabled: !!oid
     });
 
-    const { data: restaurant } = useQuery({
-        queryKey: ['restaurant', invoice?.restaurant?._id || invoice?.restaurant],
-        queryFn: async () => {
-            const restId = invoice.restaurant?._id || invoice.restaurant;
-            const res = await api.get(`/restaurant/${restId}`);
-            return res.data.data;
-        },
-        enabled: !!(invoice?.restaurant?._id || invoice?.restaurant)
-    });
+    const { restaurant, settings } = useInvoiceSettings(
+        invoice?.restaurant?._id || invoice?.restaurant
+    );
 
     const handlePrint = () => {
         if (printRef.current) {
@@ -67,24 +62,57 @@ const GstBill = () => {
         );
     }
 
+    const orderFromInvoice = {
+        ...invoice,
+        orderNumber: invoice.invoiceNo,
+        subtotal: invoice.subTotal,
+        tax: invoice.taxAmount,
+        total: invoice.total,
+        gstBreakdown: {
+            cgst: invoice.cgstAmount,
+            sgst: invoice.sgstAmount,
+            igst: invoice.igstAmount
+        },
+        discountAmount: invoice.discountAmount,
+        serviceChargeAmount: invoice.serviceChargeAmount,
+        items: invoice.items || [],
+        table: invoice.order?.table,
+        orderType: invoice.order?.orderType,
+        customerName: invoice.customerName,
+        customerPhone: invoice.customerPhone,
+        paymentMethod: invoice.paymentMethod,
+        paymentStatus: invoice.paymentStatus,
+        createdAt: invoice.generatedAt || invoice.createdAt
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 p-4 print:p-0 print:bg-white">
             <div className="max-w-sm mx-auto print:max-w-full print:mx-0">
                 <div className="flex items-center justify-between mb-4 print:hidden">
                     <h1 className="font-bold text-lg">Bill #{invoice.invoiceNo}</h1>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handlePrint}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-card border border-border rounded-xl text-sm font-bold hover:bg-muted transition-colors"
-                        >
-                            <Printer size={14} />
-                            Print
-                        </button>
-                    </div>
+                    <button
+                        onClick={handlePrint}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-card border border-border rounded-xl text-sm font-bold hover:bg-muted transition-colors"
+                    >
+                        <Printer size={14} />
+                        Print
+                    </button>
                 </div>
 
-                <div ref={printRef} className="bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:rounded-none">
-                    <GstInvoiceTemplate invoice={invoice} restaurant={restaurant} />
+                <style>{`
+                    @media print {
+                        body { background: white !important; }
+                        .no-print { display: none !important; }
+                    }
+                `}</style>
+
+                <div ref={printRef} className="bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:rounded-none p-6">
+                    <InvoiceRenderer
+                        order={orderFromInvoice}
+                        restaurant={restaurant}
+                        settings={settings}
+                        type="display"
+                    />
                 </div>
             </div>
         </div>
