@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import logger from '../utils/logger.js';
 
@@ -10,7 +11,7 @@ export const listCustomers = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Restaurant ID is required' });
         }
 
-        const match = { restaurant: restaurantId };
+        const match = { restaurant: new mongoose.Types.ObjectId(restaurantId) };
         if (search) {
             match.$or = [
                 { customerName: { $regex: search, $options: 'i' } },
