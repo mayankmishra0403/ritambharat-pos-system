@@ -14,7 +14,10 @@ export const uploadImage = async (req, res, next) => {
             });
         }
 
-        const imageUrl = `/uploads/${req.file.filename}`;
+        const protocol = req.get('X-Forwarded-Proto') || req.protocol;
+        const host = req.get('host');
+        const baseUrl = `${protocol}://${host}`;
+        const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
 
         res.status(200).json({
             success: true,
