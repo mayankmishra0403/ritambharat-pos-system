@@ -104,6 +104,24 @@ const Analytics = () => {
         }
     };
 
+    const downloadCSV = () => {
+        const rows = [
+            ['Period', 'Orders', 'Revenue', 'Avg Order Value'],
+            ...data.orders.map(o => [o._id, o.totalOrders, o.totalRevenue, o.avgOrderValue]),
+            [],
+            ['Item', 'Category', 'Orders', 'Revenue'],
+            ...data.topItems.map(i => [i.itemName, i.category, i.totalOrdered, i.totalRevenue]),
+        ];
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `analytics-${dateRange}-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const StatsCard = ({ title, value, icon: Icon, trend }) => (
         <div className="bg-card border-4 border-border rounded-[2.5rem] p-8 shadow-2xl min-w-[280px] md:min-w-0 flex-1 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />

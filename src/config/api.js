@@ -11,10 +11,6 @@ const api = axios.create({
     },
 });
 
-// Debug: Log API Base URL found in environment
-if (import.meta.env.PROD) {
-    console.log('[API] Environment Base URL:', API_BASE_URL);
-}
 
 // Request interceptor - Add auth token
 api.interceptors.request.use(
