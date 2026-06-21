@@ -4,8 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const LS_KEY = 'pwa_install_dismissed';
 
+let globalDeferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    globalDeferredPrompt = e;
+});
+
 const PWAInstallPrompt = () => {
-    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [deferredPrompt, setDeferredPrompt] = useState(globalDeferredPrompt);
     const [showPrompt, setShowPrompt] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
     const [isIOS, setIsIOS] = useState(false);
@@ -26,24 +33,29 @@ const PWAInstallPrompt = () => {
             return;
         }
 
+        if (globalDeferredPrompt) {
+            setDeferredPrompt(globalDeferredPrompt);
+            setShowPrompt(true);
+            return;
+        }
+
         const handler = (e) => {
             e.preventDefault();
+            globalDeferredPrompt = e;
             setDeferredPrompt(e);
             setShowPrompt(true);
         };
-
         window.addEventListener('beforeinstallprompt', handler);
 
-        const checkLateEvent = setTimeout(() => {
-            if (!deferredPrompt && !showPrompt) {
-                const anyDismissed = localStorage.getItem(LS_KEY);
-                if (!anyDismissed) setShowPrompt(true);
-            }
-        }, 3000);
+        const installedHandler = () => {
+            setShowPrompt(false);
+            localStorage.setItem(LS_KEY, 'true');
+        };
+        window.addEventListener('appinstalled', installedHandler);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
-            clearTimeout(checkLateEvent);
+            window.removeEventListener('appinstalled', installedHandler);
         };
     }, []);
 
@@ -53,19 +65,28 @@ const PWAInstallPrompt = () => {
             localStorage.setItem(LS_KEY, 'true');
             return;
         }
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-        setShowPrompt(false);
-        if (outcome === 'accepted') {
-            localStorage.setItem(LS_KEY, 'true');
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            globalDeferredPrompt = null;
+            setDeferredPrompt(null);
+            setShowPrompt(false);
+            if (outcome === 'accepted') {
+                localStorage.setItem(LS_KEY, 'true');
+            }
         }
     };
 
     const handleDismiss = () => {
         setShowPrompt(false);
         localStorage.setItem(LS_KEY, 'true');
+    };
+
+    const handleReset = () => {
+        localStorage.removeItem(LS_KEY);
+        if (globalDeferredPrompt) {
+            setShowPrompt(true);
+        }
     };
 
     if (isStandalone || !showPrompt) return null;
