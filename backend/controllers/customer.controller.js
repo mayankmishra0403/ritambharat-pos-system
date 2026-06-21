@@ -48,10 +48,7 @@ export const listCustomers = async (req, res, next) => {
             Order.aggregate([
                 { $match: match },
                 { $group: { _id: { phone: '$customerPhone', name: '$customerName' } } },
-                { $match: {
-                    _id: { $ne: { phone: null, name: null } },
-                    $or: [{ 'phone': { $ne: null } }, { 'name': { $ne: null } }]
-                }},
+                { $match: { _id: { $ne: { phone: null, name: null } } } },
                 { $count: 'total' }
             ])
         ]);
