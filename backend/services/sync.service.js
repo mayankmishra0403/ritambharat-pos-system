@@ -7,7 +7,7 @@ import InventoryItem from '../models/InventoryItem.js'
 import TaxSlab from '../models/TaxSlab.js'
 import logger from '../utils/logger.js'
 
-const SYSTEM_FIELDS = new Set(['_id', '__v', 'createdAt', 'updatedAt'])
+const SYSTEM_FIELDS = new Set(['__v', 'createdAt', 'updatedAt'])
 
 const SENSITIVE_USER_FIELDS = new Set(['password', 'pin', 'refreshToken', 'passwordResetToken', 'passwordResetExpires', 'verificationToken', 'verificationExpires'])
 
@@ -73,7 +73,6 @@ export class SyncService {
             users: [],
             inventoryItems: [],
             taxSlabs: [],
-            serverTime: new Date()
         }
 
         for (const [entityType, items] of Object.entries(payload)) {
@@ -94,6 +93,8 @@ export class SyncService {
 
             result[entityType] = processed
         }
+
+        result.serverTime = new Date()
 
         return result
     }
@@ -120,7 +121,6 @@ export class SyncService {
             users: [],
             inventoryItems: [],
             taxSlabs: [],
-            serverTime: new Date()
         }
 
         const requested = new Set(entities || Object.keys(ENTITY_CONFIG))
@@ -141,6 +141,8 @@ export class SyncService {
                 logger.warn(`Sync pull failed for ${entityType}: ${err.message}`)
             }
         }
+
+        result.serverTime = new Date()
 
         return result
     }
