@@ -59,19 +59,13 @@ export const updateOrderStatus = async (req, res, next) => {
         }
 
         const validTransitions = {
-            PENDING: ['CONFIRMED', 'PREPARING', 'CANCELLED'],
-            CONFIRMED: ['PREPARING', 'CANCELLED'],
+            PENDING: ['ACCEPTED', 'PREPARING', 'CANCELLED'],
+            ACCEPTED: ['PREPARING', 'CANCELLED'],
             PREPARING: ['READY', 'CANCELLED'],
             READY: ['SERVED'],
             SERVED: [],
             CANCELLED: []
         };
-
-        if (!Object.keys(validTransitions).includes(order.status)) {
-            order.status = 'PENDING';
-        }
-
-        const transitions = validTransitions[order.status] || validTransitions.PENDING;
 
         if (!transitions.includes(status)) {
             return res.status(400).json({
@@ -85,12 +79,6 @@ export const updateOrderStatus = async (req, res, next) => {
         if (status === 'CANCELLED' && cancellationReason) {
             order.cancellationReason = cancellationReason;
         }
-
-        order.statusHistory.push({
-            status,
-            timestamp: new Date(),
-            updatedBy: req.user?._id
-        });
 
         await order.save();
 

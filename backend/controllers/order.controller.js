@@ -292,7 +292,7 @@ export const updateOrderStatus = async (req, res, next) => {
             CANCELLED: []
         };
 
-        if (!validTransitions[order.status].includes(status)) {
+        if (!validTransitions[order.status]?.includes(status)) {
             return res.status(400).json({
                 success: false,
                 message: `Cannot transition from ${order.status} to ${status}`
@@ -304,13 +304,6 @@ export const updateOrderStatus = async (req, res, next) => {
         if (status === 'CANCELLED' && cancellationReason) {
             order.cancellationReason = cancellationReason;
         }
-
-        // Add to status history
-        order.statusHistory.push({
-            status,
-            timestamp: new Date(),
-            updatedBy: req.user?._id
-        });
 
         await order.save();
 
@@ -387,7 +380,7 @@ export const updateOrderStatus = async (req, res, next) => {
             orderId: order._id,
             orderNumber: order.orderNumber,
             status: order.status,
-            tableName: order.table.name
+            tableName: order.table?.name
         });
 
         io.to(`order:${order._id}`).emit('order:updated', order);

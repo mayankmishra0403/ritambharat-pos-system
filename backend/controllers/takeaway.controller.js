@@ -214,11 +214,6 @@ export const markTakeawayReady = async (req, res, next) => {
         }
 
         order.status = 'READY';
-        order.statusHistory.push({
-            status: 'READY',
-            timestamp: new Date(),
-            updatedBy: req.user?._id
-        });
         await order.save();
 
         const io = req.app.get('io');
@@ -252,11 +247,6 @@ export const markTakeawayComplete = async (req, res, next) => {
         }
 
         order.status = 'SERVED';
-        order.statusHistory.push({
-            status: 'SERVED',
-            timestamp: new Date(),
-            updatedBy: req.user?._id
-        });
         await order.save();
 
         const io = req.app.get('io');

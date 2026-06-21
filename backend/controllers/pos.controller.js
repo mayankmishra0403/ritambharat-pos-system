@@ -206,7 +206,7 @@ export const createPosOrder = async (req, res, next) => {
             customerPhone,
             specialInstructions,
             orderSource: 'MANUAL',
-            status: table ? 'CONFIRMED' : 'PENDING'
+            status: table ? 'ACCEPTED' : 'PENDING'
         });
 
         await order.populate('table', 'name');
@@ -270,14 +270,6 @@ export const processPayment = async (req, res, next) => {
         order.paymentStatus = 'PAID';
         order.paymentMethod = paymentMethod;
         order.status = 'SERVED';
-
-        if (order.status !== 'CANCELLED') {
-            order.statusHistory.push({
-                status: 'SERVED',
-                timestamp: new Date(),
-                updatedBy: req.user?._id
-            });
-        }
 
         await order.save();
 

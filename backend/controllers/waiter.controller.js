@@ -252,11 +252,6 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
         }
 
         order.status = status;
-        order.statusHistory.push({
-            status,
-            timestamp: new Date(),
-            updatedBy: req.user?._id
-        });
 
         await order.save();
 

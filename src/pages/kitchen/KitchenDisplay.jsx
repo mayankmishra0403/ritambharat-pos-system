@@ -17,10 +17,10 @@ const STATUS_COLUMNS = {
         icon: Bell,
         color: 'text-yellow-500',
         bg: 'bg-yellow-500/10',
-        next: 'CONFIRMED'
+        next: 'ACCEPTED'
     },
-    CONFIRMED: {
-        title: 'Confirmed',
+    ACCEPTED: {
+        title: 'Accepted',
         icon: ChefHat,
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
