@@ -95,7 +95,9 @@ app.use(helmet({
             mediaSrc: ["'self'"],
             frameSrc: ["'none'"]
         }
-    } : false
+    } : false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 app.use(cors({
     origin: (origin, callback) => {
