@@ -158,7 +158,7 @@ export const handleSafepayWebhook = async (req, res, next) => {
                     data: { url: '/waiter-app/orders', type: 'payment' }
                 }, ['OWNER', 'WAITER']);
 
-                sendWhatsAppToStaff(payment.restaurant, `💰 Payment Received – ${order.table?.name || '#'+order.orderNumber}`, ['OWNER', 'WAITER']);
+                sendWhatsAppToStaff(payment.restaurant, `💰 Payment Received${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
             }
         }
 

@@ -254,7 +254,7 @@ export const createPosOrder = async (req, res, next) => {
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order – ${order.table?.name || '#'+order.orderNumber}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {
@@ -339,7 +339,7 @@ export const processPayment = async (req, res, next) => {
             data: { url: '/pos', type: 'payment' }
         }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received – ${order.table?.name || '#'+order.orderNumber} (${paymentMethod})`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER']);
 
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;
 

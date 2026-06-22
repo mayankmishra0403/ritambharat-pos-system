@@ -175,7 +175,7 @@ export const processVoiceOrder = async (req, res, next) => {
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order – ${order.table?.name || '#'+order.orderNumber}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         res.status(201).json({
             success: true,
