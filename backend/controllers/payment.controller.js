@@ -4,6 +4,7 @@ import Payment from '../models/Payment.js';
 import Order from '../models/Order.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 export const createPaymentIntent = async (req, res, next) => {
     try {
@@ -156,6 +157,8 @@ export const handleSafepayWebhook = async (req, res, next) => {
                     sound: '/sounds/notification.mp3',
                     data: { url: '/waiter-app/orders', type: 'payment' }
                 }, ['OWNER', 'WAITER']);
+
+                sendWhatsAppToStaff(payment.restaurant, `💰 Payment received for order #${order.orderNumber}`, ['OWNER', 'WAITER']);
             }
         }
 

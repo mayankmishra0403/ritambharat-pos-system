@@ -1,6 +1,7 @@
 import Complaint from '../models/Complaint.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // @desc    Create complaint
 // @route   POST /api/complaints
@@ -35,6 +36,8 @@ export const createComplaint = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/complaints', type: 'complaint' }
         }, ['OWNER', 'WAITER', 'CHEF']);
+
+        sendWhatsAppToStaff(restaurant, `⚠️ ${severity} complaint from ${customerName}: ${type}`, ['OWNER', 'WAITER', 'CHEF']);
 
         res.status(201).json({
             success: true,

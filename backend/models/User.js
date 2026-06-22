@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
         type: Date,
         select: false
     },
+    phone: {
+        type: String,
+        trim: true,
+        sparse: true
+    },
     profileImage: {
         type: String // URL to image
     },

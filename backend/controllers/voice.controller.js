@@ -3,6 +3,7 @@ import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // Simple NLP parser for voice orders
 const parseVoiceTranscript = (transcript, menuItems) => {
@@ -174,6 +175,8 @@ export const processVoiceOrder = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(restaurant, `🆕 Voice Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
 
         res.status(201).json({
             success: true,

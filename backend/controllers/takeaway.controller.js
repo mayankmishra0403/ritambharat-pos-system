@@ -4,6 +4,7 @@ import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 export const getTakeawayDashboard = async (req, res, next) => {
     try {
@@ -136,6 +137,8 @@ export const createTakeawayOrder = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(restaurantId, `🆕 ${orderType.charAt(0).toUpperCase() + orderType.slice(1)} Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
 
         logger.info(`Takeaway order created: #${order.orderNumber}`);
 

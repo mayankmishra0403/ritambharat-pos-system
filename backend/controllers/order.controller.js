@@ -5,6 +5,7 @@ import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -189,6 +190,8 @@ export const createOrder = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(restaurant, `🆕 New Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
 
         logger.info(`Order created: #${order.orderNumber} for Table ${order.table?.name}`);
 
@@ -463,6 +466,8 @@ export const cancelOrder = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app/orders', type: 'order-cancelled' }
         }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
 
         logger.info(`Order cancelled: #${order.orderNumber}`);
 

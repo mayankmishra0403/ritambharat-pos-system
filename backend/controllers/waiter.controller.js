@@ -5,6 +5,7 @@ import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 export const getWaiterData = async (req, res, next) => {
     try {
@@ -220,6 +221,8 @@ export const createWaiterOrder = async (req, res, next) => {
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
 
+        sendWhatsAppToStaff(restaurant, `🆕 New Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
+
         logger.info(`Waiter order created: #${order.orderNumber}`);
 
         res.status(201).json({
@@ -323,6 +326,8 @@ export const requestWaiterBill = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app', type: 'waiter-call' }
         }, ['WAITER', 'OWNER']);
+
+        sendWhatsAppToStaff(order.restaurant, `🧾 Bill requested for order #${order.orderNumber}`, ['WAITER', 'OWNER']);
 
         logger.info(`Bill requested for order #${order.orderNumber}`);
 

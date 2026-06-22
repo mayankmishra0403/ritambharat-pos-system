@@ -3,6 +3,7 @@ import KitchenNotification from '../models/KitchenNotification.js';
 import Table from '../models/Table.js';
 import logger from '../utils/logger.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 export const getActiveOrders = async (req, res, next) => {
     try {
@@ -117,6 +118,8 @@ export const updateOrderStatus = async (req, res, next) => {
                     sound: '/sounds/notification.mp3',
                     data: { url: '/waiter-app/orders', type: 'order-ready' }
                 }, ['WAITER', 'OWNER']);
+
+                sendWhatsAppToStaff(order.restaurant, `✅ Order #${order.orderNumber} is ready to serve!`, ['WAITER', 'OWNER']);
             }
         }
 

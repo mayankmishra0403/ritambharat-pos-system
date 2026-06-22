@@ -1,6 +1,7 @@
 import ServiceRequest from '../models/ServiceRequest.js';
 import Table from '../models/Table.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // @desc    Create service request
 // @route   POST /api/service/request
@@ -51,6 +52,8 @@ export const createServiceRequest = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app', type: 'waiter-call' }
         }, ['WAITER', 'OWNER']);
+
+        sendWhatsAppToStaff(restaurant, `🔔 New ${type.replace('_', ' ')} from ${tableDoc ? tableDoc.name : 'a table'}`, ['WAITER', 'OWNER']);
 
         res.status(201).json({
             success: true,

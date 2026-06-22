@@ -20,6 +20,42 @@ export const verifyWebhook = (req, res) => {
     }
 };
 
+// @desc    Send a WhatsApp message (internal/test)
+// @route   POST /api/whatsapp/send
+// @access  Private (Admin/Staff)
+export const sendMessage = async (req, res, next) => {
+    try {
+        const { to, message } = req.body;
+        if (!to || !message) {
+            return res.status(400).json({ success: false, message: 'to and message required' });
+        }
+
+        const phone = to.startsWith('+') ? to.slice(1) : to;
+        const url = `https://graph.facebook.com/v22.0/${process.env.META_PHONE_ID}/messages`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.META_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: phone,
+                text: { body: message }
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            return res.status(response.status).json({ success: false, message: err });
+        }
+
+        res.json({ success: true, message: 'Message sent' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Handle incoming WhatsApp messages
 // @route   POST /api/whatsapp/webhook
 // @access  Public

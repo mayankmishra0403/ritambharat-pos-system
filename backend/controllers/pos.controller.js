@@ -4,6 +4,7 @@ import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
 import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 
@@ -252,6 +253,8 @@ export const createPosOrder = async (req, res, next) => {
             sound: '/sounds/notification.mp3',
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {

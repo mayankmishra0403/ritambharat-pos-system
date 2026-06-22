@@ -1,6 +1,7 @@
 import { syncService } from '../services/sync.service.js'
 import logger from '../utils/logger.js'
 import { sendPushToRestaurantStaff } from '../services/push.service.js'
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js'
 
 export const syncBatch = async (req, res, next) => {
     try {
@@ -37,6 +38,8 @@ export const syncBatch = async (req, res, next) => {
                                 sound: '/sounds/notification.mp3',
                                 data: { url: '/waiter-app/orders', type: 'new-order' }
                             }, ['OWNER', 'WAITER'])
+
+                            sendWhatsAppToStaff(restaurantId, `🆕 Order #${order.orderNumber} placed`, ['OWNER', 'WAITER'])
                         }
                     } else if (item.action === 'updated') {
                         io.to(`restaurant:${restaurantId}`).emit('order:updated', {
