@@ -15,12 +15,12 @@ import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
-    import printKOT from '../../utils/printKOT';
+import printKOT from '../../utils/printKOT';
 
 const POSDashboard = () => {
     const { user, logout } = useAuth();
     const queryClient = useQueryClient();
-    const { socket } = useSocket();
+    const { socket, joinRestaurant } = useSocket();
     const [restaurantId, setRestaurantId] = useState(null);
 
     const [selectedTable, setSelectedTable] = useState(null);
@@ -43,8 +43,9 @@ const POSDashboard = () => {
         if (user?.restaurant) {
             const id = typeof user.restaurant === 'object' ? user.restaurant._id : user.restaurant;
             setRestaurantId(id);
+            joinRestaurant(id);
         }
-    }, [user]);
+    }, [user, joinRestaurant]);
 
     useSoundAlert(socket, restaurantId, {
         event: 'order:created',
@@ -75,7 +76,9 @@ const POSDashboard = () => {
             try {
                 const res = await api.get(`/orders/${orderId}`);
                 if (!res.data.success) return;
-                const html = printKOT(res.data.data, printRestaurant);
+                const order = res.data.data;
+                if (order.status !== 'ACCEPTED') return;
+                const html = printKOT(order, printRestaurant);
                 const iframe = document.createElement('iframe');
                 iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:0;border:none';
                 document.body.appendChild(iframe);
@@ -84,11 +87,12 @@ const POSDashboard = () => {
                 doc.write(html);
                 doc.close();
                 setTimeout(() => {
-                    try { iframe.contentWindow.print(); } catch(e) {}
+                    try { iframe.contentWindow.print(); } catch(e) { console.error('KOT print failed:', e); }
                     setTimeout(() => document.body.removeChild(iframe), 1000);
                 }, 500);
             } catch (err) {
                 console.error('Auto KOT print failed:', err);
+                toast.error('KOT auto-print failed');
             }
         };
         socket.on('kds:new-order', handler);

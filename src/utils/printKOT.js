@@ -128,15 +128,6 @@ function generateKOT(order, restaurant) {
         <div class="c" style="font-size:8pt;font-weight:bold;color:#000;padding-bottom:2pt">
             <div>--- Thank You ---</div>
         </div>
-
-    <script>
-    window.onload = function() {
-        setTimeout(function() {
-            window.print();
-        }, 300);
-        window.onafterprint = function() { window.close(); };
-    };
-    </script>
     </body></html>
     `;
 }
