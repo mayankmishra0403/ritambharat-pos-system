@@ -45,7 +45,7 @@ const OrderCard = ({ order, nextStatus, onUpdateStatus }) => {
                         </span>
                         {order.table && (
                             <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase">
-                                T{table.table?.name || order.table}
+                                T{order.table?.name || order.table}
                             </span>
                         )}
                         {order.customerName && (
