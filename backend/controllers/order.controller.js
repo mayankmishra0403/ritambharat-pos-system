@@ -325,7 +325,7 @@ export const updateOrderStatus = async (req, res, next) => {
                     if (menuItem.stockQuantity <= menuItem.lowStockThreshold) {
                         menuItem.isLowStock = true;
                         // Emit low stock alert
-                        io.to(`restaurant:${order.restaurant}`).emit('inventory:low-stock', {
+                        if (io) io.to(`restaurant:${order.restaurant}`).emit('inventory:low-stock', {
                             itemId: menuItem._id,
                             name: menuItem.name,
                             remaining: menuItem.stockQuantity
@@ -337,7 +337,7 @@ export const updateOrderStatus = async (req, res, next) => {
                         menuItem.stockQuantity = 0;
                         menuItem.isAvailable = false;
                         // Emit out-of-stock alert
-                        io.to(`restaurant:${order.restaurant}`).emit('inventory:out-of-stock', {
+                        if (io) io.to(`restaurant:${order.restaurant}`).emit('inventory:out-of-stock', {
                             itemId: menuItem._id,
                             name: menuItem.name
                         });
@@ -363,7 +363,7 @@ export const updateOrderStatus = async (req, res, next) => {
                         // Re-enable if it was disabled
                         if (!menuItem.isAvailable && menuItem.stockQuantity > 0) {
                             menuItem.isAvailable = true;
-                            io.to(`restaurant:${order.restaurant}`).emit('inventory:back-in-stock', {
+                            if (io) io.to(`restaurant:${order.restaurant}`).emit('inventory:back-in-stock', {
                                 itemId: menuItem._id,
                                 name: menuItem.name,
                                 quantity: menuItem.stockQuantity
@@ -380,14 +380,14 @@ export const updateOrderStatus = async (req, res, next) => {
         }
 
         // Emit real-time event
-        io.to(`restaurant:${order.restaurant}`).emit('order:status-changed', {
+        if (io) io.to(`restaurant:${order.restaurant}`).emit('order:status-changed', {
             orderId: order._id,
             orderNumber: order.orderNumber,
             status: order.status,
             tableName: order.table?.name
         });
 
-        io.to(`order:${order._id}`).emit('order:updated', order);
+        if (io) io.to(`order:${order._id}`).emit('order:updated', order);
 
         if (status === 'ACCEPTED') {
             sendWhatsAppToStaff(order.restaurant, `✅ Accepted${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
@@ -451,7 +451,7 @@ export const cancelOrder = async (req, res, next) => {
 
         // Emit real-time event
         const io = req.app.get('io');
-        io.to(`restaurant:${order.restaurant}`).emit('order:cancelled', {
+        if (io) io.to(`restaurant:${order.restaurant}`).emit('order:cancelled', {
             orderId: order._id,
             orderNumber: order.orderNumber
         });
@@ -540,7 +540,6 @@ export const updateOrderPayment = async (req, res, next) => {
         // If paid and served, free the table
         if (order.paymentStatus === 'PAID' && order.table) {
             try {
-                const Table = await import('../models/Table.js').then(m => m.default);
                 const tableDoc = await Table.findById(order.table._id || order.table);
 
                 // Only free if this order occupies it
@@ -551,7 +550,7 @@ export const updateOrderPayment = async (req, res, next) => {
 
                     // Emit table update event
                     const io = req.app.get('io');
-                    io.to(`restaurant:${order.restaurant}`).emit('table:updated', tableDoc);
+                    if (io) io.to(`restaurant:${order.restaurant}`).emit('table:updated', tableDoc);
                 }
             } catch (tableError) {
                 logger.error(`Failed to free table: ${tableError.message}`);
@@ -560,7 +559,7 @@ export const updateOrderPayment = async (req, res, next) => {
 
         // Emit real-time event
         const io = req.app.get('io');
-        io.to(`restaurant:${order.restaurant}`).emit('order:payment-updated', {
+        if (io) io.to(`restaurant:${order.restaurant}`).emit('order:payment-updated', {
             orderId: order._id,
             paymentStatus: order.paymentStatus
         });

@@ -384,7 +384,8 @@ export const addPosOrderItems = async (req, res, next) => {
         }
 
         order.subtotal += additionalSubtotal;
-        const taxInfo = await getTaxInfo(order.restaurant);
+        const restaurantDoc = await Restaurant.findById(order.restaurant);
+        const taxInfo = await getTaxInfo(order.restaurant, restaurantDoc);
         const additionalTax = calculateTax(additionalSubtotal, taxInfo.slabRate);
         order.tax += additionalTax;
         order.total = order.subtotal + order.tax - (order.discountAmount || 0);

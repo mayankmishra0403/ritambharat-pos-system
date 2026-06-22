@@ -127,7 +127,7 @@ export const createTakeawayOrder = async (req, res, next) => {
             });
         }
 
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order – ${orderType} #${order.orderNumber}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER']);
 
         logger.info(`Takeaway order created: #${order.orderNumber}`);
 
@@ -185,7 +185,8 @@ export const addTakeawayItems = async (req, res, next) => {
         }
 
         order.subtotal += additionalSubtotal;
-        const taxInfo = await getTaxInfo(order.restaurant);
+        const restaurantDoc = await Restaurant.findById(order.restaurant);
+        const taxInfo = await getTaxInfo(order.restaurant, restaurantDoc);
         const additionalTax = calculateTax(additionalSubtotal, taxInfo.slabRate);
         order.tax += additionalTax;
         order.total = order.subtotal + order.tax;

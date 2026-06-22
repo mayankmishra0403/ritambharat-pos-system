@@ -163,7 +163,12 @@ export const updateTable = async (req, res, next) => {
             table.currentSession.occupiedAt = new Date();
         }
 
-        Object.assign(table, req.body);
+        const allowedFields = ['name', 'capacity', 'room', 'shape', 'posX', 'posY', 'location', 'status', 'isActive'];
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                table[field] = req.body[field];
+            }
+        }
         await table.save();
 
         res.status(200).json({

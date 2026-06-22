@@ -61,7 +61,8 @@ const userSchema = new mongoose.Schema({
     phone: {
         type: String,
         trim: true,
-        sparse: true
+        sparse: true,
+        match: [/^\+?[0-9]{10,15}$/, 'Please provide a valid phone number (10-15 digits, optional +)']
     },
     profileImage: {
         type: String // URL to image

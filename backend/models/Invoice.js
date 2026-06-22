@@ -90,15 +90,20 @@ const invoiceSchema = new mongoose.Schema({
 invoiceSchema.index({ restaurant: 1, createdAt: -1 });
 invoiceSchema.index({ invoiceNo: 1 });
 
-// Auto-generate invoice number
+// Auto-generate invoice number (atomic to prevent duplicates)
 invoiceSchema.pre('save', async function (next) {
     if (!this.invoiceNo) {
         const date = new Date();
-        const prefix = `INV-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-        const count = await mongoose.model('Invoice').countDocuments({
-            invoiceNo: { $regex: `^${prefix}` }
-        });
-        this.invoiceNo = `${prefix}-${(count + 1).toString().padStart(4, '0')}`;
+        const yearMonth = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        const prefix = `INV-${yearMonth}`;
+        // Atomic counter to prevent race conditions on concurrent requests
+        const result = await mongoose.model('Invoice').findOneAndUpdate(
+            { invoiceNo: { $regex: `^${prefix}` } },
+            { $inc: { __counter: 1 } },
+            { sort: { __counter: -1 }, new: true }
+        );
+        const count = result ? result.__counter + 1 : 1;
+        this.invoiceNo = `${prefix}-${count.toString().padStart(4, '0')}`;
     }
     next();
 });

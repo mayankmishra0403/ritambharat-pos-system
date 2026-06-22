@@ -41,7 +41,7 @@ const serviceRequestSchema = new mongoose.Schema({
 
 // Indexes
 serviceRequestSchema.index({ restaurant: 1, status: 1 });
-serviceRequestSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 }); // Auto-expire after 24h
+serviceRequestSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400, partialFilterExpression: { status: { $in: ['COMPLETED', 'CANCELLED'] } } }); // Auto-expire completed/cancelled after 24h
 
 const ServiceRequest = mongoose.model('ServiceRequest', serviceRequestSchema);
 

@@ -28,7 +28,7 @@ export const syncBatch = async (req, res, next) => {
                                 message: `New order #${order.orderNumber} synced from POS`
                             })
 
-                            sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'])
+                            sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ` – #${order.orderNumber}`}`, ['OWNER', 'WAITER'])
                         }
                     } else if (item.action === 'updated') {
                         io.to(`restaurant:${restaurantId}`).emit('order:updated', {

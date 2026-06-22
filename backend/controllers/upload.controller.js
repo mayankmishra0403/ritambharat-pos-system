@@ -33,6 +33,15 @@ export const uploadImage = async (req, res, next) => {
 export const deleteImage = async (req, res, next) => {
     try {
         const { publicId } = req.params;
+
+        // Prevent path traversal attacks
+        if (publicId.includes('..') || publicId.includes('/') || publicId.includes('\\')) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid public ID'
+            });
+        }
+
         const filePath = path.join(uploadsDir, publicId);
 
         if (fs.existsSync(filePath)) {

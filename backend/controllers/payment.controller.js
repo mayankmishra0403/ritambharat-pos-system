@@ -22,7 +22,10 @@ export const createPaymentIntent = async (req, res, next) => {
             amount,
             currency,
             orderId: order._id,
+            orderNumber: order.orderNumber,
             restaurantId: order.restaurant._id,
+            successUrl: `${req.protocol}://${req.get('host')}/payment/success?orderId=${order._id}`,
+            cancelUrl: `${req.protocol}://${req.get('host')}/payment/cancel?orderId=${order._id}`,
             metadata: { customerInfo: '' }
         });
 

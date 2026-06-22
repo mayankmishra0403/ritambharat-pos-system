@@ -159,7 +159,7 @@ export const processVoiceOrder = async (req, res, next) => {
 
         // Emit real-time event
         const io = req.app.get('io');
-        io.to(`restaurant:${restaurant}`).emit('order:created', {
+        if (io) io.to(`restaurant:${restaurant}`).emit('order:created', {
             order,
             message: `New voice order #${order.orderNumber}`
         });

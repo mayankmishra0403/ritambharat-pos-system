@@ -36,7 +36,7 @@ export const createServiceRequest = async (req, res, next) => {
 
         // Emit socket event
         const io = req.app.get('io');
-        io.to(`restaurant:${restaurant}`).emit('service:new', {
+        if (io) io.to(`restaurant:${restaurant}`).emit('service:new', {
             request,
             tableName: tableDoc ? tableDoc.name : 'Unknown Table',
             message: `New ${type.replace('_', ' ')} from ${tableDoc ? tableDoc.name : 'table'}`
@@ -102,18 +102,18 @@ export const updateServiceRequest = async (req, res, next) => {
 
         // Emit update to restaurant staff
         const io = req.app.get('io');
-        io.to(`restaurant:${request.restaurant}`).emit('service:updated', request);
+        if (io) io.to(`restaurant:${request.restaurant}`).emit('service:updated', request);
 
         // Notify customer if request was completed or cancelled
         if (status === 'COMPLETED') {
-            io.to(`table:${request.table?._id}`).emit('service:completed', {
+            if (io) io.to(`table:${request.table?._id}`).emit('service:completed', {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request has been completed!`
             });
             const tableName = `Table ${request.table?.name || 'a table'}`;
             sendWhatsAppToStaff(request.restaurant, `✅ Service Completed – ${tableName} (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
-            io.to(`table:${request.table?._id}`).emit('service:cancelled', {
+            if (io) io.to(`table:${request.table?._id}`).emit('service:cancelled', {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request was cancelled.`
             });
