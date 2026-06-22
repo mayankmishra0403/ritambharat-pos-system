@@ -566,7 +566,8 @@ export const updateOrderPayment = async (req, res, next) => {
         });
 
         if (order.paymentStatus === 'PAID') {
-            sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+            const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+            sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''}${paymentMethod ? ` (${paymentMethod})` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/bill/${order._id}`);
         }
 
         logger.info(`Order payment updated: #${order.orderNumber} -> ${order.paymentStatus}`);
