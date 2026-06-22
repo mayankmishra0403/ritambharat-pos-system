@@ -19,7 +19,7 @@ router.get('/:id/reviews', getStaffReviews);
 
 // Protected routes for owners/admins
 router.use(protect);
-router.use(authorize(['OWNER', 'ADMIN'], ['staff']));
+router.use(authorize(['OWNER', 'ADMIN', 'STAFF_MANAGEMENT'], ['staff']));
 
 router.post('/', addStaff);
 router.patch('/:id', updateStaff);

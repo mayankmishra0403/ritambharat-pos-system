@@ -50,37 +50,9 @@ const seed = async () => {
             console.log(`Restaurant created: ${restaurant.name}`);
         }
 
-        // Create staff users
-        const staffConfig = [
-            { name: process.env.STAFF_CASHIER_NAME || 'Cashier One', pin: process.env.STAFF_CASHIER_PIN || '1234', role: 'CASHIER' },
-            { name: process.env.STAFF_WAITER_NAME || 'Waiter One', pin: process.env.STAFF_WAITER_PIN || '5678', role: 'WAITER' },
-            { name: process.env.STAFF_CHEF_NAME || 'Chef One', pin: process.env.STAFF_CHEF_PIN || '0000', role: 'CHEF' },
-        ];
-
-        for (const staff of staffConfig) {
-            const existing = await User.findOne({ pin: staff.pin, restaurant: restaurant._id });
-            if (existing) {
-                console.log(`${staff.role} already exists: PIN ${staff.pin}`);
-            } else {
-                await User.create({
-                    name: staff.name,
-                    email: `${staff.role.toLowerCase()}@${restaurantName.toLowerCase().replace(/\s+/g, '')}.com`,
-                    password: 'staff@123',
-                    role: staff.role,
-                    pin: staff.pin,
-                    restaurant: restaurant._id,
-                    emailVerified: true
-                });
-                console.log(`${staff.role} created: ${staff.name} (PIN: ${staff.pin})`);
-            }
-        }
-
         console.log('\n✓ Seed complete!');
         console.log('\n── Login Credentials ──');
         console.log(`Admin:     ${adminEmail} / ${adminPassword}`);
-        console.log(`Cashier:   PIN ${process.env.STAFF_CASHIER_PIN || '1234'}`);
-        console.log(`Waiter:    PIN ${process.env.STAFF_WAITER_PIN || '5678'}`);
-        console.log(`Chef:      PIN ${process.env.STAFF_CHEF_PIN || '0000'}`);
         console.log(`Restaurant: ${restaurantName}`);
         console.log('────────────────────────\n');
 

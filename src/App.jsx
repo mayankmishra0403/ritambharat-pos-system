@@ -210,6 +210,9 @@ function App() {
                   {/* Confirm Order Page - for WhatsApp links */}
                   <Route path="/accept/:orderId" element={<ConfirmOrder />} />
 
+                  {/* Order Tracking Page - for WhatsApp status links */}
+                  <Route path="/track/:orderId" element={<OrderTracking />} />
+
                   {/* Owner Routes - Protected */}
                   <Route
                     path="/onboarding"

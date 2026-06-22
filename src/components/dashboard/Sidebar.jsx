@@ -62,7 +62,9 @@ const Sidebar = ({ className, open, onClose }) => {
     ];
 
     const menuItems = allMenuItems.filter(item => {
-        if (user?.role === 'OWNER' || user?.role === 'ADMIN') return true;
+        if (user?.role === 'ADMIN') return true;
+        if (user?.role === 'OWNER') return true;
+        if (user?.role === 'STAFF_MANAGEMENT') return item.permission === 'staff';
         return user?.permissions?.includes(item.permission);
     });
 
