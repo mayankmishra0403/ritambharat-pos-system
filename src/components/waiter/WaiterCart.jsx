@@ -40,7 +40,7 @@ const WaiterCart = ({ items, menuItems, onUpdateQuantity, onRemoveItem, onPlaceO
                             >
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-foreground truncate">{details?.name || item.name}</p>
-                                    <p className="text-xs text-muted-foreground">${(details?.price || 0).toFixed(2)} each</p>
+                                    <p className="text-xs text-muted-foreground">₹{(details?.price || 0).toFixed(2)} each</p>
                                 </div>
 
                                 <div className="flex items-center gap-1">
@@ -83,15 +83,15 @@ const WaiterCart = ({ items, menuItems, onUpdateQuantity, onRemoveItem, onPlaceO
                 <div className="border-t border-border pt-3 mt-3 space-y-2">
                     <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
+                        <span>₹{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground">
                         <span>Tax ({(restaurant?.taxRate || 0)}%)</span>
-                        <span>${tax.toFixed(2)}</span>
+                        <span>₹{tax.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm font-bold text-foreground">
                         <span>Total</span>
-                        <span>${total.toFixed(2)}</span>
+                        <span>₹{total.toFixed(2)}</span>
                     </div>
 
                     <button

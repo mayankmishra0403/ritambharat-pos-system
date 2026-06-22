@@ -66,7 +66,7 @@ const WaiterMenuBrowser = ({ menuItems, categories, onAddItem, selectedItems }) 
                             )}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-foreground truncate">{item.name}</p>
-                                <p className="text-xs text-muted-foreground">${item.price.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">₹{(item.price || 0).toFixed(2)}</p>
                             </div>
                             <button
                                 onClick={() => onAddItem(item)}

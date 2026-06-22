@@ -81,7 +81,7 @@ const ActiveOrders = () => {
                                 </div>
 
                                 <div className="flex flex-wrap gap-1.5">
-                                    {order.items?.slice(0, 4).map((item, idx) => (
+                                    {(order.items || []).slice(0, 4).map((item, idx) => (
                                         <span key={idx} className="text-xs bg-muted px-2 py-0.5 rounded text-muted-foreground">
                                             {item.quantity}x {item.name}
                                         </span>

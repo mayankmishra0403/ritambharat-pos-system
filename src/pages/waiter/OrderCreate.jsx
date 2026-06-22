@@ -13,7 +13,9 @@ const OrderCreate = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { restaurantId } = useOutletContext();
+    const outletCtx = useOutletContext();
+    const restaurantId = outletCtx?.restaurantId
+        || (typeof user?.restaurant === 'object' ? user.restaurant._id : user?.restaurant);
 
     const [step, setStep] = useState('table');
     const [selectedTable, setSelectedTable] = useState(null);
