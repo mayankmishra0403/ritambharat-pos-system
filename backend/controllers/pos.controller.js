@@ -3,7 +3,6 @@ import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
-import { sendPushToRestaurantStaff } from '../services/push.service.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
@@ -244,17 +243,8 @@ export const createPosOrder = async (req, res, next) => {
             });
         }
 
-        sendPushToRestaurantStaff(restaurantId, {
-            title: 'New Order',
-            body: `Order #${order.orderNumber} placed`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            sound: '/sounds/notification.mp3',
-            data: { url: '/waiter-app/orders', type: 'new-order' }
-        }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {
@@ -330,16 +320,8 @@ export const processPayment = async (req, res, next) => {
             });
         }
 
-        sendPushToRestaurantStaff(order.restaurant, {
-            title: 'Payment Received',
-            body: `Payment received for order #${order.orderNumber} (${paymentMethod})`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            data: { url: '/pos', type: 'payment' }
-        }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER']);
 
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;
 

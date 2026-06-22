@@ -4,7 +4,6 @@ import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
-import { sendPushToRestaurantStaff } from '../services/push.service.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // @desc    Create order
@@ -180,17 +179,8 @@ export const createOrder = async (req, res, next) => {
             });
         }
 
-        sendPushToRestaurantStaff(restaurant, {
-            title: 'New Order',
-            body: `Order #${order.orderNumber} placed`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            sound: '/sounds/notification.mp3',
-            data: { url: '/waiter-app/orders', type: 'new-order' }
-        }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         logger.info(`Order created: #${order.orderNumber} for Table ${order.table?.name}`);
 
@@ -400,17 +390,13 @@ export const updateOrderStatus = async (req, res, next) => {
         io.to(`order:${order._id}`).emit('order:updated', order);
 
         if (status === 'ACCEPTED') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Accepted', body: `Order #${order.orderNumber} has been accepted!`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-accepted' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(order.restaurant, `✅ Accepted${order.table?.name ? ` – ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(order.restaurant, `✅ Accepted${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
         } else if (status === 'PREPARING') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Preparing Order', body: `Order #${order.orderNumber} is being prepared in the kitchen`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-preparing' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing${order.table?.name ? ` – ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
         } else if (status === 'SERVED') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Served', body: `Order #${order.orderNumber} has been served`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-served' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(order.restaurant, `🍽️ Served${order.table?.name ? ` – ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(order.restaurant, `🍽️ Served${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Cancelled', body: `Order #${order.orderNumber} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-cancelled' } }, ['OWNER', 'WAITER']);
-            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
         }
 
         logger.info(`Order status updated: #${order.orderNumber} -> ${status}`);
@@ -470,17 +456,8 @@ export const cancelOrder = async (req, res, next) => {
             orderNumber: order.orderNumber
         });
 
-        sendPushToRestaurantStaff(order.restaurant, {
-            title: 'Order Cancelled',
-            body: `Order #${order.orderNumber} was cancelled`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            sound: '/sounds/notification.mp3',
-            data: { url: '/waiter-app/orders', type: 'order-cancelled' }
-        }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         logger.info(`Order cancelled: #${order.orderNumber}`);
 
@@ -589,8 +566,7 @@ export const updateOrderPayment = async (req, res, next) => {
         });
 
         if (order.paymentStatus === 'PAID') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Payment Updated', body: `Payment for order #${order.orderNumber} marked as ${order.paymentStatus}`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/pos', type: 'payment' } }, ['OWNER', 'WAITER']);
-            sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+            sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
         }
 
         logger.info(`Order payment updated: #${order.orderNumber} -> ${order.paymentStatus}`);

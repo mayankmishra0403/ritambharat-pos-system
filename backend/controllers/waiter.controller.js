@@ -4,7 +4,6 @@ import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
-import { sendPushToRestaurantStaff } from '../services/push.service.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 export const getWaiterData = async (req, res, next) => {
@@ -211,17 +210,8 @@ export const createWaiterOrder = async (req, res, next) => {
             });
         }
 
-        sendPushToRestaurantStaff(restaurant, {
-            title: 'New Order',
-            body: `Order #${order.orderNumber} placed`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            sound: '/sounds/notification.mp3',
-            data: { url: '/waiter-app/orders', type: 'new-order' }
-        }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
 
         logger.info(`Waiter order created: #${order.orderNumber}`);
 
@@ -285,11 +275,9 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
         }
 
         if (status === 'SERVED') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Served', body: `Order #${order.orderNumber} has been served to table`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-served' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(order.restaurant, `🍽️ Served${order.table?.name ? ` – ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(order.restaurant, `🍽️ Served${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
-            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Cancelled', body: `Order #${order.orderNumber} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-cancelled' } }, ['OWNER', 'WAITER']);
-            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
         }
 
         res.status(200).json({
@@ -325,17 +313,8 @@ export const requestWaiterBill = async (req, res, next) => {
             });
         }
 
-        sendPushToRestaurantStaff(order.restaurant, {
-            title: 'Bill Request',
-            body: `Bill requested for order #${order.orderNumber}`,
-            icon: '/icons/icon-192.png',
-            badge: '/icons/badge-72.png',
-            vibrate: [200, 100, 200],
-            sound: '/sounds/notification.mp3',
-            data: { url: '/waiter-app', type: 'waiter-call' }
-        }, ['WAITER', 'OWNER']);
 
-        sendWhatsAppToStaff(order.restaurant, `🧾 Bill Requested${order.table?.name ? ` – ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+        sendWhatsAppToStaff(order.restaurant, `🧾 Bill Requested${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
 
         logger.info(`Bill requested for order #${order.orderNumber}`);
 

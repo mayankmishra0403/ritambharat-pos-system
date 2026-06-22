@@ -1,6 +1,5 @@
 import { syncService } from '../services/sync.service.js'
 import logger from '../utils/logger.js'
-import { sendPushToRestaurantStaff } from '../services/push.service.js'
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js'
 
 export const syncBatch = async (req, res, next) => {
@@ -28,16 +27,6 @@ export const syncBatch = async (req, res, next) => {
                                 order,
                                 message: `New order #${order.orderNumber} synced from POS`
                             })
-
-                            sendPushToRestaurantStaff(restaurantId, {
-                                title: 'New Order',
-                                body: `Order #${order.orderNumber} placed`,
-                                icon: '/icons/icon-192.png',
-                                badge: '/icons/badge-72.png',
-                                vibrate: [200, 100, 200],
-                                sound: '/sounds/notification.mp3',
-                                data: { url: '/waiter-app/orders', type: 'new-order' }
-                            }, ['OWNER', 'WAITER'])
 
                             sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'])
                         }
