@@ -15,7 +15,7 @@ import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
-import printKOT from '../../utils/printKOT';
+    import printKOT from '../../utils/printKOT';
 
 const POSDashboard = () => {
     const { user, logout } = useAuth();
@@ -74,10 +74,19 @@ const POSDashboard = () => {
         const handler = async ({ orderId }) => {
             try {
                 const res = await api.get(`/orders/${orderId}`);
-                if (res.data.success) {
-                    const order = res.data.data;
-                    printKOT(order, printRestaurant);
-                }
+                if (!res.data.success) return;
+                const html = printKOT(res.data.data, printRestaurant);
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:0;border:none';
+                document.body.appendChild(iframe);
+                const doc = iframe.contentWindow.document;
+                doc.open();
+                doc.write(html);
+                doc.close();
+                setTimeout(() => {
+                    try { iframe.contentWindow.print(); } catch(e) {}
+                    setTimeout(() => document.body.removeChild(iframe), 1000);
+                }, 500);
             } catch (err) {
                 console.error('Auto KOT print failed:', err);
             }
