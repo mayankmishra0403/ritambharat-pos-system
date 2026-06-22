@@ -286,6 +286,8 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
 
         if (status === 'SERVED') {
             sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served to table`, ['WAITER', 'OWNER']);
+        } else if (status === 'CANCELLED') {
+            sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
         }
 
         res.status(200).json({

@@ -120,6 +120,12 @@ export const updateOrderStatus = async (req, res, next) => {
                 }, ['WAITER', 'OWNER']);
 
                 sendWhatsAppToStaff(order.restaurant, `✅ Order #${order.orderNumber} is ready to serve!`, ['WAITER', 'OWNER']);
+            } else if (status === 'ACCEPTED') {
+                sendWhatsAppToStaff(order.restaurant, `✅ Order #${order.orderNumber} has been accepted by kitchen`, ['WAITER', 'OWNER']);
+            } else if (status === 'PREPARING') {
+                sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Order #${order.orderNumber} is being prepared in the kitchen`, ['WAITER', 'OWNER']);
+            } else if (status === 'CANCELLED') {
+                sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled by kitchen`, ['OWNER', 'WAITER']);
             }
         }
 

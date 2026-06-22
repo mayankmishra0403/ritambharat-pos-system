@@ -406,6 +406,8 @@ export const updateOrderStatus = async (req, res, next) => {
             sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Order #${order.orderNumber} is being prepared in the kitchen`, ['WAITER', 'OWNER']);
         } else if (status === 'SERVED') {
             sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served`, ['WAITER', 'OWNER']);
+        } else if (status === 'CANCELLED') {
+            sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
         }
 
         logger.info(`Order status updated: #${order.orderNumber} -> ${status}`);
