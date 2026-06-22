@@ -65,7 +65,9 @@ export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter) => {
         }
 
         for (const user of users) {
-            const phone = user.phone.startsWith('+') ? user.phone.slice(1) : user.phone;
+            let phone = user.phone.startsWith('+') ? user.phone.slice(1) : user.phone;
+            phone = phone.replace(/[^0-9]/g, '');
+            if (phone.length === 10) phone = `91${phone}`;
             await sendMessage(phone, text);
         }
     } catch (error) {

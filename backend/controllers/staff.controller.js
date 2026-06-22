@@ -9,7 +9,12 @@ import Order from '../models/Order.js';
 // @access  Private (Owner/Admin)
 export const addStaff = async (req, res, next) => {
     try {
-        const { email, role, profileImage, name, password, pin, permissions, phone } = req.body;
+        let { email, role, profileImage, name, password, pin, permissions, phone } = req.body;
+        if (phone) {
+            phone = phone.startsWith('+') ? phone.slice(1) : phone;
+            phone = phone.replace(/[^0-9]/g, '');
+            if (phone.length === 10) phone = `91${phone}`;
+        }
         const restaurantId = req.user.restaurant;
 
         if (!restaurantId) {
@@ -118,7 +123,12 @@ export const addStaff = async (req, res, next) => {
 
 export const updateStaff = async (req, res, next) => {
     try {
-        const { name, role, profileImage, password, pin, permissions, email, phone } = req.body;
+        let { name, role, profileImage, password, pin, permissions, email, phone } = req.body;
+        if (phone) {
+            phone = phone.startsWith('+') ? phone.slice(1) : phone;
+            phone = phone.replace(/[^0-9]/g, '');
+            if (phone.length === 10) phone = `91${phone}`;
+        }
         const user = await User.findById(req.params.id);
 
         if (!user) {

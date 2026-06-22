@@ -346,7 +346,7 @@ const StaffManagement = () => {
                                             className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
                                             placeholder="919876543210"
                                         />
-                                        <p className="text-[9px] text-muted-foreground px-1">With country code (e.g. 91 for India). Staff will receive WhatsApp alerts here.</p>
+                                        <p className="text-[9px] text-muted-foreground px-1">Country code + number (e.g. <b>919876543210</b>). 10-digit numbers auto-get <b>91</b> prefix.</p>
                                     </div>
 
                                     {isPinRole ? (
