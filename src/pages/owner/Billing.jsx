@@ -98,23 +98,28 @@ const Billing = () => {
     const handlePrintKOT = (bill) => {
         if (printingKOT === bill._id) return;
         setPrintingKOT(bill._id);
-        setTimeout(() => {
-            try {
-                const win = window.open('', '_blank');
-                if (!win) {
-                    toast.error('Popup blocked! Allow popups for this site.');
-                    setPrintingKOT(null);
-                    return;
+        try {
+            const html = printKOT(bill, printRestaurant);
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:80mm;height:0;border:none';
+            document.body.appendChild(iframe);
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(html);
+            doc.close();
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.print();
+                    toast.success('KOT sent to printer...');
+                } catch(e) {
+                    toast.error('Print failed');
                 }
-                const html = printKOT(bill, printRestaurant);
-                win.document.write(html);
-                win.document.close();
-                toast.success('KOT sent to printer...');
-            } catch (err) {
-                toast.error('Failed to print KOT');
-            }
-            setPrintingKOT(null);
-        }, 300);
+                setTimeout(() => document.body.removeChild(iframe), 1000);
+            }, 500);
+        } catch (err) {
+            toast.error('Failed to print KOT');
+        }
+        setPrintingKOT(null);
     };
 
     const [editingCustomer, setEditingCustomer] = useState(null);
