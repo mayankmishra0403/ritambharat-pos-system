@@ -65,15 +65,24 @@ export const handleIncomingMessage = async (req, res, next) => {
 
         // Check if this is an event from a WhatsApp API
         if (body.object) {
+            const change = body.entry?.[0]?.changes?.[0]?.value;
+
+            // Log delivery status updates
+            if (change?.statuses?.[0]) {
+                const status = change.statuses[0];
+                console.log(`WhatsApp status: ${status.status} | id: ${status.id} | recipient: ${status.recipient_id} | timestamp: ${status.timestamp}`);
+                if (status.errors) {
+                    console.error(`WhatsApp delivery ERROR:`, JSON.stringify(status.errors));
+                }
+                return res.sendStatus(200);
+            }
+
             if (
-                body.entry &&
-                body.entry[0].changes &&
-                body.entry[0].changes[0].value.messages &&
-                body.entry[0].changes[0].value.messages[0]
+                change?.messages?.[0]
             ) {
-                const phoneNumberId = body.entry[0].changes[0].value.metadata.phone_number_id;
-                const from = body.entry[0].changes[0].value.messages[0].from; // sender phone number
-                const msgBody = body.entry[0].changes[0].value.messages[0].text.body; // message text
+                const phoneNumberId = change.metadata?.phone_number_id;
+                const from = change.messages[0].from;
+                const msgBody = change.messages[0].text?.body || '';
 
                 console.log(`WhatsApp message from ${from}: ${msgBody}`);
 
