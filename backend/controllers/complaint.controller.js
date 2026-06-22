@@ -37,7 +37,7 @@ export const createComplaint = async (req, res, next) => {
             data: { url: '/complaints', type: 'complaint' }
         }, ['OWNER', 'WAITER', 'CHEF']);
 
-        sendWhatsAppToStaff(restaurant, `⚠️ ${severity} complaint from ${customerName}: ${type}`, ['OWNER', 'WAITER', 'CHEF']);
+        sendWhatsAppToStaff(restaurant, `⚠️ Complaint (${severity}) – ${customerName}: ${type}`, ['OWNER', 'WAITER', 'CHEF']);
 
         res.status(201).json({
             success: true,

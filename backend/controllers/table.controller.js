@@ -330,7 +330,7 @@ export const resetTable = async (req, res, next) => {
         }
 
         sendPushToRestaurantStaff(table.restaurant, { title: 'Table Reset', body: `Table ${table.name} reset. Orders marked as paid.`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/pos', type: 'table-reset' } }, ['OWNER', 'WAITER']);
-        sendWhatsAppToStaff(table.restaurant, `🔄 Table ${table.name} reset and orders marked as paid`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(table.restaurant, `🔄 Reset & Paid – Table ${table.name}`, ['OWNER', 'WAITER']);
 
         res.status(200).json({
             success: true,

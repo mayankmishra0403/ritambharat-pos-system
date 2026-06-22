@@ -43,8 +43,9 @@ export const createServiceRequest = async (req, res, next) => {
             message: `New ${type.replace('_', ' ')} from ${tableDoc ? tableDoc.name : 'table'}`
         });
 
+        const tableName = tableDoc ? `Table ${tableDoc.name}` : 'a table';
         sendPushToRestaurantStaff(restaurant, {
-            title: 'Customer Request',
+            title: 'Service Request',
             body: `New ${type.replace('_', ' ').toLowerCase()} from ${tableDoc ? tableDoc.name : 'a table'}`,
             icon: '/icons/icon-192.png',
             badge: '/icons/badge-72.png',
@@ -53,7 +54,7 @@ export const createServiceRequest = async (req, res, next) => {
             data: { url: '/waiter-app', type: 'waiter-call' }
         }, ['WAITER', 'OWNER']);
 
-        sendWhatsAppToStaff(restaurant, `🔔 New ${type.replace('_', ' ')} from ${tableDoc ? tableDoc.name : 'a table'}`, ['WAITER', 'OWNER']);
+        sendWhatsAppToStaff(restaurant, `🔔 Service Request – ${tableName} (${type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
 
         res.status(201).json({
             success: true,
@@ -120,17 +121,17 @@ export const updateServiceRequest = async (req, res, next) => {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request has been completed!`
             });
-            const tableName = request.table?.name || 'a table';
+            const tableName = `Table ${request.table?.name || 'a table'}`;
             sendPushToRestaurantStaff(request.restaurant, { title: 'Request Completed', body: `${request.type.replace('_', ' ')} from ${tableName} completed`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app', type: 'service-completed' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(request.restaurant, `✅ ${request.type.replace('_', ' ')} from ${tableName} completed`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(request.restaurant, `✅ Service Completed – ${tableName} (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
             io.to(`table:${request.table?._id}`).emit('service:cancelled', {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request was cancelled.`
             });
-            const tableName = request.table?.name || 'a table';
+            const tableName = `Table ${request.table?.name || 'a table'}`;
             sendPushToRestaurantStaff(request.restaurant, { title: 'Request Cancelled', body: `${request.type.replace('_', ' ')} from ${tableName} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app', type: 'service-cancelled' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(request.restaurant, `❌ ${request.type.replace('_', ' ')} from ${tableName} cancelled`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(request.restaurant, `❌ Service Cancelled – ${tableName} (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
         }
 
         res.status(200).json({

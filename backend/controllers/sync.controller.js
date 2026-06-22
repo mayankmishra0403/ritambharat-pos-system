@@ -39,7 +39,7 @@ export const syncBatch = async (req, res, next) => {
                                 data: { url: '/waiter-app/orders', type: 'new-order' }
                             }, ['OWNER', 'WAITER'])
 
-                            sendWhatsAppToStaff(restaurantId, `🆕 Order #${order.orderNumber} placed`, ['OWNER', 'WAITER'])
+                            sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'])
                         }
                     } else if (item.action === 'updated') {
                         io.to(`restaurant:${restaurantId}`).emit('order:updated', {

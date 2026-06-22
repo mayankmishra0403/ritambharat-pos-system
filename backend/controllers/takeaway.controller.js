@@ -138,7 +138,7 @@ export const createTakeawayOrder = async (req, res, next) => {
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurantId, `🆕 #${order.orderNumber} - ${orderType.charAt(0).toUpperCase() + orderType.slice(1)} order`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order – ${orderType} #${order.orderNumber}`, ['OWNER', 'WAITER']);
 
         logger.info(`Takeaway order created: #${order.orderNumber}`);
 
@@ -240,7 +240,7 @@ export const markTakeawayReady = async (req, res, next) => {
         }
 
         sendPushToRestaurantStaff(order.restaurant, { title: 'Takeaway Ready', body: `Takeaway #${order.orderNumber} is ready for pickup!`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/takeaway', type: 'takeaway-ready' } }, ['WAITER', 'OWNER']);
-        sendWhatsAppToStaff(order.restaurant, `🛵 #${order.orderNumber} - Ready for pickup`, ['WAITER', 'OWNER']);
+        sendWhatsAppToStaff(order.restaurant, `🛵 Ready for Pickup – #${order.orderNumber}`, ['WAITER', 'OWNER']);
 
         res.status(200).json({ success: true, data: order });
     } catch (error) {
@@ -276,7 +276,7 @@ export const markTakeawayComplete = async (req, res, next) => {
         }
 
         sendPushToRestaurantStaff(order.restaurant, { title: 'Takeaway Picked Up', body: `Takeaway #${order.orderNumber} has been picked up`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/takeaway', type: 'takeaway-complete' } }, ['WAITER', 'OWNER']);
-        sendWhatsAppToStaff(order.restaurant, `✅ #${order.orderNumber} - Picked up`, ['WAITER', 'OWNER']);
+        sendWhatsAppToStaff(order.restaurant, `✅ Picked Up – #${order.orderNumber}`, ['WAITER', 'OWNER']);
 
         res.status(200).json({ success: true, data: order });
     } catch (error) {
