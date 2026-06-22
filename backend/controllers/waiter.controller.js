@@ -284,6 +284,10 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
             });
         }
 
+        if (status === 'SERVED') {
+            sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served to table`, ['WAITER', 'OWNER']);
+        }
+
         res.status(200).json({
             success: true,
             data: order

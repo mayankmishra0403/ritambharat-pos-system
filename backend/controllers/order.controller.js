@@ -400,6 +400,14 @@ export const updateOrderStatus = async (req, res, next) => {
 
         io.to(`order:${order._id}`).emit('order:updated', order);
 
+        if (status === 'ACCEPTED') {
+            sendWhatsAppToStaff(order.restaurant, `✅ Order #${order.orderNumber} has been accepted!`, ['WAITER', 'OWNER']);
+        } else if (status === 'PREPARING') {
+            sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Order #${order.orderNumber} is being prepared in the kitchen`, ['WAITER', 'OWNER']);
+        } else if (status === 'SERVED') {
+            sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served`, ['WAITER', 'OWNER']);
+        }
+
         logger.info(`Order status updated: #${order.orderNumber} -> ${status}`);
 
         res.status(200).json({

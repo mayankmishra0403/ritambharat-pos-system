@@ -239,6 +239,8 @@ export const markTakeawayReady = async (req, res, next) => {
             });
         }
 
+        sendWhatsAppToStaff(order.restaurant, `🛵 Takeaway #${order.orderNumber} is ready for pickup!`, ['WAITER', 'OWNER']);
+
         res.status(200).json({ success: true, data: order });
     } catch (error) {
         next(error);
@@ -271,6 +273,8 @@ export const markTakeawayComplete = async (req, res, next) => {
                 status: 'SERVED'
             });
         }
+
+        sendWhatsAppToStaff(order.restaurant, `✅ Takeaway #${order.orderNumber} has been picked up`, ['WAITER', 'OWNER']);
 
         res.status(200).json({ success: true, data: order });
     } catch (error) {
