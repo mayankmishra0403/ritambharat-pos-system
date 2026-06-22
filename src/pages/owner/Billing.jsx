@@ -401,7 +401,6 @@ const Billing = () => {
                                             <th className="p-4">Order Details</th>
                                             <th className="p-4">Table</th>
                                             <th className="p-4">Items</th>
-                                            <th className="p-4">Status</th>
                                             <th className="p-4">Total</th>
                                             <th className="p-4 text-right">Actions</th>
                                         </tr>
@@ -442,14 +441,7 @@ const Billing = () => {
                                                             {bill.items.reduce((acc, current) => acc + current.quantity, 0)} items total
                                                         </div>
                                                     </td>
-                                                    <td className="p-4">
-                                                        <span className={`px-2 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border ${bill.paymentStatus === 'PAID'
-                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                                            : 'bg-primary/10 text-primary border-primary/20'
-                                                            }`}>
-                                                            {bill.paymentStatus === 'PAID' ? 'PAID' : 'PENDING'}
-                                                        </span>
-                                                    </td>
+
                                                     <td className="p-4">
                                                         <div className="font-black text-lg">
                                                             {bill.total.toFixed(2)}
@@ -543,7 +535,7 @@ const Billing = () => {
                                                                                 )}
                                                                             </div>
 
-                                                                            {bill.paymentStatus !== 'PAID' && (
+                                                                            {bill.paymentStatus !== 'PAID' && bill.status !== 'CANCELLED' && (
                                                                                 <button
                                                                                     onClick={() => handleMarkPaid(bill)}
                                                                                     className="px-4 py-3 hover:bg-emerald-500/10 text-sm font-medium text-emerald-500 flex items-center gap-2 transition-colors border-b border-border/50"
