@@ -148,7 +148,8 @@ const StaffManagement = () => {
             pin: '',
             role: member.role,
             profileImage: member.profileImage,
-            permissions: member.permissions || []
+            permissions: member.permissions || [],
+            phone: member.phone || ''
         });
         setIsAddModalOpen(true);
     };
@@ -156,7 +157,7 @@ const StaffManagement = () => {
     const handleOpenAddModal = () => {
         setEditingStaff(null);
         setNewStaff({
-            name: '', email: '', password: '', pin: '', role: 'WAITER', profileImage: '', permissions: []
+            name: '', email: '', password: '', pin: '', role: 'WAITER', profileImage: '', permissions: [], phone: ''
         });
         setIsAddModalOpen(true);
     };
@@ -336,6 +337,18 @@ const StaffManagement = () => {
                                         </div>
                                     </div>
 
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">WhatsApp Number</label>
+                                        <input
+                                            type="tel"
+                                            value={newStaff.phone || ''}
+                                            onChange={e => setNewStaff({ ...newStaff, phone: e.target.value.replace(/[^0-9+]/g, '') })}
+                                            className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 outline-none transition-all"
+                                            placeholder="919876543210"
+                                        />
+                                        <p className="text-[9px] text-muted-foreground px-1">With country code (e.g. 91 for India). Staff will receive WhatsApp alerts here.</p>
+                                    </div>
+
                                     {isPinRole ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
@@ -495,6 +508,11 @@ const StaffCard = ({ member, onRemove, onEdit, index, availableFeatures }) => {
                             ) : (
                                 <p className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
                                     <Mail size={14} className="text-primary" /> {member.email}
+                                </p>
+                            )}
+                            {member.phone && (
+                                <p className="flex items-center gap-2 text-xs text-muted-foreground font-medium truncate">
+                                    <span className="text-green-500 font-bold">WhatsApp</span> {member.phone}
                                 </p>
                             )}
                         </div>

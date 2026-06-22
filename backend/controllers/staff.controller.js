@@ -9,7 +9,7 @@ import Order from '../models/Order.js';
 // @access  Private (Owner/Admin)
 export const addStaff = async (req, res, next) => {
     try {
-        const { email, role, profileImage, name, password, pin, permissions } = req.body;
+        const { email, role, profileImage, name, password, pin, permissions, phone } = req.body;
         const restaurantId = req.user.restaurant;
 
         if (!restaurantId) {
@@ -44,7 +44,8 @@ export const addStaff = async (req, res, next) => {
                 restaurant: restaurantId,
                 profileImage,
                 permissions: permissions || [],
-                pin: pin.toString()
+                pin: pin.toString(),
+                phone
             };
 
             if (!user) {
@@ -86,7 +87,8 @@ export const addStaff = async (req, res, next) => {
                 role: role || 'WAITER',
                 restaurant: restaurantId,
                 profileImage,
-                permissions: permissions || []
+                permissions: permissions || [],
+                phone
             });
         } else {
             if (user.role === 'OWNER') {
@@ -116,7 +118,7 @@ export const addStaff = async (req, res, next) => {
 
 export const updateStaff = async (req, res, next) => {
     try {
-        const { name, role, profileImage, password, pin, permissions, email } = req.body;
+        const { name, role, profileImage, password, pin, permissions, email, phone } = req.body;
         const user = await User.findById(req.params.id);
 
         if (!user) {
@@ -139,6 +141,7 @@ export const updateStaff = async (req, res, next) => {
         if (permissions) user.permissions = permissions;
         if (email) user.email = email;
         if (password) user.password = password;
+        if (phone !== undefined) user.phone = phone;
 
         const isPinRole = ['WAITER', 'CASHIER', 'CHEF'].includes(user.role);
         if (isPinRole && pin) {
@@ -175,7 +178,7 @@ export const getStaff = async (req, res, next) => {
         const staff = await User.find({
             restaurant: targetId,
             role: { $in: ['WAITER', 'CHEF', 'CASHIER'] }
-        }).select('name email role profileImage permissions createdAt');
+        }).select('name email role profileImage permissions phone createdAt');
 
         // Enhance staff with real metrics
         const enhancedStaff = await Promise.all(staff.map(async (member) => {
