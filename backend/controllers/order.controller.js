@@ -146,7 +146,6 @@ export const createOrder = async (req, res, next) => {
             customerName,
             customerPhone,
             specialInstructions: orderNote || specialInstructions,
-            paymentMethod: paymentMethod || 'CASH',
             orderSource: 'QR'
         });
 
@@ -401,12 +400,16 @@ export const updateOrderStatus = async (req, res, next) => {
         io.to(`order:${order._id}`).emit('order:updated', order);
 
         if (status === 'ACCEPTED') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Accepted', body: `Order #${order.orderNumber} has been accepted!`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-accepted' } }, ['WAITER', 'OWNER']);
             sendWhatsAppToStaff(order.restaurant, `✅ Order #${order.orderNumber} has been accepted!`, ['WAITER', 'OWNER']);
         } else if (status === 'PREPARING') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Preparing Order', body: `Order #${order.orderNumber} is being prepared in the kitchen`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-preparing' } }, ['WAITER', 'OWNER']);
             sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Order #${order.orderNumber} is being prepared in the kitchen`, ['WAITER', 'OWNER']);
         } else if (status === 'SERVED') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Served', body: `Order #${order.orderNumber} has been served`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-served' } }, ['WAITER', 'OWNER']);
             sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Cancelled', body: `Order #${order.orderNumber} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-cancelled' } }, ['OWNER', 'WAITER']);
             sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
         }
 
@@ -584,6 +587,11 @@ export const updateOrderPayment = async (req, res, next) => {
             orderId: order._id,
             paymentStatus: order.paymentStatus
         });
+
+        if (order.paymentStatus === 'PAID') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Payment Updated', body: `Payment for order #${order.orderNumber} marked as ${order.paymentStatus}`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/pos', type: 'payment' } }, ['OWNER', 'WAITER']);
+            sendWhatsAppToStaff(order.restaurant, `💰 Payment for order #${order.orderNumber} marked as ${order.paymentStatus}`, ['OWNER', 'WAITER']);
+        }
 
         logger.info(`Order payment updated: #${order.orderNumber} -> ${order.paymentStatus}`);
 

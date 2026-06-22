@@ -41,7 +41,6 @@ const Checkout = () => {
             })),
             customerName: "Guest", // Default name
             customerPhone: "0000000000", // Default phone
-            paymentMethod: "CASH", // Default payment
             totalAmount: finalTotal,
             notes: "Placed via Simplified Checkout"
         };

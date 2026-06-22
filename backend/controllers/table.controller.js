@@ -3,6 +3,8 @@ import Order from '../models/Order.js';
 import Payment from '../models/Payment.js';
 import Restaurant from '../models/Restaurant.js';
 import QRCode from 'qrcode';
+import { sendPushToRestaurantStaff } from '../services/push.service.js';
+import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 
 // Derive frontend URL from request (works on any domain, localhost, or deploy)
 function getFrontendUrl(req) {
@@ -326,6 +328,9 @@ export const resetTable = async (req, res, next) => {
         if (io) {
             io.to(`restaurant:${table.restaurant}`).emit('table:updated', table);
         }
+
+        sendPushToRestaurantStaff(table.restaurant, { title: 'Table Reset', body: `Table ${table.name} reset. Orders marked as paid.`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/pos', type: 'table-reset' } }, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(table.restaurant, `🔄 Table ${table.name} reset and orders marked as paid`, ['OWNER', 'WAITER']);
 
         res.status(200).json({
             success: true,

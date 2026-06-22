@@ -153,8 +153,7 @@ export const processVoiceOrder = async (req, res, next) => {
             customerName,
             customerPhone,
             specialInstructions: `Voice order: "${transcript}"`,
-            orderSource: 'VOICE',
-            paymentMethod: 'CASH'
+            orderSource: 'VOICE'
         });
 
         await order.populate('table');

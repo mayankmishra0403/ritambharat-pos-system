@@ -285,8 +285,10 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
         }
 
         if (status === 'SERVED') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Served', body: `Order #${order.orderNumber} has been served to table`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-served' } }, ['WAITER', 'OWNER']);
             sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served to table`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
+            sendPushToRestaurantStaff(order.restaurant, { title: 'Order Cancelled', body: `Order #${order.orderNumber} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-cancelled' } }, ['OWNER', 'WAITER']);
             sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
         }
 

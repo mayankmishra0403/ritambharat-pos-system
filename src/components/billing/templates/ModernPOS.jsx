@@ -92,7 +92,7 @@ const ModernPOS = ({ order, restaurant, settings, type = 'display' }) => {
 
             {/* ─── PAYMENT ─── */}
             <div className={`border-t border-dashed border-black mt-1 pt-1 flex justify-between ${isPrint ? 'text-[8pt]' : 'text-[10px]'} font-bold text-black`}>
-                <span>{order.paymentMethod || '-'}</span>
+                <span>{order.paymentStatus === 'PAID' ? (order.paymentMethod || '-') : ''}</span>
                 <span className={order.paymentStatus === 'PAID' ? 'text-green-700 font-bold' : 'text-black'}>{order.paymentStatus || 'PENDING'}</span>
             </div>
 

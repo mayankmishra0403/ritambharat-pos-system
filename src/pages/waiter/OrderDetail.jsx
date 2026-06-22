@@ -346,7 +346,7 @@ const OrderDetail = () => {
                         }`}>
                             {order.paymentStatus}
                         </span>
-                        {order.paymentMethod && (
+                        {order.paymentStatus === 'PAID' && order.paymentMethod && (
                             <span className="text-xs text-muted-foreground ml-2">via {order.paymentMethod}</span>
                         )}
                     </div>

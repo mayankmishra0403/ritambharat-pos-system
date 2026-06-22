@@ -198,7 +198,7 @@ const HotelClassic = ({ order, restaurant, settings, type = 'display' }) => {
             {/* ═══════════ PAYMENT ═══════════ */}
             <div className="border-t border-black border-b border-black py-1 mb-1">
                 <div className="flex justify-between items-center">
-                    <span className={`${isPrint ? 'text-[8.5pt]' : 'text-xs'} font-bold text-black`}>{order.paymentMethod || '-'}</span>
+                    <span className={`${isPrint ? 'text-[8.5pt]' : 'text-xs'} font-bold text-black`}>{isPaid ? (order.paymentMethod || '-') : ''}</span>
                     {isPaid ? (
                         <span className={`${isPrint ? 'text-[9pt]' : 'text-sm'} font-bold text-green-800 bg-green-100 px-1 py-0.5 border border-green-700`}>
                             {'\u2713'} PAID

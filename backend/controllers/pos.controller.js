@@ -330,6 +330,17 @@ export const processPayment = async (req, res, next) => {
             });
         }
 
+        sendPushToRestaurantStaff(order.restaurant, {
+            title: 'Payment Received',
+            body: `Payment received for order #${order.orderNumber} (${paymentMethod})`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/badge-72.png',
+            vibrate: [200, 100, 200],
+            data: { url: '/pos', type: 'payment' }
+        }, ['OWNER', 'WAITER']);
+
+        sendWhatsAppToStaff(order.restaurant, `💰 Payment received for order #${order.orderNumber} (${paymentMethod})`, ['OWNER', 'WAITER']);
+
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;
 
         res.status(200).json({
