@@ -1,8 +1,10 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// Use environment variable for API base URL, fallback to /api for local dev
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Use environment variable for API base URL
+// Production fallback to api.ritambharat.software (Vercel can't proxy /api)
+const API_BASE_URL = import.meta.env.VITE_API_URL
+    || (import.meta.env.PROD ? 'https://api.ritambharat.software' : '/api');
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -37,13 +39,11 @@ api.interceptors.response.use(
 
         // Detect if we received HTML instead of JSON (common in misconfigured production SPA proxies)
         if (typeof response.data === 'string' && response.data.trim().startsWith('<!DOCTYPE html>')) {
-            const errorMsg = 'API Error: Received HTML instead of JSON. This usually means the VITE_API_URL is not correctly set or the backend is unreachable.';
-            console.error(errorMsg, {
+            console.error('API returned HTML (likely SPA catch-all). Check VITE_API_URL.', {
                 url: response.config.url,
-                status: response.status,
                 baseUrl: API_BASE_URL
             });
-            return Promise.reject(new Error(errorMsg));
+            return Promise.reject(new Error('Backend unreachable — check API URL configuration'));
         }
 
         return response;
