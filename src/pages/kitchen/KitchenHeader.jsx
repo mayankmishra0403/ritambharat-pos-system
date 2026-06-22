@@ -1,5 +1,37 @@
-import { Maximize2, Minimize2, Volume2, VolumeX, Bell, LogOut, ArrowLeftFromLine } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Maximize2, Minimize2, Volume2, VolumeX, Bell, LogOut, ArrowLeftFromLine, X } from 'lucide-react';
 import { useSocket } from '../../hooks/useSocket';
+
+const NotificationDropdown = ({ notifications, onMarkAllRead, onClose }) => (
+    <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl shadow-black/20 z-50 overflow-hidden">
+        <div className="flex items-center justify-between p-3 border-b border-border">
+            <span className="text-sm font-bold">Notifications</span>
+            <div className="flex items-center gap-1">
+                <button onClick={onMarkAllRead} className="text-[10px] font-bold text-primary hover:bg-primary/10 px-2 py-1 rounded-lg transition-colors">
+                    Mark all read
+                </button>
+                <button onClick={onClose} className="p-1 hover:bg-muted rounded-lg transition-colors">
+                    <X size={14} />
+                </button>
+            </div>
+        </div>
+        <div className="max-h-72 overflow-y-auto">
+            {notifications.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">No notifications</div>
+            ) : (
+                notifications.slice(0, 20).map(n => (
+                    <div key={n._id} className={`p-3 border-b border-border/50 text-sm flex items-start gap-3 ${!n.isRead ? 'bg-primary/5' : ''}`}>
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!n.isRead ? 'bg-primary' : 'bg-transparent'}`} />
+                        <div>
+                            <p className="text-foreground font-medium">{n.message}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.createdAt).toLocaleString()}</p>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    </div>
+);
 
 const KitchenHeader = ({
     fullscreen,
@@ -14,7 +46,24 @@ const KitchenHeader = ({
     onBackToPanel
 }) => {
     const { connected } = useSocket();
+    const [showNotifications, setShowNotifications] = useState(false);
+    const notifRef = useRef(null);
     const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (notifRef.current && !notifRef.current.contains(e.target)) {
+                setShowNotifications(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, []);
+
+    const handleMarkAllRead = () => {
+        onMarkAllRead();
+        setShowNotifications(false);
+    };
 
     return (
         <div className="bg-card border-b border-border px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
@@ -52,9 +101,9 @@ const KitchenHeader = ({
                     <span>Ready: <strong className="text-green-500">{stats.ready}</strong></span>
                 </span>
 
-                <div className="relative">
+                <div className="relative" ref={notifRef}>
                     <button
-                        onClick={onMarkAllRead}
+                        onClick={() => setShowNotifications(!showNotifications)}
                         className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground relative"
                         title="Notifications"
                     >
@@ -65,6 +114,13 @@ const KitchenHeader = ({
                             </span>
                         )}
                     </button>
+                    {showNotifications && (
+                        <NotificationDropdown
+                            notifications={notifications}
+                            onMarkAllRead={handleMarkAllRead}
+                            onClose={() => setShowNotifications(false)}
+                        />
+                    )}
                 </div>
 
                 <button
