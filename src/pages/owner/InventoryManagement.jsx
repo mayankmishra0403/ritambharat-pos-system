@@ -260,7 +260,7 @@ const InventoryManagement = () => {
                             { label: 'Total Items', value: stats.totalItems, icon: Package, color: 'text-blue-500', bg: 'bg-blue-500/10' },
                             { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
                             { label: 'Out of Stock', value: stats.outOfStock, icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
-                            { label: 'Est. Value', value: `$${stats.totalValue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                            { label: 'Est. Value', value: `₹${stats.totalValue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
                         ].map((stat, i) => (
                             <div key={i} className="min-w-[240px] lg:min-w-0 snap-center bg-card/50 backdrop-blur-md border border-border/50 rounded-2xl p-5 flex items-center gap-5 shadow-sm transition-all hover:shadow-md">
                                 <div className={`p-4 rounded-xl ${stat.bg} ${stat.color} shadow-inner`}>
@@ -348,7 +348,7 @@ const InventoryManagement = () => {
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end">
-                                                <span className="text-lg font-black text-foreground">${(item.costPrice || 0).toFixed(2)}</span>
+                                                <span className="text-lg font-black text-foreground">₹{(item.costPrice || 0).toFixed(2)}</span>
                                                 <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Unit Cost</span>
                                             </div>
                                         </div>
@@ -634,7 +634,7 @@ const InventoryManagement = () => {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Cost Price ($) (Optional)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Cost Price (₹) (Optional)</label>
                                         <input
                                             type="number"
                                             step="0.01"

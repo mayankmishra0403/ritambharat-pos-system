@@ -5,7 +5,7 @@ import api from '../../config/api';
 import {
     Receipt, Search, Filter, Download, Printer,
     Calendar, Table, DollarSign, ChevronRight,
-    ArrowLeft, MoreVertical, CheckCircle, X, User, Save
+    ArrowLeft, MoreVertical, CheckCircle, X, User, Save, ChefHat
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../../components/dashboard/Sidebar';
@@ -13,6 +13,7 @@ import Header from '../../components/dashboard/Header';
 import ManualBillModal from '../../components/billing/ManualBillModal';
 import toast from 'react-hot-toast';
 import printInvoice from '../../utils/printInvoice';
+import printKOT from '../../utils/printKOT';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 
 const Billing = () => {
@@ -90,6 +91,30 @@ const Billing = () => {
         } catch (error) {
             toast.error('Failed to cancel order');
         }
+    };
+
+    const [printingKOT, setPrintingKOT] = useState(null);
+
+    const handlePrintKOT = (bill) => {
+        if (printingKOT === bill._id) return;
+        setPrintingKOT(bill._id);
+        setTimeout(() => {
+            try {
+                const win = window.open('', '_blank');
+                if (!win) {
+                    toast.error('Popup blocked! Allow popups for this site.');
+                    setPrintingKOT(null);
+                    return;
+                }
+                const html = printKOT(bill, printRestaurant);
+                win.document.write(html);
+                win.document.close();
+                toast.success('KOT sent to printer...');
+            } catch (err) {
+                toast.error('Failed to print KOT');
+            }
+            setPrintingKOT(null);
+        }, 300);
     };
 
     const [editingCustomer, setEditingCustomer] = useState(null);
@@ -453,6 +478,14 @@ const Billing = () => {
                                                                                 className="px-4 py-3 hover:bg-muted/50 text-sm font-medium text-foreground flex items-center gap-2 transition-colors border-b border-border/50"
                                                                             >
                                                                                 <Printer size={16} className="text-primary" /> Print Receipt
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={() => handlePrintKOT(bill)}
+                                                                                disabled={printingKOT === bill._id}
+                                                                                className="px-4 py-3 hover:bg-orange-500/10 text-sm font-medium text-orange-500 flex items-center gap-2 transition-colors border-b border-border/50 disabled:opacity-50"
+                                                                            >
+                                                                                <ChefHat size={16} /> {printingKOT === bill._id ? 'Printing...' : 'Print KOT'}
                                                                             </button>
 
                                                                             <div className="px-3 py-2 border-b border-border/50">

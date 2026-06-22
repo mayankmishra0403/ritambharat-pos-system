@@ -48,7 +48,7 @@ export const createManualBill = async (req, res, next) => {
             order: order._id,
             restaurant: restaurantId,
             amount: total,
-            currency: 'USD',
+            currency: 'INR',
             status: 'COMPLETED',
             paymentMethod: paymentMethod,
             gateway: 'MANUAL'

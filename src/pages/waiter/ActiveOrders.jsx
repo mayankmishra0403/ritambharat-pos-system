@@ -93,7 +93,7 @@ const ActiveOrders = () => {
 
                                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50 text-xs text-muted-foreground">
                                     <span>{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    <span className="font-bold">${order.total?.toFixed(2)}</span>
+                                    <span className="font-bold">₹{order.total?.toFixed(2)}</span>
                                 </div>
                             </div>
                         );

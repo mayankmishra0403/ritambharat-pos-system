@@ -210,7 +210,7 @@ const Dashboard = () => {
     const stats = [
         {
             title: "Total Revenue",
-            value: loading ? "..." : (analytics ? `$${analytics.today.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"),
+            value: loading ? "..." : (analytics ? `₹${analytics.today.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "₹0.00"),
             trend: loading ? "..." : (analytics?.trends?.revenue || "0%"),
             positive: parseFloat(analytics?.trends?.revenue || 0) >= 0,
             icon: DollarSign,
@@ -373,7 +373,7 @@ const Dashboard = () => {
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-                                                tickFormatter={(value) => `$${value}`}
+                                                tickFormatter={(value) => `₹${value}`}
                                             />
                                             <Tooltip
                                                 content={({ active, payload }) => {
@@ -383,7 +383,7 @@ const Dashboard = () => {
                                                         return (
                                                             <div className="bg-popover border border-border p-2 rounded-lg shadow-md">
                                                                 <p className="text-sm font-semibold text-foreground">{data.name}</p>
-                                                                <p className="text-sm text-primary">Sales: ${data.sales}</p>
+                                                                <p className="text-sm text-primary">Sales: ₹{data.sales}</p>
                                                             </div>
                                                         );
                                                     }
@@ -557,7 +557,7 @@ const Dashboard = () => {
                                             </div>
                                         </div>
                                         <span className="font-bold text-sm sm:text-base text-foreground flex-shrink-0">
-                                            ${parseFloat(item.totalRevenue).toFixed(2)}
+                                            ₹{parseFloat(item.totalRevenue).toFixed(2)}
                                         </span>
                                     </div>
                                 ))}

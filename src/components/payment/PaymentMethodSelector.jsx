@@ -2,35 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, Smartphone, Building2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const PaymentMethodSelector = ({ currency = 'PKR', onSelect, selectedMethod }) => {
+const PaymentMethodSelector = ({ currency = 'INR', onSelect, selectedMethod }) => {
     const [availableMethods, setAvailableMethods] = useState([]);
-    const gateway = 'SAFEPAY';
 
     useEffect(() => {
         setAvailableMethods([
             {
-                id: 'jazzcash',
-                name: 'JazzCash',
+                id: 'UPI',
+                name: 'UPI',
                 icon: Smartphone,
-                description: 'Pay with your JazzCash wallet'
+                description: 'Google Pay, PhonePe, Paytm'
             },
             {
-                id: 'easypaisa',
-                name: 'EasyPaisa',
-                icon: Smartphone,
-                description: 'Pay with your EasyPaisa account'
-            },
-            {
-                id: 'card',
-                name: 'Debit/Credit Card',
+                id: 'CARD',
+                name: 'Card',
                 icon: CreditCard,
-                description: 'Visa, Mastercard, UnionPay'
+                description: 'Debit / Credit Card'
             },
             {
-                id: 'bank',
-                name: 'Bank Transfer',
+                id: 'CASH',
+                name: 'Cash',
                 icon: Building2,
-                description: '1Link direct transfer'
+                description: 'Cash payment'
             }
         ]);
     }, []);
@@ -51,7 +44,7 @@ const PaymentMethodSelector = ({ currency = 'PKR', onSelect, selectedMethod }) =
                             key={method.id}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => onSelect(method.id, gateway)}
+                            onClick={() => onSelect(method.id, 'MANUAL')}
                             className={`
                                 relative p-4 rounded-xl border-2 transition-all
                                 ${isSelected
@@ -91,11 +84,6 @@ const PaymentMethodSelector = ({ currency = 'PKR', onSelect, selectedMethod }) =
                         </motion.button>
                     );
                 })}
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                <span>Secured by Safepay</span>
             </div>
         </div>
     );

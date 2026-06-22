@@ -244,7 +244,8 @@ export const createPosOrder = async (req, res, next) => {
         }
 
 
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {
@@ -321,7 +322,8 @@ export const processPayment = async (req, res, next) => {
         }
 
 
-        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER'], `${frontendUrl}/bill/${order._id}`);
 
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;
 

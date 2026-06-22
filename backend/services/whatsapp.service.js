@@ -48,10 +48,12 @@ const sendMessage = async (to, text) => {
     }
 };
 
-export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter) => {
+export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter, link) => {
     try {
         const config = getConfig();
         if (!config) return;
+
+        const fullText = link ? `${text}\n${link}` : text;
 
         const filter = { restaurant: restaurantId, phone: { $exists: true, $ne: '' } };
         if (roleFilter) {
@@ -68,7 +70,7 @@ export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter) => {
             let phone = user.phone.startsWith('+') ? user.phone.slice(1) : user.phone;
             phone = phone.replace(/[^0-9]/g, '');
             if (phone.length === 10) phone = `91${phone}`;
-            await sendMessage(phone, text);
+            await sendMessage(phone, fullText);
         }
     } catch (error) {
         logger.error(`WhatsApp staff send error for restaurant ${restaurantId}: ${error.message}`);

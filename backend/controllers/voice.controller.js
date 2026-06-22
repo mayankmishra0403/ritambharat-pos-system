@@ -164,7 +164,8 @@ export const processVoiceOrder = async (req, res, next) => {
             message: `New voice order #${order.orderNumber}`
         });
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
         res.status(201).json({
             success: true,

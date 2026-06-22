@@ -41,7 +41,7 @@ Security is baked into the routing layer:
 - **Security Middleware**: Automated protection via Helmet, Rate Limiting, and CORS sanitization.
 
 ### 💳 Financial Fidelity
-Integration with **Stripe & Safepay** ensures secure transactions.
+Integration with **Razorpay & Stripe** ensures secure transactions.
 - **Webhook Integrity**: `payment.controller.js` implements cryptographic signature verification to prevent spoofing.
 - **Subscription Management**: Automated lifecycle management for restaurant plans (Basic/Pro/Enterprise).
 

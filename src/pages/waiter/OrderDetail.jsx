@@ -319,7 +319,7 @@ const OrderDetail = () => {
                                     <p className="text-xs text-yellow-500 italic">{item.specialInstructions}</p>
                                 )}
                             </div>
-                            <span className="text-sm font-bold text-foreground">{item.currency || '$'}{(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="text-sm font-bold text-foreground">{item.currency || '₹'}{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                     ))}
                 </div>

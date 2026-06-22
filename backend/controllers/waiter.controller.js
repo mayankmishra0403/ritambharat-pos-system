@@ -211,7 +211,8 @@ export const createWaiterOrder = async (req, res, next) => {
         }
 
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
         logger.info(`Waiter order created: #${order.orderNumber}`);
 
@@ -314,7 +315,8 @@ export const requestWaiterBill = async (req, res, next) => {
         }
 
 
-        sendWhatsAppToStaff(order.restaurant, `🧾 Bill Requested${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(order.restaurant, `🧾 Bill Requested${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER'], `${frontendUrl}/bill/${order._id}`);
 
         logger.info(`Bill requested for order #${order.orderNumber}`);
 

@@ -28,7 +28,8 @@ export const syncBatch = async (req, res, next) => {
                                 message: `New order #${order.orderNumber} synced from POS`
                             })
 
-                            sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ` – #${order.orderNumber}`}`, ['OWNER', 'WAITER'])
+                            const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+                            sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ` – #${order.orderNumber}`}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`)
                         }
                     } else if (item.action === 'updated') {
                         io.to(`restaurant:${restaurantId}`).emit('order:updated', {

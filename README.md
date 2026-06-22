@@ -71,7 +71,7 @@ Here is a glimpse of the ChefOS platform across different modules:
 - **Multi-Role Authentication & Authorization:** Secure, role-based access for Admins, Restaurant Owners, Staff, and Customers using JWT and Google OAuth.
 - **Smart QR & 3D Interactive Menus:** Customers can scan a unique QR code per table, browse dynamic digital menus, and engage with `@react-three/fiber` driven 3D visualizations.
 - **Real-Time Order & Kitchen Display System:** Lightning-fast WebSocket (`socket.io`) powered synchronization across the customer app and kitchen displays.
-- **Secure Payments & Subscriptions:** Full checkout processing seamlessly integrated with multiple payment gateways (Stripe & Safepay).
+- **Secure Payments & Subscriptions:** Full checkout processing seamlessly integrated with multiple payment gateways (Razorpay & Stripe).
 - **AI-Powered Recommendations:** Leverage `Google Generative AI` to offer tailored dish suggestions and automated interactive workflows.
 - **Advanced Inventory & Menu Management:** Owners can track real-time stock levels, manage item listings, handle categories, and receive automated inventory alerts.
 - **Analytics & Dashboard Reporting:** Deep insights for owners covering daily sales trajectories, trending orders, and customer sentiment analytics.

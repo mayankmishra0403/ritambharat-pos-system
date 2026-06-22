@@ -200,7 +200,7 @@ const OrderCreate = () => {
                                         return (
                                             <div key={item.menuItem} className="flex justify-between text-xs text-muted-foreground">
                                                 <span>{details?.name} x{item.quantity}</span>
-                                                <span>${((details?.price || 0) * item.quantity).toFixed(2)}</span>
+                                                <span>₹{((details?.price || 0) * item.quantity).toFixed(2)}</span>
                                             </div>
                                         );
                                     })}

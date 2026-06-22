@@ -15,6 +15,7 @@ import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
+import printKOT from '../../utils/printKOT';
 
 const POSDashboard = () => {
     const { user, logout } = useAuth();
@@ -67,6 +68,23 @@ const POSDashboard = () => {
     }, [socket, restaurantId, queryClient]);
 
     const { restaurant: printRestaurant, settings: invoiceSettings } = useInvoiceSettings(restaurantId);
+
+    useEffect(() => {
+        if (!socket || !restaurantId || !printRestaurant) return;
+        const handler = async ({ orderId }) => {
+            try {
+                const res = await api.get(`/orders/${orderId}`);
+                if (res.data.success) {
+                    const order = res.data.data;
+                    printKOT(order, printRestaurant);
+                }
+            } catch (err) {
+                console.error('Auto KOT print failed:', err);
+            }
+        };
+        socket.on('kds:new-order', handler);
+        return () => { socket.off('kds:new-order', handler); };
+    }, [socket, restaurantId, printRestaurant]);
 
     const { data: session, isFetched: sessionFetched } = useQuery({
         queryKey: ['pos-session', restaurantId],

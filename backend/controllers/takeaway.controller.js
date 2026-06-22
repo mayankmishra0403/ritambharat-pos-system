@@ -127,7 +127,8 @@ export const createTakeawayOrder = async (req, res, next) => {
             });
         }
 
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
         logger.info(`Takeaway order created: #${order.orderNumber}`);
 

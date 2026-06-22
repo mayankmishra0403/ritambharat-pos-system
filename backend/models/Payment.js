@@ -18,11 +18,11 @@ const paymentSchema = new mongoose.Schema({
     },
     currency: {
         type: String,
-        default: 'USD'
+        default: 'INR'
     },
     paymentMethod: {
         type: String,
-        enum: ['CASH', 'CARD', 'UPI', 'ONLINE', 'SAFEPAY'],
+        enum: ['CASH', 'CARD', 'UPI', 'ONLINE'],
         required: true
     },
     paymentType: {
@@ -35,9 +35,7 @@ const paymentSchema = new mongoose.Schema({
         enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'REFUNDED'],
         default: 'PENDING'
     },
-    transactionId: String, // Payment gateway transaction ID
-    safepayTracker: String, // Safepay tracker ID
-    safepayCheckoutUrl: String, // Safepay checkout URL
+    transactionId: String,
     receiptUrl: String,
     metadata: {
         type: Map,
@@ -54,7 +52,6 @@ const paymentSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Indexes
 paymentSchema.index({ order: 1 });
 paymentSchema.index({ restaurant: 1, status: 1 });
 paymentSchema.index({ transactionId: 1 });

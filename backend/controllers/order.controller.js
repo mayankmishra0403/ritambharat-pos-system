@@ -180,7 +180,8 @@ export const createOrder = async (req, res, next) => {
         }
 
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
         logger.info(`Order created: #${order.orderNumber} for Table ${order.table?.name}`);
 
@@ -679,6 +680,52 @@ export const updateOrderCustomer = async (req, res, next) => {
             success: true,
             message: 'Customer details updated',
             data: { customerName: order.customerName, customerPhone: order.customerPhone }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Accept order (from confirm page)
+// @route   POST /api/orders/:id/accept
+// @access  Public (anyone with link can accept)
+export const acceptOrder = async (req, res, next) => {
+    try {
+        const order = await Order.findById(req.params.id).populate('table', 'name');
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.status !== 'PENDING') {
+            return res.status(400).json({ success: false, message: `Order is already ${order.status}` });
+        }
+
+        order.status = 'ACCEPTED';
+        await order.save();
+
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`restaurant:${order.restaurant}`).emit('order:status-changed', {
+                orderId: order._id,
+                orderNumber: order.orderNumber,
+                status: 'ACCEPTED',
+                tableName: order.table?.name
+            });
+            io.to(`restaurant:${order.restaurant}`).emit('kds:new-order', {
+                orderId: order._id,
+                orderNumber: order.orderNumber,
+                tableName: order.table?.name
+            });
+            io.to(`order:${order._id}`).emit('order:updated', order);
+        }
+
+        const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
+        sendWhatsAppToStaff(order.restaurant, `✅ Accepted – Table ${order.table?.name || 'Takeout'}\n${frontendUrl}/orders`, ['WAITER', 'OWNER']);
+
+        res.status(200).json({
+            success: true,
+            message: 'Order accepted',
+            data: order
         });
     } catch (error) {
         next(error);

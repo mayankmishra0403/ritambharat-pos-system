@@ -83,6 +83,7 @@ const CustomerReviews = lazy(() => import('./pages/customer').then(m => ({ defau
 const ReviewFeedback = lazy(() => import('./pages/customer').then(m => ({ default: m.ReviewFeedback })));
 const RateStaff = lazy(() => import('./pages/customer').then(m => ({ default: m.RateStaff })));
 const PublicBillView = lazy(() => import('./pages/public/PublicBillView'));
+const ConfirmOrder = lazy(() => import('./pages/ConfirmOrder'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -205,6 +206,9 @@ function App() {
 
                   {/* Public Bill View - standalone, no layout needed */}
                   <Route path="/bill/:orderId" element={<PublicBillView />} />
+
+                  {/* Confirm Order Page - for WhatsApp links */}
+                  <Route path="/accept/:orderId" element={<ConfirmOrder />} />
 
                   {/* Owner Routes - Protected */}
                   <Route

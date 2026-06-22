@@ -146,7 +146,7 @@ export const HeroSection = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="p-4 rounded-xl border border-border/50 bg-background/50 space-y-1">
                                             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Today's Revenue</p>
-                                            <p className="text-2xl font-black text-foreground">$1,280.50</p>
+                                            <p className="text-2xl font-black text-foreground">₹1,280.50</p>
                                             <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-bold">
                                                 <span>↑ 12.5%</span>
                                                 <span className="text-muted-foreground/60 font-medium">vs yesterday</span>

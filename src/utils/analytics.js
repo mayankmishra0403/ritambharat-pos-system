@@ -69,6 +69,6 @@ export const trackOrder = (orderId, total) => {
     trackEvent('purchase', {
         transaction_id: orderId,
         value: total,
-        currency: 'USD'
+        currency: 'INR'
     });
 };

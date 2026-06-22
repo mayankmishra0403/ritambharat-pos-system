@@ -278,7 +278,7 @@ const Analytics = () => {
                                                         }}
                                                         itemStyle={{ color: '#d97706', fontWeight: '900', textTransform: 'uppercase', fontSize: '10px' }}
                                                         labelStyle={{ color: theme === 'dark' ? 'white' : '#111827', fontWeight: '900', marginBottom: '8px', fontSize: '12px' }}
-                                                        formatter={(value) => [`$${value}`, 'Revenue']}
+                                                        formatter={(value) => [`₹${value}`, 'Revenue']}
                                                     />
                                                     <Area
                                                         type="monotone"

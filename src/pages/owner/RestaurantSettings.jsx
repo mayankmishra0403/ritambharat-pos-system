@@ -307,23 +307,22 @@ const GeneralSettings = ({ restaurant, handleChange, handleFileUpload }) => (
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">Currency</label>
                             <select
                                 name="currency"
-                                value={restaurant.currency || 'USD'}
+                                value={restaurant.currency || 'INR'}
                                 onChange={handleChange}
                                 className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none appearance-none"
                             >
-                                <option value="USD">USD ($)</option>
-                                <option value="PKR">PKR (Rs.)</option>
+                                <option value="INR">INR (₹)</option>
                             </select>
                         </div>
                         <div className="group/field relative">
                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">Base Gateway</label>
                             <select
                                 name="paymentGateway"
-                                value={restaurant.paymentGateway || 'SAFEPAY'}
+                                value={restaurant.paymentGateway || 'RAZORPAY'}
                                 onChange={handleChange}
                                 className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none appearance-none"
                             >
-                                <option value="SAFEPAY">Safepay</option>
+                                <option value="CASH">Manual (PhonePe QR)</option>
                             </select>
                         </div>
                     </div>

@@ -8,7 +8,8 @@ import {
     cancelOrder,
     getOrderStats,
     getActiveBill,
-    updateOrderCustomer
+    updateOrderCustomer,
+    acceptOrder
 } from '../controllers/order.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { orderRateLimiter } from '../middleware/rateLimiter.js';
@@ -25,5 +26,6 @@ router.patch('/:id/status', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHI
 router.patch('/:id/payment', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHIER'], ['orders']), updateOrderPayment);
 router.patch('/:id/customer', protect, authorize(['OWNER', 'ADMIN', 'CASHIER', 'WAITER'], ['orders']), updateOrderCustomer);
 router.delete('/:id', cancelOrder);
+router.post('/:id/accept', acceptOrder);
 
 export default router;
