@@ -217,8 +217,7 @@ function renderToString(order, restaurant, settings) {
             : ''}
 
         <!-- PAYMENT -->
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:2.5pt 0;border-top:1px solid #000;border-bottom:1px solid #000;margin-bottom:2.5pt">
-            <span class="b" style="font-size:9.5pt;color:#000">${isPaid ? (order.paymentMethod || '-') : ''}</span>
+        <div style="display:flex;justify-content:flex-end;align-items:center;padding:2.5pt 0;border-top:1px solid #000;border-bottom:1px solid #000;margin-bottom:2.5pt">
             ${isPaid
                 ? `<span class="paid-badge" style="background:#e8f5e9;padding:1.5pt 5pt;border:1px solid #008000">\u2713 PAID</span>`
                 : `<span class="b" style="font-size:9.5pt;color:#000">${order.paymentStatus || 'PENDING'}</span>`}

@@ -174,8 +174,7 @@ const PremiumRestaurant = ({ order, restaurant, settings, type = 'display' }) =>
             )}
 
             {/* ─── PAYMENT ─── */}
-            <div className="border-t border-dotted border-black pt-1 mb-2 flex justify-between font-bold text-[8pt]">
-                <span className="text-black">{order.paymentStatus === 'PAID' ? (order.paymentMethod || '-') : ''}</span>
+            <div className="border-t border-dotted border-black pt-1 mb-2 flex justify-end font-bold text-[8pt]">
                 <span className={order.paymentStatus === 'PAID' ? 'text-green-700 font-bold' : 'font-bold text-black'}>
                     {order.paymentStatus === 'PAID' ? '\u2713 PAID' : order.paymentStatus || 'PENDING'}
                 </span>

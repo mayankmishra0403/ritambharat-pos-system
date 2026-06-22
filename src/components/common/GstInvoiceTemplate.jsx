@@ -107,7 +107,7 @@ const GstInvoiceTemplate = ({ invoice, restaurant }) => {
 
             {/* Payment info */}
             <div className="border-t border-dashed border-gray-400 mt-3 pt-2 text-center text-[9px]">
-                <p>{invoice.paymentStatus === 'PAID' ? `Payment: ${invoice.paymentMethod || '-'} | ` : ''}Status: {invoice.paymentStatus}</p>
+                <p>Status: {invoice.paymentStatus}</p>
                 <p className="mt-1 text-xs font-bold">Thank You! Visit Again!</p>
             </div>
         </div>
