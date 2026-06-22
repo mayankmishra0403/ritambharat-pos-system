@@ -221,7 +221,7 @@ export const createWaiterOrder = async (req, res, next) => {
             data: { url: '/waiter-app/orders', type: 'new-order' }
         }, ['OWNER', 'WAITER']);
 
-        sendWhatsAppToStaff(restaurant, `🆕 New Order #${order.orderNumber} placed`, ['OWNER', 'WAITER']);
+        sendWhatsAppToStaff(restaurant, `🆕 ${order.table?.name || '#'+order.orderNumber} - New order`, ['OWNER', 'WAITER']);
 
         logger.info(`Waiter order created: #${order.orderNumber}`);
 
@@ -286,10 +286,10 @@ export const updateWaiterOrderStatus = async (req, res, next) => {
 
         if (status === 'SERVED') {
             sendPushToRestaurantStaff(order.restaurant, { title: 'Order Served', body: `Order #${order.orderNumber} has been served to table`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-served' } }, ['WAITER', 'OWNER']);
-            sendWhatsAppToStaff(order.restaurant, `🍽️ Order #${order.orderNumber} has been served to table`, ['WAITER', 'OWNER']);
+            sendWhatsAppToStaff(order.restaurant, `🍽️ ${order.table?.name || '#'+order.orderNumber} - Served`, ['WAITER', 'OWNER']);
         } else if (status === 'CANCELLED') {
             sendPushToRestaurantStaff(order.restaurant, { title: 'Order Cancelled', body: `Order #${order.orderNumber} cancelled`, icon: '/icons/icon-192.png', badge: '/icons/badge-72.png', vibrate: [200, 100, 200], data: { url: '/waiter-app/orders', type: 'order-cancelled' } }, ['OWNER', 'WAITER']);
-            sendWhatsAppToStaff(order.restaurant, `❌ Order #${order.orderNumber} cancelled`, ['OWNER', 'WAITER']);
+            sendWhatsAppToStaff(order.restaurant, `❌ ${order.table?.name || '#'+order.orderNumber} - Cancelled`, ['OWNER', 'WAITER']);
         }
 
         res.status(200).json({
@@ -335,7 +335,7 @@ export const requestWaiterBill = async (req, res, next) => {
             data: { url: '/waiter-app', type: 'waiter-call' }
         }, ['WAITER', 'OWNER']);
 
-        sendWhatsAppToStaff(order.restaurant, `🧾 Bill requested for order #${order.orderNumber}`, ['WAITER', 'OWNER']);
+        sendWhatsAppToStaff(order.restaurant, `🧾 ${order.table?.name || '#'+order.orderNumber} - Bill requested`, ['WAITER', 'OWNER']);
 
         logger.info(`Bill requested for order #${order.orderNumber}`);
 

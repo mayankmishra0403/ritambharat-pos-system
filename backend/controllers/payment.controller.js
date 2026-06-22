@@ -129,7 +129,7 @@ export const handleSafepayWebhook = async (req, res, next) => {
         await payment.save();
 
         if (payment.order) {
-            const order = await Order.findById(payment.order);
+            const order = await Order.findById(payment.order).populate('table', 'name');
             if (order && status === 'COMPLETED') {
                 order.paymentStatus = 'PAID';
                 await order.save();
@@ -158,7 +158,7 @@ export const handleSafepayWebhook = async (req, res, next) => {
                     data: { url: '/waiter-app/orders', type: 'payment' }
                 }, ['OWNER', 'WAITER']);
 
-                sendWhatsAppToStaff(payment.restaurant, `💰 Payment received for order #${order.orderNumber}`, ['OWNER', 'WAITER']);
+                sendWhatsAppToStaff(payment.restaurant, `💰 ${order.table?.name || '#'+order.orderNumber} - Paid`, ['OWNER', 'WAITER']);
             }
         }
 
