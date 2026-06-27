@@ -45,9 +45,7 @@ import syncRoutes from './routes/sync.routes.js';
 import pushRoutes from './routes/push.routes.js';
 
 // Load environment variables
-logger.info('Starting server...');
 dotenv.config();
-logger.info('Environment variables loaded');
 
 // Validate environment variables
 validateEnvironment();
@@ -191,7 +189,7 @@ app.get('/api/images/:filename', (req, res) => {
 });
 
 // Static fallback for direct /uploads access
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 404 handler
 app.use('*', (req, res) => {

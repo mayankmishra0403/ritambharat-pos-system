@@ -1,10 +1,8 @@
 import TaxSlab from '../models/TaxSlab.js';
 import Invoice from '../models/Invoice.js';
 import Order from '../models/Order.js';
-import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
 import numberToWords from '../utils/numberToWords.js';
-import logger from '../utils/logger.js';
 
 const DEFAULT_SLABS = [
     { name: 'No GST', rate: 0, cgstRate: 0, sgstRate: 0, igstRate: 0 },

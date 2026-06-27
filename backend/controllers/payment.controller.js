@@ -19,9 +19,9 @@ export const createManualBill = async (req, res, next) => {
                 price: i.price,
                 quantity: i.quantity
             })),
-            subtotal: subtotal || items.reduce((s, i) => s + i.price * i.quantity, 0),
+            subtotal: subtotal ?? items.reduce((s, i) => s + i.price * i.quantity, 0),
             tax,
-            total: total || items.reduce((s, i) => s + i.price * i.quantity, 0),
+            total: total ?? items.reduce((s, i) => s + i.price * i.quantity, 0),
             paymentMethod,
             paymentStatus,
             status: 'SERVED',

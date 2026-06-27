@@ -23,7 +23,8 @@ export const updateInvoiceSettings = async (req, res, next) => {
         const { invoiceSettings, tagline, gstin, fssai, alternatePhone, website } = req.body;
 
         if (invoiceSettings) {
-            restaurant.invoiceSettings = { ...restaurant.invoiceSettings.toObject(), ...invoiceSettings };
+            const existing = restaurant.invoiceSettings?.toObject?.() || {};
+            restaurant.invoiceSettings = { ...existing, ...invoiceSettings };
         }
         if (tagline !== undefined) restaurant.tagline = tagline;
         if (gstin !== undefined) restaurant.gstin = gstin;

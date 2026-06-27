@@ -56,7 +56,8 @@ const tableSchema = new mongoose.Schema({
         occupiedAt: Date, // Track when table became occupied
         customerCount: Number,
         orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
-        waiterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+        waiterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: 'Table' }
     },
     isActive: {
         type: Boolean,

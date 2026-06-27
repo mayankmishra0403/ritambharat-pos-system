@@ -32,9 +32,9 @@ export const createManualBill = async (req, res, next) => {
                 price: item.price,
                 quantity: item.quantity
             })),
-            subtotal: subtotal || items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            tax: tax || 0,
-            total: total || subtotal,
+            subtotal: subtotal ?? items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+            tax: tax ?? 0,
+            total: total ?? subtotal,
             status: 'SERVED',
             paymentStatus: 'PAID',
             paymentMethod: paymentMethod,

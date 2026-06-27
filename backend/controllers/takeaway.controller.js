@@ -190,7 +190,7 @@ export const addTakeawayItems = async (req, res, next) => {
         const taxInfo = await getTaxInfo(order.restaurant, restaurantDoc);
         const additionalTax = calculateTax(additionalSubtotal, taxInfo.slabRate);
         order.tax += additionalTax;
-        order.total = order.subtotal + order.tax;
+        order.total = order.subtotal + order.tax + (order.tipAmount || 0) - (order.discountAmount || 0);
 
         await order.save();
 
@@ -254,7 +254,19 @@ export const markTakeawayComplete = async (req, res, next) => {
         }
 
         order.status = 'SERVED';
+        order.paymentStatus = 'PAID';
         await order.save();
+
+        // Deduct stock for each item
+        for (const item of order.items) {
+            try {
+                await MenuItem.findByIdAndUpdate(item.menuItem, {
+                    $inc: { stockQuantity: -item.quantity }
+                });
+            } catch (stockError) {
+                logger.error(`Failed to deduct stock for ${item.menuItem}: ${stockError.message}`);
+            }
+        }
 
         const io = req.app.get('io');
         if (io) {

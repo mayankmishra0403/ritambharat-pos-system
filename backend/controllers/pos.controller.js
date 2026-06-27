@@ -4,6 +4,7 @@ import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendCustomerWhatsApp } from '../services/msg91.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 
@@ -218,9 +219,10 @@ export const createPosOrder = async (req, res, next) => {
                 if (tableDoc) {
                     tableDoc.status = 'OCCUPIED';
                     tableDoc.currentSession = {
+                        ...tableDoc.currentSession,
                         sessionId,
-                        occupiedAt: new Date(),
-                        startTime: new Date(),
+                        occupiedAt: tableDoc.currentSession?.occupiedAt || new Date(),
+                        startTime: tableDoc.currentSession?.startTime || new Date(),
                         orderId: order._id
                     };
                     await tableDoc.save();
@@ -264,7 +266,7 @@ export const processPayment = async (req, res, next) => {
             });
         }
 
-        const order = await Order.findById(id).populate('table', 'name');
+        const order = await Order.findById(id).populate('table', 'name').populate('restaurant', 'name');
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
@@ -324,6 +326,19 @@ export const processPayment = async (req, res, next) => {
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
         sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER'], `${frontendUrl}/bill/${order._id}`);
+
+        if (order.customerPhone) {
+            const billLink = `${frontendUrl}/bill/${order._id}`;
+            const restaurantName = order.restaurant?.name || 'our restaurant';
+            const message = `Thank you for dining at ${restaurantName}!\n\nOrder: #${order.orderNumber}\nAmount: ₹${order.total}\n\nView your bill: ${billLink}\n\nWe hope to serve you again!`;
+            sendCustomerWhatsApp(order.customerPhone, {
+                customer_name: order.customerName || 'Guest',
+                restaurant_name: restaurantName,
+                amount: `₹${order.total}`,
+                bill_url: billLink,
+                message
+            });
+        }
 
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;
 
@@ -390,7 +405,7 @@ export const addPosOrderItems = async (req, res, next) => {
         const taxInfo = await getTaxInfo(order.restaurant, restaurantDoc);
         const additionalTax = calculateTax(additionalSubtotal, taxInfo.slabRate);
         order.tax += additionalTax;
-        order.total = order.subtotal + order.tax - (order.discountAmount || 0);
+        order.total = order.subtotal + order.tax + (order.tipAmount || 0) - (order.discountAmount || 0);
 
         await order.save();
 

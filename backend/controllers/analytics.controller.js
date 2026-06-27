@@ -119,10 +119,10 @@ export const getDashboardSummary = async (req, res, next) => {
             { $group: { _id: null, total: { $sum: '$total' } } }
         ]);
         const yesterdayRevenue = yesterdayRevenueData.length > 0 ? yesterdayRevenueData[0].total : 0;
-        const revenueTrend = yesterdayRevenue > 0 ? ((summary.today.revenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : "+0.0";
+        const revenueTrend = yesterdayRevenue > 0 ? ((summary.today.revenue - yesterdayRevenue) / yesterdayRevenue * 100).toFixed(1) : "0.0";
 
         const yesterdayOrders = await Order.countDocuments({ restaurant: restaurantId, createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd } });
-        const ordersTrend = yesterdayOrders > 0 ? ((summary.today.orders - yesterdayOrders) / yesterdayOrders * 100).toFixed(1) : "+0.0";
+        const ordersTrend = yesterdayOrders > 0 ? ((summary.today.orders - yesterdayOrders) / yesterdayOrders * 100).toFixed(1) : "0.0";
 
         // Prep time trend (Yesterday's avg)
         const dayBeforeYesterday = new Date(yesterdayStart);
@@ -146,7 +146,7 @@ export const getDashboardSummary = async (req, res, next) => {
             }
         });
         const yestAvgPrepTime = yestValidCount > 0 ? Math.round(yestTotalPrep / yestValidCount) : 0;
-        const prepTimeTrend = yestAvgPrepTime > 0 ? ((avgPrepTime - yestAvgPrepTime) / yestAvgPrepTime * 100).toFixed(1) : "+0.0";
+        const prepTimeTrend = yestAvgPrepTime > 0 ? ((avgPrepTime - yestAvgPrepTime) / yestAvgPrepTime * 100).toFixed(1) : "0.0";
 
         // Guest trend (Total guests from orders today vs yesterday)
         const guestsTodayData = await Order.aggregate([
@@ -160,7 +160,7 @@ export const getDashboardSummary = async (req, res, next) => {
             { $group: { _id: null, total: { $sum: '$guestCount' } } }
         ]);
         const guestsYesterday = guestsYesterdayData.length > 0 ? guestsYesterdayData[0].total : 0;
-        const guestsTrend = guestsYesterday > 0 ? ((guestsToday - guestsYesterday) / guestsYesterday * 100).toFixed(1) : "+0.0";
+        const guestsTrend = guestsYesterday > 0 ? ((guestsToday - guestsYesterday) / guestsYesterday * 100).toFixed(1) : "0.0";
 
         // Recent Activity (Merge Orders, Reservations, Complaints)
         const recentOrders = await Order.find({ restaurant: restaurantObjectId })
@@ -171,7 +171,7 @@ export const getDashboardSummary = async (req, res, next) => {
             .lean();
 
 
-        const recentComplaints = await Complaint.find({ restaurant: restaurantObjectId })
+        const recentComplaints = await Complaint.find({ restaurant: restaurantObjectId, isDeleted: { $ne: true } })
             .sort({ createdAt: -1 })
             .limit(5)
             .select('message type severity status createdAt')
@@ -476,7 +476,7 @@ export const getTableUsageAnalytics = async (req, res, next) => {
         ]);
 
         // Populate table details
-        await Order.populate(tableUsage, { path: '_id', select: 'name location' });
+        await Table.populate(tableUsage, { path: '_id', select: 'name location' });
 
         res.status(200).json({
             success: true,
@@ -503,7 +503,7 @@ export const getNotifications = async (req, res, next) => {
             .limit(5)
             .lean();
 
-        const newComplaints = await Complaint.find({ restaurant: restaurantId, status: 'OPEN' })
+        const newComplaints = await Complaint.find({ restaurant: restaurantId, status: 'OPEN', isDeleted: { $ne: true } })
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();

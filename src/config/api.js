@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 // Use environment variable for API base URL
 // Production fallback to api.ritambharat.software (Vercel can't proxy /api)
 const API_BASE_URL = import.meta.env.VITE_API_URL
-    || (import.meta.env.PROD ? 'https://api.ritambharat.software' : '/api');
+    || (import.meta.env.PROD ? 'https://api.ritambharat.software/api' : '/api');
 
 const api = axios.create({
     baseURL: API_BASE_URL,

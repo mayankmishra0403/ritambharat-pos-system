@@ -21,7 +21,7 @@ export const createComplaint = async (req, res, next) => {
 
         // Emit socket event to admins/staff
         const io = req.app.get('io');
-        io.to(`restaurant:${restaurant}`).emit('complaint:new', {
+        if (io) io.to(`restaurant:${restaurant}`).emit('complaint:new', {
             complaint,
             message: `New ${severity} complaint from ${customerName}`
         });

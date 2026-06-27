@@ -80,8 +80,13 @@ export const updateRestaurant = async (req, res, next) => {
             });
         }
 
-        // Update fields
-        Object.assign(restaurant, req.body);
+        // Update fields (whitelist allowed fields only)
+        const allowedFields = ['name', 'address', 'city', 'state', 'country', 'pincode', 'phone', 'email', 'cuisine', 'description', 'logo', 'coverImage', 'tagline', 'gstin', 'fssai', 'alternatePhone', 'website', 'currency', 'timezone', 'openingTime', 'closingTime', 'isActive', 'orderPrefix', 'invoiceSettings'];
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                restaurant[field] = req.body[field];
+            }
+        }
         await restaurant.save();
 
         // Invalidate restaurant cache
@@ -127,6 +132,41 @@ export const updateRestaurantSettings = async (req, res, next) => {
             success: true,
             message: 'Settings updated successfully',
             data: restaurant
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update SMS gateway settings
+// @route   PATCH /api/restaurant/:id/sms-gateway
+// @access  Private (Owner)
+export const updateSmsGateway = async (req, res, next) => {
+    try {
+        const { enabled, mode, url, username, password } = req.body;
+        const restaurant = await Restaurant.findById(req.params.id);
+
+        if (!restaurant) {
+            return res.status(404).json({
+                success: false,
+                message: 'Restaurant not found'
+            });
+        }
+
+        restaurant.smsGateway = {
+            enabled: enabled ?? restaurant.smsGateway?.enabled ?? false,
+            mode: mode || restaurant.smsGateway?.mode || 'local',
+            url: url || restaurant.smsGateway?.url || '',
+            username: username || restaurant.smsGateway?.username || '',
+            password: password || restaurant.smsGateway?.password || ''
+        };
+
+        await restaurant.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'SMS gateway settings updated',
+            data: { smsGateway: restaurant.smsGateway }
         });
     } catch (error) {
         next(error);

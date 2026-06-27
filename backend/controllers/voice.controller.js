@@ -34,6 +34,7 @@ const parseVoiceTranscript = (transcript, menuItems) => {
             const quantity = quantityWords[word];
 
             // Look ahead for menu item name
+            let matched = false;
             for (let j = i + 1; j < Math.min(i + 5, words.length); j++) {
                 const potentialItemName = words.slice(i + 1, j + 1).join(' ');
 
@@ -46,10 +47,13 @@ const parseVoiceTranscript = (transcript, menuItems) => {
                             confidence: menuName === potentialItemName ? 1.0 : 0.7
                         });
                         i = j; // Skip processed words
+                        matched = true;
                         break;
                     }
                 }
+                if (matched) break;
             }
+            if (matched) continue;
         }
     }
 

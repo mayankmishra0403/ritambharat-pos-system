@@ -239,7 +239,7 @@ const WaiterDashboard = () => {
                                     <div>
                                         <span className="text-sm font-bold text-foreground">#{order.orderNumber}</span>
                                         {order.table && (
-                                            <span className="text-xs text-muted-foreground ml-2">T{table.table?.name || order.table}</span>
+                                            <span className="text-xs text-muted-foreground ml-2">T{order.table?.name || order.table}</span>
                                         )}
                                     </div>
                                     <ChevronRight size={16} className="text-muted-foreground" />

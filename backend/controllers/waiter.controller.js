@@ -181,9 +181,10 @@ export const createWaiterOrder = async (req, res, next) => {
                 if (tableDoc) {
                     tableDoc.status = 'OCCUPIED';
                     tableDoc.currentSession = {
+                        ...tableDoc.currentSession,
                         sessionId,
-                        occupiedAt: new Date(),
-                        startTime: new Date(),
+                        occupiedAt: tableDoc.currentSession?.occupiedAt || new Date(),
+                        startTime: tableDoc.currentSession?.startTime || new Date(),
                         orderId: order._id
                     };
                     await tableDoc.save();
@@ -378,7 +379,7 @@ export const addWaiterOrderItems = async (req, res, next) => {
 
         order.subtotal = subtotal;
         order.tax = tax;
-        order.total = subtotal + tax;
+        order.total = subtotal + tax + (order.tipAmount || 0) - (order.discountAmount || 0);
         order.gstBreakdown = {
             cgst: gstBreakdown.cgst,
             sgst: gstBreakdown.sgst,

@@ -89,6 +89,10 @@ const Login = () => {
                 navigate(hasRestaurant ? '/dashboard' : '/onboarding');
             } else if (user.role === 'CHEF') {
                 navigate('/kitchen');
+            } else if (user.role === 'WAITER') {
+                navigate('/waiter-app');
+            } else if (user.role === 'CASHIER') {
+                navigate('/admin/pos');
             } else if (user.permissions?.includes('orders')) {
                 navigate('/orders');
             } else if (user.permissions && user.permissions.length > 0) {

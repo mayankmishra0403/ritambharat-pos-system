@@ -125,6 +125,13 @@ const restaurantSchema = new mongoose.Schema({
     fssai: { type: String, default: '' },
     alternatePhone: { type: String, default: '' },
     website: { type: String, default: '' },
+    smsGateway: {
+        enabled: { type: Boolean, default: false },
+        mode: { type: String, enum: ['local', 'cloud'], default: 'local' },
+        url: { type: String, default: '' },
+        username: { type: String, default: '' },
+        password: { type: String, default: '' }
+    },
     invoiceSettings: {
         template: { type: String, enum: ['hotel-classic', 'premium-restaurant', 'modern-pos', 'minimal-receipt'], default: 'hotel-classic' },
         invoiceTitle: { type: String, default: 'TAX INVOICE' },

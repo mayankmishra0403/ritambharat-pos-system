@@ -4,6 +4,7 @@ import {
     getRestaurant,
     updateRestaurant,
     updateRestaurantSettings,
+    updateSmsGateway,
     getMyRestaurants,
     getMyPrimaryRestaurant,
     deleteRestaurant
@@ -30,7 +31,8 @@ const invalidateRestaurantCache = (req, res, next) => {
 
 router.patch('/:id', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateRestaurant);
 router.patch('/:id/settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateRestaurantSettings);
-router.get('/:id/invoice-settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, getInvoiceSettings);
+router.patch('/:id/sms-gateway', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateSmsGateway);
+router.get('/:id/invoice-settings', getInvoiceSettings);
 router.patch('/:id/invoice-settings', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, updateInvoiceSettings);
 router.delete('/:id', protect, authorize(['OWNER', 'ADMIN'], ['settings']), verifyRestaurantOwnership, invalidateRestaurantCache, deleteRestaurant);
 

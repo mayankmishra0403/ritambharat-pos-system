@@ -14,7 +14,10 @@ const optionalEnvVars = [
     'REDIS_URL',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET'
+    'CLOUDINARY_API_SECRET',
+    'MSG91_AUTH_KEY',
+    'MSG91_WHATSAPP_NUMBER',
+    'MSG91_WHATSAPP_TEMPLATE_ID'
 ];
 
 export const validateEnvironment = () => {

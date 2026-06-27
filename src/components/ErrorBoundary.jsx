@@ -44,6 +44,7 @@ class ErrorBoundary extends Component {
                         <p className="mb-6 text-muted-foreground">
                             We're sorry for the inconvenience. The error has been logged and our team will look into it.
                         </p>
+
                         <button
                             onClick={() => window.location.reload()}
                             className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-lg transition hover:bg-primary/90"

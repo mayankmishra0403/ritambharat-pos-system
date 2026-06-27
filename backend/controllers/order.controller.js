@@ -5,6 +5,7 @@ import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendCustomerWhatsApp } from '../services/msg91.service.js';
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -524,7 +525,7 @@ export const updateOrderPayment = async (req, res, next) => {
     try {
         const { paymentStatus, paymentMethod } = req.body;
 
-        const order = await Order.findById(req.params.id).populate('table', 'name');
+        const order = await Order.findById(req.params.id).populate('table', 'name').populate('restaurant', 'name');
 
         if (!order) {
             return res.status(404).json({
@@ -568,6 +569,19 @@ export const updateOrderPayment = async (req, res, next) => {
         if (order.paymentStatus === 'PAID') {
             const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
             sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''}${paymentMethod ? ` (${paymentMethod})` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/bill/${order._id}`);
+
+            if (order.customerPhone) {
+                const billLink = `${frontendUrl}/bill/${order._id}`;
+                const restaurantName = order.restaurant?.name || 'our restaurant';
+                const message = `Thank you for dining at ${restaurantName}!\n\nOrder: #${order.orderNumber}\nAmount: ₹${order.total}\n\nView your bill: ${billLink}\n\nWe hope to serve you again!`;
+                sendCustomerWhatsApp(order.customerPhone, {
+                    customer_name: order.customerName || 'Guest',
+                    restaurant_name: restaurantName,
+                    amount: `₹${order.total}`,
+                    bill_url: billLink,
+                    message
+                });
+            }
         }
 
         logger.info(`Order payment updated: #${order.orderNumber} -> ${order.paymentStatus}`);

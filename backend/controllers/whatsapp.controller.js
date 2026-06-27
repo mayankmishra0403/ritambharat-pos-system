@@ -6,7 +6,7 @@ export const verifyWebhook = (req, res) => {
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'menusphere_whatsapp_token';
+    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
 
     if (mode && token) {
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
@@ -93,10 +93,7 @@ export const handleIncomingMessage = async (req, res, next) => {
 
                 // For now, simple echo via console (Mock response logic would go here)
 
-                // Emit socket event for "Live Chat" view in dashboard
-                const io = req.app.get('io');
-                // Determining restaurant ID would require mapping Phone Number -> Restaurant
-                // For demo, we might emit to a global or specific debug channel
+                // Live Chat: emit socket event for dashboard (requires phone->restaurant mapping)
             }
             res.sendStatus(200);
         } else {

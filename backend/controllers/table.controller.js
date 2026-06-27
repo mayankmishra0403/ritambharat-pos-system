@@ -1,7 +1,6 @@
 import Table from '../models/Table.js';
 import Order from '../models/Order.js';
 import Payment from '../models/Payment.js';
-import Restaurant from '../models/Restaurant.js';
 import QRCode from 'qrcode';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
 

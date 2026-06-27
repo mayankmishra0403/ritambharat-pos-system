@@ -41,8 +41,7 @@ export const addStaff = async (req, res, next) => {
                     message: 'PIN is required for this role'
                 });
             }
-            // Create or update user without email/password
-            let user = await User.findOne({ restaurant: restaurantId, name });
+            // Create user without email/password (always create new, never update by name)
             const userData = {
                 name,
                 role: role || 'WAITER',
@@ -53,12 +52,7 @@ export const addStaff = async (req, res, next) => {
                 phone
             };
 
-            if (!user) {
-                user = await User.create(userData);
-            } else {
-                Object.assign(user, userData);
-                await user.save({ validateBeforeSave: false });
-            }
+            const user = await User.create(userData);
 
             return res.status(200).json({
                 success: true,
@@ -237,7 +231,7 @@ export const removeStaff = async (req, res, next) => {
         }
 
         // Security check: Ensure owner owns the restaurant
-        if (user.restaurant.toString() !== req.user.restaurant.toString()) {
+        if (user.restaurant?.toString() !== req.user.restaurant?.toString()) {
             return res.status(401).json({
                 success: false,
                 message: 'Not authorized to remove this staff member'

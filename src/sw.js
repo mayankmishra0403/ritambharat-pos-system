@@ -9,7 +9,12 @@ precacheAndRoute(self.__WB_MANIFEST)
 self.addEventListener('install', () => self.skipWaiting())
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim())
+  event.waitUntil(
+    Promise.all([
+      clients.claim(),
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+    ])
+  )
 })
 
 registerRoute(
