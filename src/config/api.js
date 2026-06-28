@@ -87,6 +87,10 @@ api.interceptors.response.use(
 
         // Handle other errors
         if (!error.config?._skipErrorToast) {
+            // Skip toast for cancelled/aborted requests (React Query cancels on retry/remount)
+            if (error.code === 'ERR_CANCELED' || axios.isCancel(error)) {
+                return Promise.reject(error);
+            }
             const errorMsg = error.response?.data?.message || error.message || 'An error occurred';
             console.error('API Error:', error.response?.status, errorMsg);
             if (errorMsg !== 'undefined') {
