@@ -30,24 +30,19 @@ export const sendCustomerWhatsApp = async (to, variables) => {
                 integrated_number: config.integratedNumber,
                 content_type: 'template',
                 payload: {
-                    messaging_product: 'whatsapp',
-                    to: to.startsWith('91') ? to : `91${to}`,
                     type: 'template',
+                    to: to.startsWith('91') ? to : `91${to}`,
                     template: {
                         name: templateId,
-                        language: { code: 'en' },
+                        language: { code: 'en', policy: 'deterministic' },
                         components: [
-                            {
-                                type: 'body',
-                                parameters: [
-                                    { type: 'text', text: variables.customer_name || '' },
-                                    { type: 'text', text: variables.restaurant_name || '' },
-                                    { type: 'text', text: variables.amount || '' },
-                                    { type: 'text', text: variables.bill_url || '' }
-                                ]
-                            }
+                            { type: 'text', value: variables.customer_name || 'Guest' },
+                            { type: 'text', value: variables.restaurant_name || 'our restaurant' },
+                            { type: 'text', value: variables.amount || '₹0' },
+                            { type: 'text', value: variables.bill_url || '' }
                         ]
-                    }
+                    },
+                    messaging_product: 'whatsapp'
                 }
             };
         } else {
