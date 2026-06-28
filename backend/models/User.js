@@ -83,6 +83,9 @@ const userSchema = new mongoose.Schema({
     lastAssignmentAt: {
         type: Date
     },
+    lastUserMessageAt: {
+        type: Date
+    },
     shift: {
         type: String,
         enum: ['MORNING', 'LUNCH', 'EVENING', 'NIGHT', ''],

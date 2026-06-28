@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import StaffReview from '../models/StaffReview.js';
 import Restaurant from '../models/Restaurant.js';
 import Order from '../models/Order.js';
+import { sendWhatsAppToUser } from '../services/whatsapp.service.js';
 
 // @desc    Add a staff member
 // @route   POST /api/staff
@@ -54,6 +55,8 @@ export const addStaff = async (req, res, next) => {
 
             const user = await User.create(userData);
 
+            sendWhatsAppToUser(user._id, '👋 Welcome! Send any message here to activate WhatsApp notifications for orders and updates.').catch(() => {});
+
             return res.status(200).json({
                 success: true,
                 message: 'Staff member added successfully',
@@ -89,6 +92,8 @@ export const addStaff = async (req, res, next) => {
                 permissions: permissions || [],
                 phone
             });
+
+            sendWhatsAppToUser(user._id, '👋 Welcome! Send any message here to activate WhatsApp notifications for orders and updates.').catch(() => {});
         } else {
             if (user.role === 'OWNER') {
                 return res.status(403).json({

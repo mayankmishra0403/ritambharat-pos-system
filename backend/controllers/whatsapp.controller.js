@@ -1,3 +1,5 @@
+import User from '../models/User.js';
+
 // @desc    WhatsApp Webhook Verification (Meta requirement)
 // @route   GET /api/whatsapp/webhook
 // @access  Public
@@ -80,20 +82,15 @@ export const handleIncomingMessage = async (req, res, next) => {
             if (
                 change?.messages?.[0]
             ) {
-                const phoneNumberId = change.metadata?.phone_number_id;
                 const from = change.messages[0].from;
                 const msgBody = change.messages[0].text?.body || '';
 
                 console.log(`WhatsApp message from ${from}: ${msgBody}`);
 
-                // AI Chatbot Integration Point
-                // 1. Check user state (e.g., is ordering?)
-                // 2. Send to OpenAI / Dialogflow
-                // 3. Process intent (See Menu, Order Item, Status)
-
-                // For now, simple echo via console (Mock response logic would go here)
-
-                // Live Chat: emit socket event for dashboard (requires phone->restaurant mapping)
+                User.updateOne(
+                    { phone: { $regex: from.replace('+', '') + '$' } },
+                    { $set: { lastUserMessageAt: new Date() } }
+                ).exec();
             }
             res.sendStatus(200);
         } else {

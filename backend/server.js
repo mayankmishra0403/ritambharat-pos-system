@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/database.js';
 import { connectRedis } from './config/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { startKeepAliveCron } from './services/sessionKeepAlive.service.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 import { validateEnvironment } from './utils/validateEnv.js';
@@ -226,6 +227,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
     logger.info(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     logger.info(`📡 WebSocket server ready`);
+    startKeepAliveCron();
 });
 
 process.on('unhandledRejection', (err) => {
