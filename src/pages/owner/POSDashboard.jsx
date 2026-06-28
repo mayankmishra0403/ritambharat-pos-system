@@ -15,6 +15,7 @@ import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
+import printKOT from '../../utils/printKOT';
 
 const POSDashboard = () => {
     const { user, logout } = useAuth();
@@ -69,6 +70,33 @@ const POSDashboard = () => {
             socket.off('order:paid', handler);
         };
     }, [socket, restaurantId, queryClient]);
+
+    useEffect(() => {
+        if (!socket || !restaurantId || !printRestaurant) return;
+        const handler = async ({ orderId }) => {
+            try {
+                const res = await api.get(`/orders/${orderId}`);
+                if (!res.data.success) return;
+                const order = res.data.data;
+                const html = printKOT(order, printRestaurant);
+                const win = window.open('', '_blank', 'width=400,height=600,menubar=no,toolbar=no,location=no,status=no');
+                if (!win) {
+                    toast.error('Popup blocked! Allow popups for KOT auto-print.');
+                    return;
+                }
+                win.document.write(html);
+                win.document.close();
+                win.onafterprint = () => {
+                    win.close();
+                };
+                setTimeout(() => win.print(), 300);
+            } catch (err) {
+                console.error('Auto KOT print failed:', err);
+            }
+        };
+        socket.on('kds:new-order', handler);
+        return () => { socket.off('kds:new-order', handler); };
+    }, [socket, restaurantId, printRestaurant]);
 
     const { restaurant: printRestaurant, settings: invoiceSettings } = useInvoiceSettings(restaurantId);
 
@@ -190,7 +218,7 @@ const POSDashboard = () => {
     });
 
     const addItemsMutation = useMutation({
-        mutationFn: async (orderId, items) => {
+        mutationFn: async ({ orderId, items }) => {
             const res = await api.post(`/pos/order/${orderId}/items`, { items, restaurantId });
             return res.data.data;
         },
