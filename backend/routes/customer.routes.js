@@ -8,7 +8,8 @@ import {
     updateCustomer,
     redeemLoyaltyPoints,
     getLoyaltySettings,
-    getBirthdayCustomers
+    getBirthdayCustomers,
+    deleteCustomer
 } from '../controllers/customer.controller.js';
 
 const router = Router();
@@ -24,6 +25,7 @@ router.get('/', listCustomers);
 router.get('/:id', getCustomerDetail);
 router.patch('/:id', updateCustomer);
 router.post('/redeem', redeemLoyaltyPoints);
+router.delete('/:id', deleteCustomer);
 router.get('/:id/orders', getCustomerOrders);
 
 export default router;

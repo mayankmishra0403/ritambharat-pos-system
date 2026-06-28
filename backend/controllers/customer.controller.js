@@ -228,6 +228,19 @@ export const redeemLoyaltyPoints = async (req, res, next) => {
     }
 };
 
+export const deleteCustomer = async (req, res, next) => {
+    try {
+        const customer = await Customer.findById(req.params.id);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+        await Customer.deleteOne({ _id: req.params.id });
+        res.status(200).json({ success: true, message: 'Customer deleted' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getBirthdayCustomers = async (req, res, next) => {
     try {
         const { restaurantId } = req.query;
