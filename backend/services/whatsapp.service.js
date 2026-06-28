@@ -2,58 +2,53 @@ import logger from '../utils/logger.js';
 import User from '../models/User.js';
 import Table from '../models/Table.js';
 
-const META_API_VERSION = 'v22.0';
+const MSG91_API_URL = 'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/';
 
-const getConfig = () => {
-    const token = process.env.META_ACCESS_TOKEN;
-    const phoneId = process.env.META_PHONE_ID;
-
-    if (!token || !phoneId) {
-        logger.warn('Meta WhatsApp not configured — messages disabled');
+const getMsg91Config = () => {
+    const authKey = process.env.MSG91_AUTH_KEY;
+    const integratedNumber = process.env.MSG91_WHATSAPP_NUMBER;
+    if (!authKey || !integratedNumber) {
+        logger.warn('MSG91 not configured — WhatsApp staff messages disabled');
         return null;
     }
-
-    return { token, phoneId };
+    return { authKey, integratedNumber };
 };
 
-const sendMessage = async (to, text) => {
-    const config = getConfig();
+const sendViaMsg91 = async (to, text) => {
+    const config = getMsg91Config();
     if (!config) return;
 
     try {
-        const url = `https://graph.facebook.com/${META_API_VERSION}/${config.phoneId}/messages`;
-        const response = await fetch(url, {
+        const phone = to.startsWith('91') ? to : `91${to}`;
+        const response = await fetch(MSG91_API_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${config.token}`,
+                authkey: config.authKey,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                to,
-                text: { body: text }
+                integrated_number: config.integratedNumber,
+                content_type: 'text',
+                recipient_number: [phone],
+                text
             })
         });
 
-        if (!response.ok) {
-            const errBody = await response.text();
-            logger.error(`WhatsApp send failed to ${to}: ${response.status} ${errBody}`);
+        const data = await response.json();
+        if (!response.ok || data.status === 'failure') {
+            logger.error(`WhatsApp staff send failed to ${to}: ${JSON.stringify(data)}`);
             return false;
         }
-
-        logger.info(`WhatsApp delivered to ${to}`);
+        logger.info(`WhatsApp staff delivered to ${to}`);
         return true;
     } catch (error) {
-        logger.error(`WhatsApp send error to ${to}: ${error.message}`);
+        logger.error(`WhatsApp staff send error to ${to}: ${error.message}`);
         return false;
     }
 };
 
 export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter, link) => {
     try {
-        const config = getConfig();
-        if (!config) return;
-
         const fullText = link ? `${text}\n${link}` : text;
 
         const filter = { restaurant: restaurantId, phone: { $exists: true, $ne: '' } };
@@ -71,7 +66,7 @@ export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter, link) 
             let phone = user.phone.startsWith('+') ? user.phone.slice(1) : user.phone;
             phone = phone.replace(/[^0-9]/g, '');
             if (phone.length === 10) phone = `91${phone}`;
-            await sendMessage(phone, fullText);
+            await sendViaMsg91(phone, fullText);
         }
     } catch (error) {
         logger.error(`WhatsApp staff send error for restaurant ${restaurantId}: ${error.message}`);
@@ -80,9 +75,6 @@ export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter, link) 
 
 export const sendWhatsAppToUser = async (userId, text, link) => {
     try {
-        const config = getConfig();
-        if (!config) return;
-
         const user = await User.findById(userId).select('phone name');
         if (!user?.phone) {
             logger.warn(`WhatsApp: user ${userId} has no phone`);
@@ -94,7 +86,7 @@ export const sendWhatsAppToUser = async (userId, text, link) => {
         phone = phone.replace(/[^0-9]/g, '');
         if (phone.length === 10) phone = `91${phone}`;
 
-        await sendMessage(phone, fullText);
+        await sendViaMsg91(phone, fullText);
         logger.info(`WhatsApp sent to user ${user.name} (${phone})`);
     } catch (error) {
         logger.error(`WhatsApp user send error: ${error.message}`);
