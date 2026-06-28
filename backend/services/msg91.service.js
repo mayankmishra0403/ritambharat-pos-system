@@ -27,10 +27,10 @@ export const sendCustomerWhatsApp = async (to, variables) => {
 
         if (templateId) {
             payload = {
-                messaging_product: 'whatsapp',
                 integrated_number: config.integratedNumber,
                 content_type: 'template',
                 payload: {
+                    messaging_product: 'whatsapp',
                     to: to.startsWith('91') ? to : `91${to}`,
                     type: 'template',
                     template: {
