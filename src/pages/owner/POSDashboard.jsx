@@ -74,6 +74,8 @@ const POSDashboard = () => {
         };
     }, [socket, restaurantId, queryClient]);
 
+    const { restaurant: printRestaurant, settings: invoiceSettings } = useInvoiceSettings(restaurantId);
+
     useEffect(() => {
         if (!socket || !restaurantId || !printRestaurant) return;
         const handler = async ({ orderId }) => {
@@ -100,8 +102,6 @@ const POSDashboard = () => {
         socket.on('kds:new-order', handler);
         return () => { socket.off('kds:new-order', handler); };
     }, [socket, restaurantId, printRestaurant]);
-
-    const { restaurant: printRestaurant, settings: invoiceSettings } = useInvoiceSettings(restaurantId);
 
     const { data: session, isFetched: sessionFetched } = useQuery({
         queryKey: ['pos-session', restaurantId],
