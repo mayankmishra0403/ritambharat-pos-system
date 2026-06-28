@@ -401,3 +401,53 @@ export const getAssignedTables = async (waiterId) => {
         return [];
     }
 };
+
+export const findLeastLoadedWaiter = async (restaurantId) => {
+    const waiters = await User.find({
+        restaurant: restaurantId,
+        role: 'WAITER',
+        isActive: true,
+        waiterStatus: { $in: ['AVAILABLE', 'BUSY'] }
+    }).select('_id name');
+
+    if (!waiters.length) return null;
+
+    const waiterIds = waiters.map(w => w._id);
+
+    const tableLoads = await Table.aggregate([
+        { $match: { restaurant: restaurantId, 'currentSession.waiterId': { $in: waiterIds }, isActive: true } },
+        { $group: { _id: '$currentSession.waiterId', tables: { $sum: 1 } } }
+    ]);
+    const tableMap = {};
+    for (const t of tableLoads) tableMap[t._id.toString()] = t.tables;
+
+    const orderLoads = await Order.aggregate([
+        { $match: { restaurant: restaurantId, paymentStatus: 'UNPAID', status: { $nin: ['CANCELLED', 'SERVED'] } } },
+        { $lookup: { from: 'tables', localField: 'table', foreignField: '_id', as: 'tableDoc' } },
+        { $unwind: { path: '$tableDoc', preserveNullAndEmptyArrays: true } },
+        { $match: { $or: [{ 'tableDoc.currentSession.waiterId': { $in: waiterIds } }, { assignedWaiter: { $in: waiterIds } }] } },
+        { $group: { _id: '$tableDoc.currentSession.waiterId', orders: { $sum: 1 } } }
+    ]);
+    const orderMap = {};
+    for (const o of orderLoads) {
+        const id = o._id ? o._id.toString() : null;
+        if (id) orderMap[id] = o.orders;
+    }
+
+    let best = null;
+    let bestScore = Infinity;
+
+    for (const waiter of waiters) {
+        const id = waiter._id.toString();
+        const tables = tableMap[id] || 0;
+        const orders = orderMap[id] || 0;
+        const score = tables * 5 + orders * 2;
+
+        if (score < bestScore) {
+            bestScore = score;
+            best = waiter;
+        }
+    }
+
+    return best;
+};

@@ -70,10 +70,14 @@ const orderSchema = new mongoose.Schema({
         enum: ['CASH', 'CARD', 'UPI', 'ONLINE', ''],
         default: ''
     },
+    assignedWaiter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     orderSource: {
         type: String,
-        enum: ['MANUAL', 'VOICE', 'WHATSAPP', 'QR'],
-        default: 'MANUAL'
+        enum: ['QR', 'MANUAL', 'VOICE'],
+        default: 'QR'
     },
     customerName: String,
     customerPhone: String,

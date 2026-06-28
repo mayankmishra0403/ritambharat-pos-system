@@ -3,7 +3,8 @@ import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppToUser } from '../services/whatsapp.service.js';
+import { findLeastLoadedWaiter } from '../services/waiterAssignment.service.js';
 import { buildOrderItem } from '../utils/buildOrderItem.js';
 
 export const getTakeawayDashboard = async (req, res, next) => {
@@ -123,9 +124,17 @@ export const createTakeawayOrder = async (req, res, next) => {
         }
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
 
-        logger.info(`Takeaway order created: #${order.orderNumber}`);
+        const assignedWaiter = await findLeastLoadedWaiter(restaurantId);
+        if (assignedWaiter) {
+            order.assignedWaiter = assignedWaiter._id;
+            await order.save();
+            sendWhatsAppToUser(assignedWaiter._id, `🆕 New Takeaway Order – #${order.orderNumber}`, `${frontendUrl}/accept/${order._id}`);
+        } else {
+            sendWhatsAppToStaff(restaurantId, `🆕 New Order – #${order.orderNumber}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
+        }
+
+        logger.info(`Takeaway order created: #${order.orderNumber} | assigned to: ${assignedWaiter?.name || 'all staff'}`);
 
         res.status(201).json({
             success: true,
