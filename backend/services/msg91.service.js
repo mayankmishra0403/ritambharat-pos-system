@@ -39,10 +39,10 @@ export const sendCustomerWhatsApp = async (to, variables) => {
                             {
                                 type: 'body',
                                 parameters: [
-                                    { type: 'text', text: variables.customer_name || 'Guest' },
-                                    { type: 'text', text: variables.restaurant_name || 'our restaurant' },
-                                    { type: 'text', text: variables.amount || '₹0' },
-                                    { type: 'text', text: variables.bill_url || '' }
+                                    { type: 'text', parameter_name: 'var_1', text: variables.customer_name || 'Guest' },
+                                    { type: 'text', parameter_name: 'var_2', text: variables.restaurant_name || 'our restaurant' },
+                                    { type: 'text', parameter_name: 'var_3', text: variables.amount || '₹0' },
+                                    { type: 'text', parameter_name: 'var_4', text: variables.bill_url || '' }
                                 ]
                             }
                         ]
