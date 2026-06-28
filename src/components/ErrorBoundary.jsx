@@ -4,7 +4,7 @@ import { trackError } from '../utils/analytics';
 class ErrorBoundary extends Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null };
+        this.state = { hasError: false, error: null, showDetails: false };
     }
 
     static getDerivedStateFromError(error) {
@@ -12,14 +12,13 @@ class ErrorBoundary extends Component {
     }
 
     componentDidCatch(error, errorInfo) {
-        // Log to analytics
         trackError(error, errorInfo);
-
         console.error('[ErrorBoundary] Caught:', error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
+            const err = this.state.error;
             return (
                 <div className="flex min-h-screen items-center justify-center bg-background p-4">
                     <div className="max-w-md text-center">
@@ -42,8 +41,25 @@ class ErrorBoundary extends Component {
                             Oops! Something went wrong
                         </h1>
                         <p className="mb-6 text-muted-foreground">
-                            We're sorry for the inconvenience. The error has been logged and our team will look into it.
+                            We're sorry for the inconvenience. Please try refreshing.
                         </p>
+
+                        {err && (
+                            <div className="mb-4">
+                                <button
+                                    onClick={() => this.setState(s => ({ showDetails: !s.showDetails }))}
+                                    className="text-xs text-muted-foreground underline mb-2 inline-block"
+                                >
+                                    {this.state.showDetails ? 'Hide details' : 'Show error details'}
+                                </button>
+                                {this.state.showDetails && (
+                                    <pre className="text-xs text-left bg-red-50 dark:bg-red-950/30 p-3 rounded-lg overflow-auto max-h-40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                                        {err.message || err.toString()}
+                                        {err.stack && `\n\n${err.stack.split('\n').slice(1, 4).join('\n')}...`}
+                                    </pre>
+                                )}
+                            </div>
+                        )}
 
                         <button
                             onClick={() => window.location.reload()}

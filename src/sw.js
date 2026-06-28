@@ -12,7 +12,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       clients.claim(),
-      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      caches.keys().then(keys => Promise.all(
+        keys.map(k => {
+          if (!k.startsWith('workbox-precache')) return caches.delete(k);
+        })
+      ))
     ])
   )
 })
