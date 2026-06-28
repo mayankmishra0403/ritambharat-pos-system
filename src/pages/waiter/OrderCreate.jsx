@@ -22,6 +22,7 @@ const OrderCreate = () => {
     const [cartItems, setCartItems] = useState([]);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
+    const [preferredWaiterId, setPreferredWaiterId] = useState('');
 
     const restaurant = user?.restaurant;
 
@@ -46,6 +47,29 @@ const OrderCreate = () => {
     });
 
     const categories = [...new Set(menuItems.map(item => item.category))];
+
+    const { data: restaurantSettings } = useQuery({
+        queryKey: ['restaurant', restaurantId],
+        queryFn: async () => {
+            if (!restaurantId) return null;
+            const res = await api.get(`/restaurant/${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId
+    });
+
+    const waiterMode = restaurantSettings?.waiterSettings?.mode || 'AUTO_ASSIGN';
+    const isManualMode = waiterMode === 'MANUAL';
+
+    const { data: waiterLoads = [] } = useQuery({
+        queryKey: ['waiter-loads', restaurantId],
+        queryFn: async () => {
+            if (!restaurantId) return [];
+            const res = await api.get(`/waiter/loads?restaurantId=${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId && isManualMode
+    });
 
     const placeOrderMutation = useMutation({
         mutationFn: async (orderData) => {
@@ -101,7 +125,8 @@ const OrderCreate = () => {
             items: cartItems,
             customerName: customerName || undefined,
             customerPhone: customerPhone || undefined,
-            orderSource: 'MANUAL'
+            orderSource: 'MANUAL',
+            preferredWaiterId: isManualMode && preferredWaiterId ? preferredWaiterId : undefined
         });
     };
 
@@ -168,6 +193,20 @@ const OrderCreate = () => {
                     </div>
 
                     <div className="flex-shrink-0">
+                        {isManualMode && (
+                            <select
+                                value={preferredWaiterId}
+                                onChange={(e) => setPreferredWaiterId(e.target.value)}
+                                className="w-full px-3 py-2 bg-muted border border-border rounded-xl text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            >
+                                <option value="">Auto-assign waiter</option>
+                                {waiterLoads.map(w => (
+                                    <option key={w._id} value={w._id}>
+                                        {w.name} ({w.activeTables} tables, {w.activeOrders} orders)
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <input
                             type="text"
                             placeholder="Customer name (optional)"

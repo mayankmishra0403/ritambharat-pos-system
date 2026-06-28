@@ -2,7 +2,8 @@ import Table from '../models/Table.js';
 import Order from '../models/Order.js';
 import Payment from '../models/Payment.js';
 import QRCode from 'qrcode';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
+import { releaseWaiter } from '../services/waiterAssignment.service.js';
 
 // Derive frontend URL from request (works on any domain, localhost, or deploy)
 function getFrontendUrl(req) {
@@ -315,6 +316,8 @@ export const resetTable = async (req, res, next) => {
             }
         }
 
+        await releaseWaiter({ restaurantId: table.restaurant, tableId: table._id, changedBy: req.user?._id, reason: 'Table reset' });
+
         table.status = 'FREE';
         table.currentSession = {
             sessionId: null,
@@ -332,7 +335,7 @@ export const resetTable = async (req, res, next) => {
             io.to(`restaurant:${table.restaurant}`).emit('table:updated', table);
         }
 
-        sendWhatsAppToStaff(table.restaurant, `🔄 Reset & Paid – Table ${table.name}`, ['OWNER', 'WAITER']);
+        await sendWhatsAppForTable(table._id, `🔄 Reset & Paid – Table ${table.name}`, '', { ownerPrefix: 'Reset' });
 
         res.status(200).json({
             success: true,

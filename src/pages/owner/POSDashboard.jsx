@@ -37,6 +37,8 @@ const POSDashboard = () => {
     const [printOrder, setPrintOrder] = useState(null);
     const [printMode, setPrintMode] = useState('new');
     const [showExistingOrders, setShowExistingOrders] = useState(false);
+    const [showTransfer, setShowTransfer] = useState(false);
+    const [transferWaiterId, setTransferWaiterId] = useState('');
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -212,6 +214,30 @@ const POSDashboard = () => {
             toast.success('Order cancelled');
         },
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to cancel')
+    });
+
+    const { data: waiterLoads = [] } = useQuery({
+        queryKey: ['waiter-loads', restaurantId],
+        queryFn: async () => {
+            if (!restaurantId) return [];
+            const res = await api.get(`/waiter/loads?restaurantId=${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId && showTransfer
+    });
+
+    const transferMutation = useMutation({
+        mutationFn: async ({ tableId, newWaiterId }) => {
+            const res = await api.post('/waiter/transfer', { tableId, newWaiterId });
+            return res.data.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['pos-data', restaurantId] });
+            setShowTransfer(false);
+            setTransferWaiterId('');
+            toast.success('Table transferred');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Transfer failed')
     });
 
     const paymentMutation = useMutation({
@@ -455,9 +481,25 @@ const POSDashboard = () => {
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Cart</h2>
                         {selectedTable && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                {selectedTable.name}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                    {selectedTable.name}
+                                </span>
+                                {selectedTable.currentSession?.waiterId?.name && (
+                                    <span className="flex items-center gap-1 text-[8px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/20 uppercase tracking-wider">
+                                        {selectedTable.currentSession.waiterId.name}
+                                        {(user?.role === 'OWNER' || user?.role === 'ADMIN') && (
+                                            <button
+                                                onClick={() => setShowTransfer(true)}
+                                                className="ml-0.5 hover:bg-blue-500/20 rounded-full p-0.5"
+                                                title="Transfer waiter"
+                                            >
+                                                <RotateCcw size={8} />
+                                            </button>
+                                        )}
+                                    </span>
+                                )}
+                            </div>
                         )}
                         {!selectedTable && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
@@ -510,6 +552,42 @@ const POSDashboard = () => {
                     )}
                 </div>
             </div>
+
+            {showTransfer && selectedTable && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowTransfer(false)}>
+                    <div className="bg-card border-2 border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-bold text-sm mb-1">Transfer Waiter</h3>
+                        <p className="text-[10px] text-muted-foreground mb-4">Table {selectedTable.name} — {selectedTable.currentSession?.waiterId?.name || 'No waiter'}</p>
+                        <select
+                            value={transferWaiterId}
+                            onChange={e => setTransferWaiterId(e.target.value)}
+                            className="w-full px-3 py-2 bg-muted border border-border rounded-xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        >
+                            <option value="">Select waiter...</option>
+                            {waiterLoads.filter(w => w._id !== selectedTable.currentSession?.waiterId?._id).map(w => (
+                                <option key={w._id} value={w._id}>
+                                    {w.name} ({w.activeTables} tables, {w.status})
+                                </option>
+                            ))}
+                        </select>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { setShowTransfer(false); setTransferWaiterId(''); }}
+                                className="flex-1 py-2.5 bg-muted text-foreground font-bold text-xs rounded-xl hover:bg-muted/80 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => transferMutation.mutate({ tableId: selectedTable._id, newWaiterId: transferWaiterId })}
+                                disabled={!transferWaiterId || transferMutation.isPending}
+                                className="flex-1 py-2.5 bg-primary text-primary-foreground font-bold text-xs rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                            >
+                                {transferMutation.isPending ? 'Transferring...' : 'Transfer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <POSSessionModal
                 session={session}

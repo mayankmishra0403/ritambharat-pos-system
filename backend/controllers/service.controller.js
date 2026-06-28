@@ -1,6 +1,6 @@
 import ServiceRequest from '../models/ServiceRequest.js';
 import Table from '../models/Table.js';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 
 // @desc    Create service request
 // @route   POST /api/service/request
@@ -43,7 +43,11 @@ export const createServiceRequest = async (req, res, next) => {
         });
 
         const tableName = tableDoc ? `Table ${tableDoc.name}` : 'a table';
-        sendWhatsAppToStaff(restaurant, `🔔 Service Request – ${tableName} (${type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+        if (table) {
+            await sendWhatsAppForTable(table, `🔔 Service Request – ${tableName} (${type.replace('_', ' ')})`, '', { ownerPrefix: 'Service Request' });
+        } else {
+            sendWhatsAppToStaff(restaurant, `🔔 Service Request – ${tableName} (${type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+        }
 
         res.status(201).json({
             success: true,
@@ -110,15 +114,21 @@ export const updateServiceRequest = async (req, res, next) => {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request has been completed!`
             });
-            const tableName = `Table ${request.table?.name || 'a table'}`;
-            sendWhatsAppToStaff(request.restaurant, `✅ Service Completed – ${tableName} (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+            if (request.table) {
+                await sendWhatsAppForTable(request.table._id || request.table, `✅ Service Completed – ${request.table?.name || 'Table'} (${request.type.replace('_', ' ')})`, '', { ownerPrefix: 'Service Completed' });
+            } else {
+                sendWhatsAppToStaff(request.restaurant, `✅ Service Completed (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+            }
         } else if (status === 'CANCELLED') {
             if (io) io.to(`table:${request.table?._id}`).emit('service:cancelled', {
                 type: request.type,
                 message: `Your ${request.type.replace('_', ' ').toLowerCase()} request was cancelled.`
             });
-            const tableName = `Table ${request.table?.name || 'a table'}`;
-            sendWhatsAppToStaff(request.restaurant, `❌ Service Cancelled – ${tableName} (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+            if (request.table) {
+                await sendWhatsAppForTable(request.table._id || request.table, `❌ Service Cancelled – ${request.table?.name || 'Table'} (${request.type.replace('_', ' ')})`, '', { ownerPrefix: 'Service Cancelled' });
+            } else {
+                sendWhatsAppToStaff(request.restaurant, `❌ Service Cancelled (${request.type.replace('_', ' ')})`, ['WAITER', 'OWNER']);
+            }
         }
 
         res.status(200).json({

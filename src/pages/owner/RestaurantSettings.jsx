@@ -5,7 +5,7 @@ import api from '../../config/api';
 import {
     Save, Loader, Store, Clock, Settings, Image as ImageIcon,
     Upload, MapPin, Phone, Globe, Shield, Bell, CheckCircle, Smartphone,
-    ShieldAlert, Share2, Star, Users
+    ShieldAlert, Share2, Star, Users, UserCheck, RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -125,6 +125,7 @@ const RestaurantSettings = () => {
         { id: 'location', label: 'Location & Contact', icon: MapPin },
         { id: 'operations', label: 'Operations', icon: Clock },
         { id: 'security', label: 'Security & Features', icon: Shield },
+        { id: 'waiter', label: 'Waiter Assignment', icon: UserCheck },
     ];
 
     if (isLoading || !restaurant) {
@@ -235,6 +236,12 @@ const RestaurantSettings = () => {
                                         handleFeatureChange={handleFeatureChange}
                                         handleChange={handleChange}
                                         onDeleteRestart={() => deleteMutation.mutate()}
+                                    />
+                                )}
+                                {activeTab === 'waiter' && (
+                                    <WaiterSettings
+                                        restaurant={restaurant}
+                                        setRestaurant={setRestaurant}
                                     />
                                 )}
                             </motion.div>
@@ -694,6 +701,220 @@ const SecuritySettings = ({ restaurant, handleFeatureChange, handleChange, onDel
                     </div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const WAITER_MODES = [
+    { value: 'AUTO_ASSIGN', label: 'Auto Assign', desc: 'Least-busy waiter gets the table based on weighted scoring' },
+    { value: 'ROUND_ROBIN', label: 'Round Robin', desc: 'Tables assigned in rotation order across all waiters' },
+    { value: 'FIXED_SECTIONS', label: 'Fixed Sections', desc: 'Each waiter owns specific tables in their section' },
+    { value: 'MANUAL', label: 'Manual', desc: 'Cashier/manager selects which waiter gets each table' }
+];
+
+const WaiterSettings = ({ restaurant, setRestaurant }) => {
+    const mode = restaurant?.waiterSettings?.mode || 'AUTO_ASSIGN';
+    const weights = restaurant?.waiterSettings?.scoringWeights || {};
+    const enableTransfer = restaurant?.waiterSettings?.enableTransfer !== false;
+    const autoReleaseAfterBill = restaurant?.waiterSettings?.autoReleaseAfterBill !== false;
+    const ignoreOnBreak = restaurant?.waiterSettings?.ignoreOnBreak !== false;
+    const maxTables = restaurant?.waiterSettings?.maxActiveTablesPerWaiter || 10;
+    const sections = restaurant?.waiterSettings?.fixedSections || [];
+
+    const updateWS = (key, value) => {
+        setRestaurant(prev => ({
+            ...prev,
+            waiterSettings: {
+                ...prev.waiterSettings,
+                mode: prev.waiterSettings?.mode || 'AUTO_ASSIGN',
+                scoringWeights: prev.waiterSettings?.scoringWeights || {},
+                enableTransfer: prev.waiterSettings?.enableTransfer !== false,
+                autoReleaseAfterBill: prev.waiterSettings?.autoReleaseAfterBill !== false,
+                ignoreOnBreak: prev.waiterSettings?.ignoreOnBreak !== false,
+                maxActiveTablesPerWaiter: prev.waiterSettings?.maxActiveTablesPerWaiter || 10,
+                fixedSections: prev.waiterSettings?.fixedSections || [],
+                ...prev.waiterSettings,
+                [key]: value
+            }
+        }));
+    };
+
+    const updateWeight = (key, value) => {
+        setRestaurant(prev => ({
+            ...prev,
+            waiterSettings: {
+                ...prev.waiterSettings,
+                scoringWeights: {
+                    ...prev.waiterSettings?.scoringWeights,
+                    [key]: Number(value) || 0
+                }
+            }
+        }));
+    };
+
+    return (
+        <div className="space-y-8 mb-20 max-w-4xl">
+            {/* Mode Selector */}
+            <div className="bg-card border-4 border-border p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-foreground tracking-tight uppercase">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                        <UserCheck size={24} strokeWidth={3} />
+                    </div>
+                    Assignment Mode
+                </h3>
+                <div className="space-y-4 relative z-10">
+                    {WAITER_MODES.map(m => {
+                        const isActive = mode === m.value;
+                        return (
+                            <button
+                                key={m.value}
+                                onClick={() => updateWS('mode', m.value)}
+                                className={`w-full flex items-center gap-6 p-6 rounded-3xl border-2 text-left transition-all ${
+                                    isActive
+                                        ? 'bg-primary/10 border-primary shadow-lg shadow-primary/10'
+                                        : 'bg-muted/10 border-border/50 hover:border-primary/30 hover:bg-muted/20'
+                                }`}
+                            >
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                    isActive ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                                }`}>
+                                    {isActive && <div className="w-2 h-2 bg-white rounded-full" />}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black uppercase tracking-wider">{m.label}</p>
+                                    <p className="text-[10px] text-muted-foreground font-medium mt-1">{m.desc}</p>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Auto-Assign Weights */}
+            {mode === 'AUTO_ASSIGN' && (
+                <div className="bg-card border-4 border-border p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                    <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-foreground tracking-tight uppercase">
+                        <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                            <RefreshCw size={24} strokeWidth={3} />
+                        </div>
+                        Scoring Weights
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground font-medium mb-6 -mt-4">
+                        Higher weight = more impact on who gets the next table
+                    </p>
+                    <div className="grid grid-cols-2 gap-6 relative z-10">
+                        {[
+                            { key: 'activeTables', label: 'Active Tables', default: 5 },
+                            { key: 'activeOrders', label: 'Active Orders', default: 2 },
+                            { key: 'pendingBills', label: 'Pending Bills', default: 3 },
+                            { key: 'activeGuests', label: 'Active Guests', default: 1 }
+                        ].map(w => (
+                            <div key={w.key} className="group/field relative">
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">{w.label}</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    value={weights[w.key] ?? w.default}
+                                    onChange={e => updateWeight(w.key, e.target.value)}
+                                    className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Settings */}
+            <div className="bg-card border-4 border-border p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-foreground tracking-tight uppercase">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                        <Settings size={24} strokeWidth={3} />
+                    </div>
+                    Configuration
+                </h3>
+                <div className="space-y-4 relative z-10">
+                    <div className="flex items-center justify-between p-6 bg-muted/20 rounded-3xl border border-border/50 group/item hover:border-primary/30 transition-all">
+                        <div>
+                            <p className="text-sm font-black uppercase tracking-widest">Enable Transfer</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">Allow moving tables between waiters</p>
+                        </div>
+                        <button
+                            onClick={() => updateWS('enableTransfer', !enableTransfer)}
+                            className={`w-14 h-7 shrink-0 rounded-full relative transition-all duration-300 shadow-inner ${enableTransfer ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${enableTransfer ? 'left-7.5' : 'left-0.5'}`} />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-6 bg-muted/20 rounded-3xl border border-border/50 group/item hover:border-primary/30 transition-all">
+                        <div>
+                            <p className="text-sm font-black uppercase tracking-widest">Auto-Release After Bill</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">Free waiter as soon as bill is paid</p>
+                        </div>
+                        <button
+                            onClick={() => updateWS('autoReleaseAfterBill', !autoReleaseAfterBill)}
+                            className={`w-14 h-7 shrink-0 rounded-full relative transition-all duration-300 shadow-inner ${autoReleaseAfterBill ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${autoReleaseAfterBill ? 'left-7.5' : 'left-0.5'}`} />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-6 bg-muted/20 rounded-3xl border border-border/50 group/item hover:border-primary/30 transition-all">
+                        <div>
+                            <p className="text-sm font-black uppercase tracking-widest">Ignore on Break</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">Don't assign tables to waiters on break</p>
+                        </div>
+                        <button
+                            onClick={() => updateWS('ignoreOnBreak', !ignoreOnBreak)}
+                            className={`w-14 h-7 shrink-0 rounded-full relative transition-all duration-300 shadow-inner ${ignoreOnBreak ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                        >
+                            <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 ${ignoreOnBreak ? 'left-7.5' : 'left-0.5'}`} />
+                        </button>
+                    </div>
+
+                    <div className="p-6 bg-muted/20 rounded-3xl border border-border/50">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">Max Active Tables Per Waiter</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="50"
+                            value={maxTables}
+                            onChange={e => updateWS('maxActiveTablesPerWaiter', Number(e.target.value) || 10)}
+                            className="w-full bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Fixed Sections Info */}
+            {mode === 'FIXED_SECTIONS' && (
+                <div className="bg-card border-4 border-yellow-500/20 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-yellow-500/5 pointer-events-none" />
+                    <h3 className="text-xl font-black mb-6 flex items-center gap-3 text-yellow-500 tracking-tight uppercase">
+                        <div className="p-3 bg-yellow-500/10 rounded-2xl">
+                            <Users size={24} strokeWidth={3} />
+                        </div>
+                        Fixed Sections
+                    </h3>
+                    {sections.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No sections configured yet. Assign sections after setting up tables and waiters.</p>
+                    ) : (
+                        <div className="space-y-3 relative z-10">
+                            {sections.map((s, i) => (
+                                <div key={i} className="p-4 bg-muted/20 rounded-2xl border border-border/50">
+                                    <p className="font-bold text-sm">{s.name}</p>
+                                    <p className="text-[10px] text-muted-foreground mt-1">Waiter: {s.waiterId?.name || s.waiterId || 'Not assigned'}</p>
+                                    <p className="text-[10px] text-muted-foreground">{s.tableIds?.length || 0} tables</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

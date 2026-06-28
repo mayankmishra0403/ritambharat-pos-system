@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../hooks/useSocket';
 import { useSoundAlert } from '../../hooks/useSoundAlert';
@@ -8,7 +8,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 import PWAInstallPrompt from '../../components/common/PWAInstallPrompt';
 import api from '../../config/api';
 import {
-    UtensilsCrossed, ShoppingBag, Clock, ChevronRight, LogOut, Bell
+    UtensilsCrossed, ShoppingBag, Clock, ChevronRight, LogOut, Bell, Circle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -67,6 +67,26 @@ const WaiterDashboard = () => {
         enabled: !!restaurantId,
         refetchInterval: 10000
     });
+
+    const queryClient = useQueryClient();
+
+    const statusMutation = useMutation({
+        mutationFn: async (status) => {
+            const res = await api.patch('/waiter/status', { status });
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['user'] });
+            toast.success('Status updated');
+        },
+        onError: (err) => toast.error(err.response?.data?.message || 'Failed to update status')
+    });
+
+    const toggleStatus = () => {
+        const current = user?.waiterStatus || 'AVAILABLE';
+        const next = current === 'AVAILABLE' ? 'BREAK' : 'AVAILABLE';
+        statusMutation.mutate(next);
+    };
 
     useSoundAlert(socket, restaurantId, {
         event: 'order:created',
@@ -150,6 +170,21 @@ const WaiterDashboard = () => {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={toggleStatus}
+                        disabled={statusMutation.isPending}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                            user?.waiterStatus === 'AVAILABLE'
+                                ? 'bg-green-500/10 text-green-500 border border-green-500/20'
+                                : user?.waiterStatus === 'BREAK'
+                                    ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                                    : 'bg-muted text-muted-foreground border border-border'
+                        }`}
+                        title={`Status: ${user?.waiterStatus || 'AVAILABLE'} — tap to toggle`}
+                    >
+                        <Circle size={8} className="fill-current" />
+                        {user?.waiterStatus === 'BREAK' ? 'On Break' : user?.waiterStatus || 'Active'}
+                    </button>
                     <span className="text-xs text-muted-foreground">{user?.name}</span>
                     <button
                         onClick={handleBellClick}

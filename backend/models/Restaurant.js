@@ -159,6 +159,30 @@ const restaurantSchema = new mongoose.Schema({
         customFooterNote: { type: String, default: '' },
         showPoweredBy: { type: Boolean, default: true },
         monospaceFont: { type: Boolean, default: false }
+    },
+    waiterSettings: {
+        mode: {
+            type: String,
+            enum: ['FIXED_SECTIONS', 'AUTO_ASSIGN', 'ROUND_ROBIN', 'MANUAL'],
+            default: 'AUTO_ASSIGN'
+        },
+        enableTransfer: { type: Boolean, default: true },
+        autoReleaseAfterBill: { type: Boolean, default: true },
+        ignoreOnBreak: { type: Boolean, default: true },
+        enableNotifications: { type: Boolean, default: true },
+        maxActiveTablesPerWaiter: { type: Number, default: 10 },
+        scoringWeights: {
+            activeTables: { type: Number, default: 5 },
+            activeOrders: { type: Number, default: 2 },
+            pendingBills: { type: Number, default: 3 },
+            activeGuests: { type: Number, default: 1 }
+        },
+        roundRobinIndex: { type: Number, default: 0 },
+        fixedSections: [{
+            name: { type: String, required: true },
+            waiterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            tableIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Table' }]
+        }]
     }
 }, {
     timestamps: true

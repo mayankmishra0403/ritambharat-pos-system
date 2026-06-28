@@ -4,8 +4,9 @@ import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 import { sendCustomerWhatsApp } from '../services/msg91.service.js';
+import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -172,6 +173,16 @@ export const createOrder = async (req, res, next) => {
             logger.error(`Failed to update table status: ${tableError.message}`);
         }
 
+        // Auto-assign waiter if this is a dine-in table order
+        if (table) {
+            await assignWaiter({
+                restaurantId: restaurant,
+                tableId: table,
+                orderId: order._id,
+                changedBy: null
+            });
+        }
+
         // Emit real-time events via Socket.IO
         if (io) {
             io.to(`restaurant:${restaurant}`).emit('order:created', {
@@ -182,7 +193,11 @@ export const createOrder = async (req, res, next) => {
 
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
-        sendWhatsAppToStaff(restaurant, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
+        if (table) {
+            await sendWhatsAppForTable(table, `🆕 New Order – Table ${order.table?.name || ''}`, `${frontendUrl}/accept/${order._id}`, { ownerPrefix: 'New Order' });
+        } else {
+            sendWhatsAppToStaff(restaurant, `🆕 New Order`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
+        }
 
         logger.info(`Order created: #${order.orderNumber} for Table ${order.table?.name}`);
 
@@ -391,14 +406,31 @@ export const updateOrderStatus = async (req, res, next) => {
 
         if (io) io.to(`order:${order._id}`).emit('order:updated', order);
 
+        const tableId = order.table?._id || order.table;
         if (status === 'ACCEPTED') {
-            sendWhatsAppToStaff(order.restaurant, `✅ Accepted${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            if (tableId) {
+                await sendWhatsAppForTable(tableId, `✅ Accepted – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Accepted' });
+            } else {
+                sendWhatsAppToStaff(order.restaurant, `✅ Accepted`, ['WAITER', 'OWNER']);
+            }
         } else if (status === 'PREPARING') {
-            sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            if (tableId) {
+                await sendWhatsAppForTable(tableId, `👨‍🍳 Preparing – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Preparing' });
+            } else {
+                sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing`, ['WAITER', 'OWNER']);
+            }
         } else if (status === 'SERVED') {
-            sendWhatsAppToStaff(order.restaurant, `🍽️ Served${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+            if (tableId) {
+                await sendWhatsAppForTable(tableId, `🍽️ Served – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Served' });
+            } else {
+                sendWhatsAppToStaff(order.restaurant, `🍽️ Served`, ['WAITER', 'OWNER']);
+            }
         } else if (status === 'CANCELLED') {
-            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+            if (tableId) {
+                await sendWhatsAppForTable(tableId, `❌ Cancelled – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Cancelled' });
+            } else {
+                sendWhatsAppToStaff(order.restaurant, `❌ Cancelled`, ['OWNER', 'WAITER']);
+            }
         }
 
         logger.info(`Order status updated: #${order.orderNumber} -> ${status}`);
@@ -459,7 +491,13 @@ export const cancelOrder = async (req, res, next) => {
         });
 
 
-        sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+        if (order.table) {
+            const tableId = order.table._id || order.table;
+            await releaseWaiter({ restaurantId: order.restaurant, tableId, changedBy: req.user?._id, reason: 'Order cancelled' });
+            await sendWhatsAppForTable(tableId, `❌ Cancelled – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Cancelled' });
+        } else {
+            sendWhatsAppToStaff(order.restaurant, `❌ Cancelled`, ['OWNER', 'WAITER']);
+        }
 
         logger.info(`Order cancelled: #${order.orderNumber}`);
 
@@ -546,6 +584,8 @@ export const updateOrderPayment = async (req, res, next) => {
 
                 // Only free if this order occupies it
                 if (tableDoc && tableDoc.status === 'OCCUPIED' && tableDoc.currentSession?.orderId?.toString() === order._id.toString()) {
+                    await releaseWaiter({ restaurantId: order.restaurant, tableId: tableDoc._id, changedBy: req.user?._id, reason: 'Payment completed' });
+
                     tableDoc.status = 'FREE';
                     tableDoc.currentSession = {}; // Clear session
                     await tableDoc.save();

@@ -3,8 +3,9 @@ import Table from '../models/Table.js';
 import MenuItem from '../models/MenuItem.js';
 import Order from '../models/Order.js';
 import Restaurant from '../models/Restaurant.js';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 import { sendCustomerWhatsApp } from '../services/msg91.service.js';
+import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 
@@ -100,7 +101,7 @@ export const getPosData = async (req, res, next) => {
         }
 
         const [tables, menuItems, activeOrders, restaurant] = await Promise.all([
-            Table.find({ restaurant: restaurantId, isActive: true }).sort({ name: 1 }),
+            Table.find({ restaurant: restaurantId, isActive: true }).populate('currentSession.waiterId', 'name').sort({ name: 1 }),
             MenuItem.find({ restaurant: restaurantId, isAvailable: true, isDeleted: false })
                 .sort({ category: 1 }),
             Order.find({
@@ -235,6 +236,14 @@ export const createPosOrder = async (req, res, next) => {
             } catch (tableError) {
                 logger.error(`Failed to update table: ${tableError.message}`);
             }
+
+            await assignWaiter({
+                restaurantId,
+                tableId: table,
+                orderId: order._id,
+                preferredWaiterId: req.body.preferredWaiterId,
+                changedBy: req.user._id
+            });
         }
 
         const io = req.app.get('io');
@@ -247,7 +256,11 @@ export const createPosOrder = async (req, res, next) => {
 
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
-        sendWhatsAppToStaff(restaurantId, `🆕 New Order${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
+        if (table) {
+            await sendWhatsAppForTable(table, `🆕 New Order – Table ${order.table?.name || ''}`, `${frontendUrl}/accept/${order._id}`, { ownerPrefix: 'New Order' });
+        } else {
+            sendWhatsAppToStaff(restaurantId, `🆕 New Order`, ['OWNER', 'WAITER'], `${frontendUrl}/accept/${order._id}`);
+        }
 
         res.status(201).json({ success: true, data: order });
     } catch (error) {

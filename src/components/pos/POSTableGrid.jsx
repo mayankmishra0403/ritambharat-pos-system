@@ -31,6 +31,7 @@ const POSTableGrid = ({ tables, selectedTableId, onSelectTable, activeOrders }) 
                 const orderCount = getTableOrderCount(table._id);
                 const isMerged = table.currentSession?.mergedInto;
                 const isSelected = selectedTableId === table._id;
+                const waiterName = table.currentSession?.waiterId?.name;
 
                 return (
                     <motion.button
@@ -58,6 +59,12 @@ const POSTableGrid = ({ tables, selectedTableId, onSelectTable, activeOrders }) 
                             <div className="flex items-center gap-1 mt-1.5">
                                 <CookingPot size={10} className="text-orange-500" />
                                 <span className="text-[10px] font-bold text-orange-500">{orderCount} active</span>
+                            </div>
+                        )}
+                        {waiterName && (
+                            <div className="flex items-center gap-1 mt-1">
+                                <Users size={8} className="text-primary" />
+                                <span className="text-[8px] font-bold text-primary uppercase tracking-wider">{waiterName}</span>
                             </div>
                         )}
                         <div className={`absolute bottom-2 right-2 w-2 h-2 rounded-full ${colors.dot} shadow-sm`} />

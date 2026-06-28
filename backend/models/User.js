@@ -75,6 +75,22 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    waiterStatus: {
+        type: String,
+        enum: ['AVAILABLE', 'BUSY', 'BREAK', 'OFFLINE', 'SHIFT_ENDED'],
+        default: 'AVAILABLE'
+    },
+    lastAssignmentAt: {
+        type: Date
+    },
+    shift: {
+        type: String,
+        enum: ['MORNING', 'LUNCH', 'EVENING', 'NIGHT', ''],
+        default: ''
+    },
+    checkedInAt: {
+        type: Date
+    },
     pushSubscriptions: {
         type: [{
             endpoint: { type: String, required: true },

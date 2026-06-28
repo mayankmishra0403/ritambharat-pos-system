@@ -99,6 +99,11 @@ const OrderCard = ({ order, nextStatus, onUpdateStatus }) => {
                     <span className="text-[9px] font-bold uppercase text-muted-foreground bg-muted px-2 py-0.5 rounded">
                         {order.items?.length || 0} items
                     </span>
+                    {order.table?.currentSession?.waiterId?.name && (
+                        <span className="text-[9px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded">
+                            {order.table.currentSession.waiterId.name}
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex gap-2">

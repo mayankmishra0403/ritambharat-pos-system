@@ -1,5 +1,6 @@
 import logger from '../utils/logger.js';
 import User from '../models/User.js';
+import Table from '../models/Table.js';
 
 const META_API_VERSION = 'v22.0';
 
@@ -74,5 +75,48 @@ export const sendWhatsAppToStaff = async (restaurantId, text, roleFilter, link) 
         }
     } catch (error) {
         logger.error(`WhatsApp staff send error for restaurant ${restaurantId}: ${error.message}`);
+    }
+};
+
+export const sendWhatsAppToUser = async (userId, text, link) => {
+    try {
+        const config = getConfig();
+        if (!config) return;
+
+        const user = await User.findById(userId).select('phone name');
+        if (!user?.phone) {
+            logger.warn(`WhatsApp: user ${userId} has no phone`);
+            return;
+        }
+
+        const fullText = link ? `${text}\n${link}` : text;
+        let phone = user.phone.startsWith('+') ? user.phone.slice(1) : user.phone;
+        phone = phone.replace(/[^0-9]/g, '');
+        if (phone.length === 10) phone = `91${phone}`;
+
+        await sendMessage(phone, fullText);
+        logger.info(`WhatsApp sent to user ${user.name} (${phone})`);
+    } catch (error) {
+        logger.error(`WhatsApp user send error: ${error.message}`);
+    }
+};
+
+export const sendWhatsAppForTable = async (tableId, text, link, options = {}) => {
+    try {
+        const table = await Table.findById(tableId).select('restaurant currentSession name');
+        if (!table) return;
+
+        const restaurantId = table.restaurant;
+
+        if (table.currentSession?.waiterId) {
+            await sendWhatsAppToUser(table.currentSession.waiterId, text, link);
+        } else {
+            await sendWhatsAppToStaff(restaurantId, text, 'WAITER', link);
+        }
+
+        const ownerText = options.ownerPrefix ? `${options.ownerPrefix}: ${text}` : text;
+        await sendWhatsAppToStaff(restaurantId, ownerText, 'OWNER', link);
+    } catch (error) {
+        logger.error(`WhatsApp table send error: ${error.message}`);
     }
 };

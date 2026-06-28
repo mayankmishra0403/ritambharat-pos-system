@@ -81,7 +81,7 @@ export const updateRestaurant = async (req, res, next) => {
         }
 
         // Update fields (whitelist allowed fields only)
-        const allowedFields = ['name', 'address', 'city', 'state', 'country', 'pincode', 'phone', 'email', 'cuisine', 'description', 'logo', 'coverImage', 'tagline', 'gstin', 'fssai', 'alternatePhone', 'website', 'currency', 'timezone', 'openingTime', 'closingTime', 'isActive', 'orderPrefix', 'invoiceSettings'];
+        const allowedFields = ['name', 'address', 'city', 'state', 'country', 'pincode', 'phone', 'email', 'cuisine', 'description', 'logo', 'coverImage', 'tagline', 'gstin', 'fssai', 'alternatePhone', 'website', 'currency', 'timezone', 'openingTime', 'closingTime', 'isActive', 'orderPrefix', 'invoiceSettings', 'features', 'waiterSettings'];
         for (const field of allowedFields) {
             if (req.body[field] !== undefined) {
                 restaurant[field] = req.body[field];

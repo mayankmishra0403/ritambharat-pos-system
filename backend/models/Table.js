@@ -57,6 +57,7 @@ const tableSchema = new mongoose.Schema({
         customerCount: Number,
         orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
         waiterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        waiterAssignedAt: Date,
         mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: 'Table' }
     },
     isActive: {

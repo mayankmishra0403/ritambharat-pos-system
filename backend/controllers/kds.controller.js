@@ -2,7 +2,7 @@ import Order from '../models/Order.js';
 import KitchenNotification from '../models/KitchenNotification.js';
 import Table from '../models/Table.js';
 import logger from '../utils/logger.js';
-import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 
 export const getActiveOrders = async (req, res, next) => {
     try {
@@ -19,7 +19,7 @@ export const getActiveOrders = async (req, res, next) => {
             restaurant: restaurantId,
             status: { $in: ['PENDING', 'ACCEPTED', 'PREPARING', 'READY'] }
         })
-            .populate('table', 'name')
+            .populate({ path: 'table', select: 'name currentSession', populate: { path: 'currentSession.waiterId', select: 'name' } })
             .populate('items.menuItem', 'name image preparationTime')
             .sort({ createdAt: -1 });
 
@@ -109,13 +109,29 @@ export const updateOrderStatus = async (req, res, next) => {
                 });
 
 
-                sendWhatsAppToStaff(order.restaurant, `✅ Ready to Serve${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+                if (order.table) {
+                    await sendWhatsAppForTable(order.table._id || order.table, `✅ Ready to Serve – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Ready' });
+                } else {
+                    sendWhatsAppToStaff(order.restaurant, `✅ Ready to Serve`, ['WAITER', 'OWNER']);
+                }
             } else if (status === 'ACCEPTED') {
-                sendWhatsAppToStaff(order.restaurant, `✅ Accepted${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+                if (order.table) {
+                    await sendWhatsAppForTable(order.table._id || order.table, `✅ Accepted – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Accepted' });
+                } else {
+                    sendWhatsAppToStaff(order.restaurant, `✅ Accepted`, ['WAITER', 'OWNER']);
+                }
             } else if (status === 'PREPARING') {
-                sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['WAITER', 'OWNER']);
+                if (order.table) {
+                    await sendWhatsAppForTable(order.table._id || order.table, `👨‍🍳 Preparing – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Preparing' });
+                } else {
+                    sendWhatsAppToStaff(order.restaurant, `👨‍🍳 Preparing`, ['WAITER', 'OWNER']);
+                }
             } else if (status === 'CANCELLED') {
-                sendWhatsAppToStaff(order.restaurant, `❌ Cancelled${order.table?.name ? ` – Table ${order.table.name}` : ''}`, ['OWNER', 'WAITER']);
+                if (order.table) {
+                    await sendWhatsAppForTable(order.table._id || order.table, `❌ Cancelled – Table ${order.table?.name || ''}`, '', { ownerPrefix: 'Cancelled' });
+                } else {
+                    sendWhatsAppToStaff(order.restaurant, `❌ Cancelled`, ['OWNER', 'WAITER']);
+                }
             }
         }
 
