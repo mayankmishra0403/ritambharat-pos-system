@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, AlertTriangle, CheckCircle, Search, RefreshCw, XCircle, X, Plus, Filter, TrendingDown, TrendingUp, Package, DollarSign, Truck, Trash2, Edit2, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,6 +48,34 @@ const InventoryManagement = () => {
         },
         enabled: !!restaurantId
     });
+
+    // Fetch Menu Items to compute recipe usage counts
+    const { data: menuItems } = useQuery({
+        queryKey: ['menu-items', restaurantId],
+        queryFn: async () => {
+            if (!restaurantId) return [];
+            const res = await api.get(`/menu/restaurant/${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId
+    });
+
+    // Compute recipe usage count per inventory item
+    const recipeUsageMap = useMemo(() => {
+        const map = {};
+        if (!menuItems) return map;
+        menuItems.forEach(item => {
+            if (item.ingredients && item.ingredients.length > 0) {
+                item.ingredients.forEach(ing => {
+                    const id = ing.inventoryItem?._id || ing.inventoryItem;
+                    if (id) {
+                        map[id] = (map[id] || 0) + 1;
+                    }
+                });
+            }
+        });
+        return map;
+    }, [menuItems]);
 
     // Add Item Mutation
     const addItemMutation = useMutation({
@@ -340,12 +368,17 @@ const InventoryManagement = () => {
                                                         <Package size={28} className="text-muted-foreground/40" />
                                                     )}
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-black text-xl text-foreground tracking-tight">{item.name}</h3>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{item.category}</span>
+                                                    <div>
+                                                        <h3 className="font-black text-xl text-foreground tracking-tight">{item.name}</h3>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{item.category}</span>
+                                                            {recipeUsageMap[item._id] > 0 && (
+                                                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                                                                    Used in {recipeUsageMap[item._id]} recipe{recipeUsageMap[item._id] > 1 ? 's' : ''}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <span className="text-lg font-black text-foreground">₹{(item.costPrice || 0).toFixed(2)}</span>
@@ -699,6 +732,14 @@ const InventoryManagement = () => {
                             <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
                                 You are about to permanently remove <span className="text-foreground font-black underline decoration-red-500 decoration-4 underline-offset-4">{selectedItem.name}</span> from your inventory. This action cannot be undone.
                             </p>
+                            {recipeUsageMap[selectedItem._id] > 0 && (
+                                <div className="bg-yellow-500/10 border-2 border-yellow-500/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
+                                    <AlertTriangle size={20} className="text-yellow-500 flex-shrink-0" />
+                                    <p className="text-[10px] font-black text-yellow-600 uppercase tracking-widest text-left">
+                                        This item is used in {recipeUsageMap[selectedItem._id]} menu recipe{recipeUsageMap[selectedItem._id] > 1 ? 's' : ''}. Deleting it will break those recipes.
+                                    </p>
+                                </div>
+                            )}
                             <div className="flex flex-col sm:flex-row gap-3">
                                 <button
                                     onClick={() => {

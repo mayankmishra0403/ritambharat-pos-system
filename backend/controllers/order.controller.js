@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import MenuItem from '../models/MenuItem.js';
+import InventoryItem from '../models/InventoryItem.js';
 import Restaurant from '../models/Restaurant.js';
 import Table from '../models/Table.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
@@ -331,13 +332,35 @@ export const updateOrderStatus = async (req, res, next) => {
             for (const item of order.items) {
                 const menuItem = await MenuItem.findById(item.menuItem);
                 if (menuItem) {
-                    // Deduct stock
+                    // Deduct menu item stock
                     menuItem.stockQuantity -= item.quantity;
 
-                    // Low stock check
+                    // Deduct inventory items if recipe is linked
+                    if (menuItem.ingredients?.length > 0) {
+                        for (const ingredient of menuItem.ingredients) {
+                            const inventoryItem = await InventoryItem.findById(ingredient.inventoryItem);
+                            if (inventoryItem) {
+                                const deductQty = ingredient.quantity * item.quantity;
+                                inventoryItem.stockQuantity = Math.max(0, inventoryItem.stockQuantity - deductQty);
+                                inventoryItem.isLowStock = inventoryItem.stockQuantity <= inventoryItem.lowStockThreshold;
+
+                                if (inventoryItem.isLowStock && io) {
+                                    io.to(`restaurant:${order.restaurant}`).emit('inventory:low-stock', {
+                                        itemId: inventoryItem._id,
+                                        name: inventoryItem.name,
+                                        remaining: inventoryItem.stockQuantity,
+                                        source: 'recipe'
+                                    });
+                                }
+
+                                await inventoryItem.save();
+                            }
+                        }
+                    }
+
+                    // Low stock check for menu item
                     if (menuItem.stockQuantity <= menuItem.lowStockThreshold) {
                         menuItem.isLowStock = true;
-                        // Emit low stock alert
                         if (io) io.to(`restaurant:${order.restaurant}`).emit('inventory:low-stock', {
                             itemId: menuItem._id,
                             name: menuItem.name,
@@ -349,7 +372,6 @@ export const updateOrderStatus = async (req, res, next) => {
                     if (menuItem.stockQuantity <= 0) {
                         menuItem.stockQuantity = 0;
                         menuItem.isAvailable = false;
-                        // Emit out-of-stock alert
                         if (io) io.to(`restaurant:${order.restaurant}`).emit('inventory:out-of-stock', {
                             itemId: menuItem._id,
                             name: menuItem.name
@@ -363,15 +385,26 @@ export const updateOrderStatus = async (req, res, next) => {
 
         // Stock Restoration Logic - When order is CANCELLED after being SERVED
         if (status === 'CANCELLED') {
-            // Check if order was previously served
             const wasServed = order.statusHistory.some(history => history.status === 'SERVED');
 
             if (wasServed) {
                 for (const item of order.items) {
                     const menuItem = await MenuItem.findById(item.menuItem);
                     if (menuItem) {
-                        // Restore stock
+                        // Restore menu item stock
                         menuItem.stockQuantity += item.quantity;
+
+                        // Restore inventory items if recipe was linked
+                        if (menuItem.ingredients?.length > 0) {
+                            for (const ingredient of menuItem.ingredients) {
+                                const inventoryItem = await InventoryItem.findById(ingredient.inventoryItem);
+                                if (inventoryItem) {
+                                    inventoryItem.stockQuantity += ingredient.quantity * item.quantity;
+                                    inventoryItem.isLowStock = inventoryItem.stockQuantity <= inventoryItem.lowStockThreshold;
+                                    await inventoryItem.save();
+                                }
+                            }
+                        }
 
                         // Re-enable if it was disabled
                         if (!menuItem.isAvailable && menuItem.stockQuantity > 0) {
@@ -383,9 +416,7 @@ export const updateOrderStatus = async (req, res, next) => {
                             });
                         }
 
-                        // Update low stock flag
                         menuItem.isLowStock = menuItem.stockQuantity <= menuItem.lowStockThreshold;
-
                         await menuItem.save();
                     }
                 }

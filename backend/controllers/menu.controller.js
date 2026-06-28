@@ -1,4 +1,5 @@
 import MenuItem from '../models/MenuItem.js';
+import InventoryItem from '../models/InventoryItem.js';
 import cache from '../utils/cache.js';
 
 // @desc    Create menu item
@@ -219,6 +220,114 @@ export const deleteMenuItem = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: 'Menu item deleted successfully'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update menu item ingredients (recipe)
+// @route   PUT /api/menu/:id/ingredients
+// @access  Private (Owner)
+export const updateIngredients = async (req, res, next) => {
+    try {
+        const menuItem = await MenuItem.findOne({ _id: req.params.id, isDeleted: false });
+
+        if (!menuItem) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
+        }
+
+        if (req.user.role !== 'ADMIN' && req.user.restaurant?.toString() !== menuItem.restaurant.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to update this item'
+            });
+        }
+
+        const { ingredients } = req.body;
+
+        menuItem.ingredients = ingredients || [];
+
+        // Compute cost from inventory items
+        let totalCost = 0;
+        if (menuItem.ingredients.length > 0) {
+            const inventoryItems = await InventoryItem.find({
+                _id: { $in: menuItem.ingredients.map(i => i.inventoryItem) },
+                restaurant: menuItem.restaurant
+            });
+
+            const costMap = {};
+            inventoryItems.forEach(item => {
+                costMap[item._id.toString()] = item.costPrice || 0;
+            });
+
+            totalCost = menuItem.ingredients.reduce((sum, ing) => {
+                const costPerUnit = costMap[ing.inventoryItem.toString()] || 0;
+                return sum + (costPerUnit * ing.quantity);
+            }, 0);
+        }
+
+        menuItem.costPrice = totalCost;
+        menuItem.profitMargin = menuItem.price - totalCost;
+        menuItem.profitPercentage = menuItem.price > 0 ? ((menuItem.price - totalCost) / menuItem.price) * 100 : 0;
+
+        await menuItem.save();
+
+        // Invalidate cache
+        await cache.invalidatePattern(`menu:${menuItem.restaurant}*`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Recipe updated successfully',
+            data: menuItem
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Get menu item costing breakdown
+// @route   GET /api/menu/:id/costing
+// @access  Private (Owner)
+export const getCosting = async (req, res, next) => {
+    try {
+        const menuItem = await MenuItem.findOne({ _id: req.params.id, isDeleted: false })
+            .populate({
+                path: 'ingredients.inventoryItem',
+                select: 'name unit costPrice category'
+            });
+
+        if (!menuItem) {
+            return res.status(404).json({
+                success: false,
+                message: 'Menu item not found'
+            });
+        }
+
+        const ingredientDetails = (menuItem.ingredients || []).map(ing => ({
+            inventoryItem: ing.inventoryItem?._id,
+            name: ing.inventoryItem?.name || 'Unknown',
+            category: ing.inventoryItem?.category,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            costPerUnit: ing.inventoryItem?.costPrice || 0,
+            lineCost: (ing.inventoryItem?.costPrice || 0) * ing.quantity
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                _id: menuItem._id,
+                name: menuItem.name,
+                price: menuItem.price,
+                ingredients: ingredientDetails,
+                totalCost: menuItem.costPrice,
+                profitMargin: menuItem.profitMargin,
+                profitPercentage: menuItem.profitPercentage
+            }
         });
     } catch (error) {
         next(error);

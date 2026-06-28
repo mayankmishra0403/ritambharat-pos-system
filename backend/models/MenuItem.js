@@ -70,6 +70,36 @@ const menuItemSchema = new mongoose.Schema({
         price: { type: Number, default: 0, min: 0 },
         maxSelect: { type: Number, default: 1, min: 1 }
     }],
+    // Recipe / Ingredient Linking
+    ingredients: [{
+        inventoryItem: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'InventoryItem',
+            required: true
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            min: 0
+        },
+        unit: {
+            type: String,
+            default: 'g'
+        }
+    }],
+    costPrice: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    profitMargin: {
+        type: Number,
+        default: 0
+    },
+    profitPercentage: {
+        type: Number,
+        default: 0
+    },
     isAvailable: {
         type: Boolean,
         default: true
@@ -77,7 +107,7 @@ const menuItemSchema = new mongoose.Schema({
     // Stock Management
     stockQuantity: {
         type: Number,
-        default: 100, // Default stock
+        default: 100,
         min: 0
     },
     lowStockThreshold: {
