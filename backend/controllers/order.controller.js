@@ -648,7 +648,7 @@ export const updateOrderPayment = async (req, res, next) => {
                 sendCustomerWhatsApp(order.customerPhone, {
                     customer_name: order.customerName || 'Guest',
                     restaurant_name: restaurantName,
-                    amount: `₹${order.total}`,
+                    amount: `${order.total}`,
                     bill_url: billLink,
                     message
                 });
