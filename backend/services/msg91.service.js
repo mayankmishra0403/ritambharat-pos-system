@@ -27,6 +27,7 @@ export const sendCustomerWhatsApp = async (to, variables) => {
 
         if (templateId) {
             payload = {
+                messaging_product: 'whatsapp',
                 integrated_number: config.integratedNumber,
                 content_type: 'template',
                 payload: {
