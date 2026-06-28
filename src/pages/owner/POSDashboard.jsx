@@ -39,6 +39,7 @@ const POSDashboard = () => {
     const [showExistingOrders, setShowExistingOrders] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
     const [transferWaiterId, setTransferWaiterId] = useState('');
+    const [preferredWaiterId, setPreferredWaiterId] = useState('');
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -160,7 +161,8 @@ const POSDashboard = () => {
                 table: selectedTable?._id,
                 items,
                 customerName: customerName || undefined,
-                customerPhone: customerPhone || undefined
+                customerPhone: customerPhone || undefined,
+                preferredWaiterId: isManualMode && preferredWaiterId ? preferredWaiterId : undefined
             });
             return res.data.data;
         },
@@ -216,6 +218,19 @@ const POSDashboard = () => {
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to cancel')
     });
 
+    const { data: restaurantSettings } = useQuery({
+        queryKey: ['restaurant', restaurantId],
+        queryFn: async () => {
+            if (!restaurantId) return null;
+            const res = await api.get(`/restaurant/${restaurantId}`);
+            return res.data.data;
+        },
+        enabled: !!restaurantId
+    });
+
+    const waiterMode = restaurantSettings?.waiterSettings?.mode || 'AUTO_ASSIGN';
+    const isManualMode = waiterMode === 'MANUAL';
+
     const { data: waiterLoads = [] } = useQuery({
         queryKey: ['waiter-loads', restaurantId],
         queryFn: async () => {
@@ -223,7 +238,7 @@ const POSDashboard = () => {
             const res = await api.get(`/waiter/loads?restaurantId=${restaurantId}`);
             return res.data.data;
         },
-        enabled: !!restaurantId && showTransfer
+        enabled: !!restaurantId && (showTransfer || isManualMode)
     });
 
     const transferMutation = useMutation({
@@ -509,6 +524,20 @@ const POSDashboard = () => {
                     </div>
 
                     <div className="mb-3 space-y-2">
+                        {isManualMode && selectedTable && !activeTableOrder && (
+                            <select
+                                value={preferredWaiterId}
+                                onChange={e => setPreferredWaiterId(e.target.value)}
+                                className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs focus:outline-none focus:border-primary"
+                            >
+                                <option value="">Auto-assign waiter</option>
+                                {waiterLoads.map(w => (
+                                    <option key={w._id} value={w._id}>
+                                        {w.name} ({w.activeTables} tables)
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <input
                             value={customerName}
                             onChange={e => setCustomerName(e.target.value)}
