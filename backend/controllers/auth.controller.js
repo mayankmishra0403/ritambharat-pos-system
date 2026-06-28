@@ -374,6 +374,33 @@ export const getMe = async (req, res, next) => {
     }
 };
 
+// @desc    Update user profile (name, phone)
+// @route   PATCH /api/auth/profile
+// @access  Private
+export const updateProfile = async (req, res, next) => {
+    try {
+        const { name, phone } = req.body;
+        const update = {};
+        if (name !== undefined) update.name = name;
+        if (phone !== undefined) {
+            let normalized = phone.startsWith('+') ? phone.slice(1) : phone;
+            normalized = normalized.replace(/[^0-9]/g, '');
+            if (normalized.length === 10) normalized = `91${normalized}`;
+            update.phone = normalized;
+        }
+
+        const user = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (error) {
+        logger.error(`UpdateProfile error: ${error.message}`);
+        next(error);
+    }
+};
+
 // @desc    Request password reset OTP
 // @route   POST /api/auth/forgot-password
 // @access  Public

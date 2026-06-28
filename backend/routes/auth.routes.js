@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, pinLogin, setPin, refreshToken, logout, getMe, forgotPassword, verifyOTP, resetPassword } from '../controllers/auth.controller.js';
+import { register, login, pinLogin, setPin, refreshToken, logout, getMe, forgotPassword, verifyOTP, resetPassword, updateProfile } from '../controllers/auth.controller.js';
 import { protect, authorize } from '../middleware/auth.js';
 import {
     registerValidation,
@@ -32,5 +32,6 @@ router.post('/reset-password', authLimiter, resetPasswordValidation, resetPasswo
 // Protected routes
 router.post('/logout', protect, logout);
 router.get('/me', protect, getMe);
+router.patch('/profile', protect, updateProfile);
 
 export default router;

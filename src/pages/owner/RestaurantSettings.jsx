@@ -40,6 +40,14 @@ const RestaurantSettings = () => {
         }
     }, [restaurantData]);
 
+    const updateProfileMutation = useMutation({
+        mutationFn: (data) => api.patch('/auth/profile', data),
+        onSuccess: () => {
+            toast.success('Owner profile updated');
+        },
+        onError: () => toast.error('Failed to update profile')
+    });
+
     const updateMutation = useMutation({
         mutationFn: (data) => api.patch(`/restaurant/${restaurantId}`, data),
         onSuccess: () => {
@@ -216,6 +224,8 @@ const RestaurantSettings = () => {
                                         restaurant={restaurant}
                                         handleChange={handleChange}
                                         handleFileUpload={handleFileUpload}
+                                        user={user}
+                                        updateProfileMutation={updateProfileMutation}
                                     />
                                 )}
                                 {activeTab === 'location' && (
@@ -255,7 +265,17 @@ const RestaurantSettings = () => {
 
 // --- Sub-Components ---
 
-const GeneralSettings = ({ restaurant, handleChange, handleFileUpload }) => (
+const GeneralSettings = ({ restaurant, handleChange, handleFileUpload, user, updateProfileMutation }) => {
+    const [ownerPhone, setOwnerPhone] = useState(user?.phone || '');
+    const [ownerPhoneOriginal] = useState(user?.phone || '');
+
+    const handleOwnerPhoneSave = () => {
+        if (ownerPhone !== ownerPhoneOriginal) {
+            updateProfileMutation.mutate({ phone: ownerPhone });
+        }
+    };
+
+    return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
         <div className="space-y-8">
             <div className="bg-card border-4 border-border p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
@@ -409,9 +429,42 @@ const GeneralSettings = ({ restaurant, handleChange, handleFileUpload }) => (
                     </div>
                 </div>
             </div>
+
+            <div className="bg-card border-4 border-border p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <h3 className="text-xl font-black mb-8 flex items-center gap-3 text-foreground tracking-tight uppercase">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                        <Smartphone size={24} strokeWidth={3} />
+                    </div>
+                    Owner Contact
+                </h3>
+                <div className="space-y-6 relative z-10">
+                    <div className="group/field relative">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2 block px-1">WhatsApp Number (Owner)</label>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                value={ownerPhone}
+                                onChange={e => setOwnerPhone(e.target.value)}
+                                className="flex-1 bg-muted/20 border-2 border-transparent focus:border-primary/50 rounded-2xl py-4 px-6 text-sm font-medium transition-all outline-none"
+                                placeholder="+919305804916"
+                            />
+                            <button
+                                onClick={handleOwnerPhoneSave}
+                                disabled={ownerPhone === ownerPhoneOriginal || updateProfileMutation.isPending}
+                                className="px-6 py-4 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                                {updateProfileMutation.isPending ? '...' : 'Update'}
+                            </button>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-2 px-1">This number receives all WhatsApp notifications (orders, bills, etc.)</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 );
+};
 
 const LocationSettings = ({ restaurant, handleChange }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
