@@ -36,10 +36,15 @@ export const sendCustomerWhatsApp = async (to, variables) => {
                         name: templateId,
                         language: { code: 'en', policy: 'deterministic' },
                         components: [
-                            { type: 'text', value: variables.customer_name || 'Guest' },
-                            { type: 'text', value: variables.restaurant_name || 'our restaurant' },
-                            { type: 'text', value: variables.amount || '₹0' },
-                            { type: 'text', value: variables.bill_url || '' }
+                            {
+                                type: 'body',
+                                parameters: [
+                                    { type: 'text', text: variables.customer_name || 'Guest' },
+                                    { type: 'text', text: variables.restaurant_name || 'our restaurant' },
+                                    { type: 'text', text: variables.amount || '₹0' },
+                                    { type: 'text', text: variables.bill_url || '' }
+                                ]
+                            }
                         ]
                     },
                     messaging_product: 'whatsapp'
