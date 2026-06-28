@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import User from '../models/User.js';
 
 // @desc    WhatsApp Webhook Verification (Meta requirement)
@@ -63,13 +64,25 @@ export const sendMessage = async (req, res, next) => {
 // @access  Public
 export const handleIncomingMessage = async (req, res, next) => {
     try {
+        const appSecret = process.env.WHATSAPP_APP_SECRET;
+        if (appSecret) {
+            const signature = req.headers['x-hub-signature-256'];
+            if (!signature) {
+                console.warn('WhatsApp webhook: missing signature header');
+                return res.sendStatus(401);
+            }
+            const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(req.rawBody || '').digest('hex');
+            if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+                console.warn('WhatsApp webhook: invalid signature');
+                return res.sendStatus(401);
+            }
+        }
+
         const body = req.body;
 
-        // Check if this is an event from a WhatsApp API
         if (body.object) {
             const change = body.entry?.[0]?.changes?.[0]?.value;
 
-            // Log delivery status updates
             if (change?.statuses?.[0]) {
                 const status = change.statuses[0];
                 console.log(`WhatsApp status: ${status.status} | id: ${status.id} | recipient: ${status.recipient_id} | timestamp: ${status.timestamp}`);
@@ -79,16 +92,15 @@ export const handleIncomingMessage = async (req, res, next) => {
                 return res.sendStatus(200);
             }
 
-            if (
-                change?.messages?.[0]
-            ) {
+            if (change?.messages?.[0]) {
                 const from = change.messages[0].from;
                 const msgBody = change.messages[0].text?.body || '';
 
                 console.log(`WhatsApp message from ${from}: ${msgBody}`);
 
+                const phone = from.startsWith('+') ? from.slice(1) : from;
                 User.updateOne(
-                    { phone: { $regex: from.replace('+', '') + '$' } },
+                    { phone },
                     { $set: { lastUserMessageAt: new Date() } }
                 ).exec();
             }

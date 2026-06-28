@@ -25,7 +25,7 @@ router.get('/:id', getOrder);
 router.patch('/:id/status', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHIER'], ['orders']), updateOrderStatus);
 router.patch('/:id/payment', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHIER'], ['orders']), updateOrderPayment);
 router.patch('/:id/customer', protect, authorize(['OWNER', 'ADMIN', 'CASHIER', 'WAITER'], ['orders']), updateOrderCustomer);
-router.delete('/:id', cancelOrder);
-router.post('/:id/accept', acceptOrder);
+router.delete('/:id', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHIER', 'WAITER'], ['orders']), cancelOrder);
+router.post('/:id/accept', protect, authorize(['OWNER', 'CHEF', 'ADMIN', 'CASHIER', 'WAITER'], ['orders']), acceptOrder);
 
 export default router;

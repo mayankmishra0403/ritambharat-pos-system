@@ -121,12 +121,8 @@ export const updateInventoryItem = async (req, res, next) => {
             });
         }
 
-        const updates = { ...req.body };
-        delete updates._id; // Ensure we don't try to update immutable _id
-
-        Object.keys(updates).forEach(key => {
-            item[key] = updates[key];
-        });
+        const allowedFields = (({ name, sku, category, stockQuantity, unit, unitPrice, costPrice, lowStockThreshold, supplier, description, image }) => ({ name, sku, category, stockQuantity, unit, unitPrice, costPrice, lowStockThreshold, supplier, description, image }))(req.body);
+        Object.assign(item, allowedFields);
 
         await item.save();
 

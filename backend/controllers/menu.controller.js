@@ -20,7 +20,12 @@ export const createMenuItem = async (req, res, next) => {
             });
         }
 
-        const menuItem = await MenuItem.create(req.body);
+        const allowedFields = (({ name, description, price, category, image, isVegetarian, isSpicy, isAvailable, estimatedPrepTime, nutritionalInfo, customizations }) => ({ name, description, price, category, image, isVegetarian, isSpicy, isAvailable, estimatedPrepTime, nutritionalInfo, customizations }))(req.body);
+        if (!allowedFields.name || !allowedFields.category || allowedFields.price === undefined) {
+            return res.status(400).json({ success: false, message: 'Name, category, and price are required' });
+        }
+        allowedFields.restaurant = restaurant;
+        const menuItem = await MenuItem.create(allowedFields);
 
         // Invalidate menu cache for this restaurant
         await cache.invalidatePattern(`menu:${restaurant}*`);
@@ -135,7 +140,8 @@ export const updateMenuItem = async (req, res, next) => {
             });
         }
 
-        Object.assign(menuItem, req.body);
+        const allowedFields = (({ name, description, price, category, image, isVegetarian, isSpicy, isAvailable, estimatedPrepTime, nutritionalInfo, customizations }) => ({ name, description, price, category, image, isVegetarian, isSpicy, isAvailable, estimatedPrepTime, nutritionalInfo, customizations }))(req.body);
+        Object.assign(menuItem, allowedFields);
         await menuItem.save();
 
         // Invalidate menu cache
