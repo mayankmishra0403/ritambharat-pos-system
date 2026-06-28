@@ -1,9 +1,6 @@
-import { useNavigate } from 'react-router-dom';
-import { Phone, Mail, Calendar, DollarSign, ShoppingBag, TrendingUp } from 'lucide-react';
+import { Phone, Mail, Calendar, DollarSign, ShoppingBag, TrendingUp, Gift, Edit3 } from 'lucide-react';
 
-const CustomerProfile = ({ customer }) => {
-    const navigate = useNavigate();
-
+const CustomerProfile = ({ customer, onEdit }) => {
     if (!customer) return null;
 
     const getTierBadge = (spent) => {
@@ -19,26 +16,46 @@ const CustomerProfile = ({ customer }) => {
         <div className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-start justify-between mb-4">
                 <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-lg font-black text-primary">
                                 {customer.name?.charAt(0) || '?'}
                             </span>
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg text-foreground">{customer.name || 'Unknown'}</h3>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tier.class}`}>
-                                {tier.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-lg text-foreground">{customer.name || 'Unknown'}</h3>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${tier.class}`}>
+                                    {tier.label}
+                                </span>
+                            </div>
+                            {customer.phone && (
+                                <span className="text-sm text-muted-foreground">{customer.phone}</span>
+                            )}
                         </div>
                     </div>
                 </div>
+                {onEdit && (
+                    <button onClick={onEdit} className="p-2 rounded-lg hover:bg-muted transition-colors">
+                        <Edit3 size={14} className="text-muted-foreground" />
+                    </button>
+                )}
             </div>
 
-            {customer.phone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Phone size={14} />
-                    {customer.phone}
+            {customer.email && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <Mail size={14} />
+                    {customer.email}
+                </div>
+            )}
+
+            {customer.tags && customer.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                    {customer.tags.map(tag => (
+                        <span key={tag} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {tag}
+                        </span>
+                    ))}
                 </div>
             )}
 
@@ -48,7 +65,7 @@ const CustomerProfile = ({ customer }) => {
                         <ShoppingBag size={12} />
                         Orders
                     </div>
-                    <span className="text-lg font-bold text-foreground">{customer.orderCount || 0}</span>
+                    <span className="text-lg font-bold text-foreground">{customer.totalVisits || customer.orderCount || 0}</span>
                 </div>
                 <div className="p-3 bg-muted/30 rounded-xl">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
@@ -59,12 +76,10 @@ const CustomerProfile = ({ customer }) => {
                 </div>
                 <div className="p-3 bg-muted/30 rounded-xl">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                        <Calendar size={12} />
-                        First Visit
+                        <Gift size={12} />
+                        Loyalty Points
                     </div>
-                    <span className="text-sm font-bold text-foreground">
-                        {customer.firstVisit ? new Date(customer.firstVisit).toLocaleDateString() : '-'}
-                    </span>
+                    <span className="text-lg font-bold text-foreground">{customer.loyaltyPoints || 0}</span>
                 </div>
                 <div className="p-3 bg-muted/30 rounded-xl">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
@@ -75,7 +90,36 @@ const CustomerProfile = ({ customer }) => {
                         {customer.lastVisit ? new Date(customer.lastVisit).toLocaleDateString() : '-'}
                     </span>
                 </div>
+                {customer.birthday && (
+                    <div className="p-3 bg-muted/30 rounded-xl">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                            <Calendar size={12} />
+                            Birthday
+                        </div>
+                        <span className="text-sm font-bold text-foreground">
+                            {new Date(customer.birthday).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}
+                        </span>
+                    </div>
+                )}
+                {customer.firstVisit && (
+                    <div className="p-3 bg-muted/30 rounded-xl">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                            <Calendar size={12} />
+                            First Visit
+                        </div>
+                        <span className="text-sm font-bold text-foreground">
+                            {new Date(customer.firstVisit).toLocaleDateString()}
+                        </span>
+                    </div>
+                )}
             </div>
+
+            {customer.notes && (
+                <div className="mt-3 p-3 bg-muted/20 rounded-xl">
+                    <p className="text-xs font-bold text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm text-foreground">{customer.notes}</p>
+                </div>
+            )}
         </div>
     );
 };

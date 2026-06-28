@@ -43,6 +43,7 @@ const POSDashboard = () => {
     const [transferWaiterId, setTransferWaiterId] = useState('');
     const [preferredWaiterId, setPreferredWaiterId] = useState('');
     const [variantModalItem, setVariantModalItem] = useState(null);
+    const [customerInfo, setCustomerInfo] = useState(null);
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -210,6 +211,7 @@ const POSDashboard = () => {
             } else {
                 setCustomerName('');
                 setCustomerPhone('');
+                setCustomerInfo(null);
                 setPrintOrder(order);
                 setPrintMode('new');
                 setShowPrintModal(true);
@@ -609,10 +611,46 @@ const POSDashboard = () => {
                         />
                         <input
                             value={customerPhone}
-                            onChange={e => setCustomerPhone(e.target.value)}
+                            onChange={e => {
+                                setCustomerPhone(e.target.value);
+                                const phone = e.target.value.replace(/\D/g, '');
+                                if (phone.length >= 10) {
+                                    api.post('/customers/find-or-create', {
+                                        restaurantId,
+                                        phone,
+                                        name: customerName || undefined
+                                    }).then(res => {
+                                        setCustomerInfo(res.data.data);
+                                        if (!customerName && res.data.data.name) {
+                                            setCustomerName(res.data.data.name);
+                                        }
+                                    }).catch(() => {});
+                                } else {
+                                    setCustomerInfo(null);
+                                }
+                            }}
                             placeholder="Phone number"
                             className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-xs placeholder:text-muted-foreground focus:outline-none focus:border-primary"
                         />
+                        {customerInfo && (
+                            <div className="px-2 py-1.5 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <span className="text-[10px] font-bold text-primary">
+                                        {customerInfo.name || 'Known customer'}
+                                    </span>
+                                    {customerInfo.totalVisits > 0 && (
+                                        <span className="text-[9px] text-muted-foreground ml-2">
+                                            {customerInfo.totalVisits} visits · ₹{customerInfo.totalSpent?.toFixed(0)}
+                                        </span>
+                                    )}
+                                </div>
+                                {customerInfo.loyaltyPoints > 0 && (
+                                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                        {customerInfo.loyaltyPoints} pts
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <POSCart

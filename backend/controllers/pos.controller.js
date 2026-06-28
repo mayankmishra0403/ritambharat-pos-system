@@ -8,6 +8,7 @@ import { sendCustomerWhatsApp } from '../services/msg91.service.js';
 import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import { buildOrderItem } from '../utils/buildOrderItem.js';
+import { addLoyaltyPoints } from './customer.controller.js';
 import logger from '../utils/logger.js';
 
 export const openSession = async (req, res, next) => {
@@ -331,6 +332,9 @@ export const processPayment = async (req, res, next) => {
             });
         }
 
+        if (order.customerPhone) {
+            addLoyaltyPoints(order.restaurant, order.customerPhone, order.total, order._id);
+        }
 
         const frontendUrl = process.env.FRONTEND_URL || 'https://pos.ritambharat.software';
         sendWhatsAppToStaff(order.restaurant, `💰 Payment Received${order.table?.name ? ` – Table ${order.table.name}` : ''} (${paymentMethod})`, ['OWNER', 'WAITER'], `${frontendUrl}/bill/${order._id}`);
