@@ -24,6 +24,17 @@ const POSCart = ({ cartItems, onUpdateQty, onRemoveItem, discount, serviceCharge
                         <div className="flex-1 min-w-0">
                             <span className="text-sm font-bold text-foreground block truncate">{item.name}</span>
                             <span className="text-xs font-medium text-primary">{formatPrice(item.price)}</span>
+                            {item.variant && (
+                                <span className="block text-[10px] font-medium text-muted-foreground/60">{item.variant.name}</span>
+                            )}
+                            {item.modifiers && item.modifiers.length > 0 && (
+                                <span className="block text-[10px] text-muted-foreground/60">
+                                    +{item.modifiers.map(m => m.name).join(', ')}
+                                    {item.modifiers.some(m => m.price > 0) && (
+                                        <span className="text-primary"> (+₹{item.modifiers.reduce((s, m) => s + m.price, 0)})</span>
+                                    )}
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-1.5">
                             <button

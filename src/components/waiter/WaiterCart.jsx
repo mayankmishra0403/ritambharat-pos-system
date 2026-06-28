@@ -2,13 +2,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 
 const WaiterCart = ({ items, menuItems, onUpdateQuantity, onRemoveItem, onPlaceOrder, loading, restaurant }) => {
-    const getItemDetails = (menuItemId) => {
-        return menuItems.find(m => m._id === menuItemId);
+    const getItemPrice = (item) => {
+        if (item.price) return item.price;
+        const details = menuItems.find(m => m._id === item.menuItem);
+        return details?.price || 0;
     };
 
     const subtotal = items.reduce((sum, item) => {
-        const details = getItemDetails(item.menuItem);
-        return sum + (details?.price || 0) * item.quantity;
+        return sum + getItemPrice(item) * item.quantity;
     }, 0);
 
     const tax = (subtotal * (restaurant?.taxRate || 0)) / 100;
@@ -27,11 +28,11 @@ const WaiterCart = ({ items, menuItems, onUpdateQuantity, onRemoveItem, onPlaceO
             <div className="flex-1 overflow-y-auto space-y-2">
                 <AnimatePresence mode="popLayout">
                     {items.map((item, idx) => {
-                        const details = getItemDetails(item.menuItem);
+                        const price = getItemPrice(item);
 
                         return (
                             <motion.div
-                                key={item.menuItem}
+                                key={`${item.menuItem}-${item.variant?.name || ''}-${idx}`}
                                 layout
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -39,8 +40,16 @@ const WaiterCart = ({ items, menuItems, onUpdateQuantity, onRemoveItem, onPlaceO
                                 className="flex items-center gap-2 p-2.5 bg-card border border-border rounded-xl"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-foreground truncate">{details?.name || item.name}</p>
-                                    <p className="text-xs text-muted-foreground">₹{(details?.price || 0).toFixed(2)} each</p>
+                                    <p className="text-sm font-bold text-foreground truncate">{item.name}</p>
+                                    <p className="text-xs text-muted-foreground">₹{price.toFixed(2)} each</p>
+                                    {item.variant && (
+                                        <p className="text-[10px] text-muted-foreground/60">{item.variant.name}</p>
+                                    )}
+                                    {item.modifiers && item.modifiers.length > 0 && (
+                                        <p className="text-[10px] text-muted-foreground/60">
+                                            +{item.modifiers.map(m => m.name).join(', ')}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-1">

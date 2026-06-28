@@ -3,6 +3,7 @@ import MenuItem from '../models/MenuItem.js';
 import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { buildOrderItem } from '../utils/buildOrderItem.js';
 
 // Simple NLP parser for voice orders
 const parseVoiceTranscript = (transcript, menuItems) => {
@@ -122,16 +123,10 @@ export const processVoiceOrder = async (req, res, next) => {
         for (const item of parsedItems) {
             const menuItem = menuItems.find(m => m._id.toString() === item.menuItem.toString());
             if (menuItem) {
-                const itemTotal = menuItem.price * item.quantity;
+                const built = buildOrderItem(menuItem, item);
+                const itemTotal = built.price * item.quantity;
                 subtotal += itemTotal;
-
-                orderItems.push({
-                    menuItem: menuItem._id,
-                    name: menuItem.name,
-                    price: menuItem.price,
-                    quantity: item.quantity,
-                    specialInstructions: `Voice order (${(item.confidence * 100).toFixed(0)}% confidence)`
-                });
+                orderItems.push(built);
             }
         }
 

@@ -7,6 +7,7 @@ import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.
 import { sendCustomerWhatsApp } from '../services/msg91.service.js';
 import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
+import { buildOrderItem } from '../utils/buildOrderItem.js';
 import logger from '../utils/logger.js';
 
 export const openSession = async (req, res, next) => {
@@ -171,16 +172,10 @@ export const createPosOrder = async (req, res, next) => {
                 });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             subtotal += itemTotal;
-
-            orderItems.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions || ''
-            });
+            orderItems.push(built);
         }
 
         const taxInfo = await getTaxInfo(restaurantId, restaurantDoc);
@@ -401,16 +396,10 @@ export const addPosOrderItems = async (req, res, next) => {
                 return res.status(400).json({ success: false, message: `${menuItem.name} is unavailable` });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             additionalSubtotal += itemTotal;
-
-            order.items.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions || ''
-            });
+            order.items.push(built);
         }
 
         order.subtotal += additionalSubtotal;

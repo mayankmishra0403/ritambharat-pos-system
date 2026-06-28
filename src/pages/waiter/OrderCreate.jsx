@@ -8,6 +8,7 @@ import { ArrowLeft, Plus } from 'lucide-react';
 import TableGrid from '../../components/waiter/TableGrid';
 import WaiterMenuBrowser from '../../components/waiter/WaiterMenuBrowser';
 import WaiterCart from '../../components/waiter/WaiterCart';
+import POSVariantModal from '../../components/pos/POSVariantModal';
 
 const OrderCreate = () => {
     const { user } = useAuth();
@@ -23,6 +24,7 @@ const OrderCreate = () => {
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [preferredWaiterId, setPreferredWaiterId] = useState('');
+    const [variantModalItem, setVariantModalItem] = useState(null);
 
     const restaurant = user?.restaurant;
 
@@ -88,6 +90,11 @@ const OrderCreate = () => {
     });
 
     const handleAddItem = (item) => {
+        const hasOptions = (item.variants && item.variants.length > 0) || (item.modifiers && item.modifiers.length > 0);
+        if (hasOptions) {
+            setVariantModalItem(item);
+            return;
+        }
         setCartItems(prev => {
             const existing = prev.find(i => i.menuItem === item._id);
             if (existing) {
@@ -95,8 +102,26 @@ const OrderCreate = () => {
                     i.menuItem === item._id ? { ...i, quantity: i.quantity + 1 } : i
                 );
             }
-            return [...prev, { menuItem: item._id, name: item.name, quantity: 1 }];
+            return [...prev, { menuItem: item._id, name: item.name, price: item.price, quantity: 1 }];
         });
+    };
+
+    const handleVariantConfirm = (cartItem) => {
+        setCartItems(prev => {
+            const existing = prev.find(i =>
+                i.menuItem === cartItem.menuItem &&
+                (i.variant?.name || '') === (cartItem.variant?.name || '')
+            );
+            if (existing) {
+                return prev.map(i =>
+                    i.menuItem === cartItem.menuItem && (i.variant?.name || '') === (cartItem.variant?.name || '')
+                        ? { ...i, quantity: i.quantity + cartItem.quantity }
+                        : i
+                );
+            }
+            return [...prev, { ...cartItem, variant: cartItem.variant || undefined, modifiers: cartItem.modifiers || undefined }];
+        });
+        setVariantModalItem(null);
     };
 
     const handleUpdateQuantity = (menuItemId, delta) => {
@@ -286,6 +311,14 @@ const OrderCreate = () => {
                         restaurant={typeof restaurant === 'object' ? restaurant : null}
                     />
                 </div>
+            )}
+
+            {variantModalItem && (
+                <POSVariantModal
+                    item={variantModalItem}
+                    onConfirm={handleVariantConfirm}
+                    onClose={() => setVariantModalItem(null)}
+                />
             )}
         </div>
     );

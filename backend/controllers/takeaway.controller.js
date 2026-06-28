@@ -4,6 +4,7 @@ import Restaurant from '../models/Restaurant.js';
 import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHelper.js';
 import logger from '../utils/logger.js';
 import { sendWhatsAppToStaff } from '../services/whatsapp.service.js';
+import { buildOrderItem } from '../utils/buildOrderItem.js';
 
 export const getTakeawayDashboard = async (req, res, next) => {
     try {
@@ -75,16 +76,10 @@ export const createTakeawayOrder = async (req, res, next) => {
                 });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             subtotal += itemTotal;
-
-            orderItems.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions || ''
-            });
+            orderItems.push(built);
         }
 
         const taxInfo = await getTaxInfo(restaurantId, restaurantDoc);
@@ -173,16 +168,10 @@ export const addTakeawayItems = async (req, res, next) => {
                 });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             additionalSubtotal += itemTotal;
-
-            order.items.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions || ''
-            });
+            order.items.push(built);
         }
 
         order.subtotal += additionalSubtotal;

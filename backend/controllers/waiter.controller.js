@@ -6,6 +6,7 @@ import { getTaxInfo, calculateTax, calculateGstBreakdown } from '../utils/taxHel
 import logger from '../utils/logger.js';
 import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
+import { buildOrderItem } from '../utils/buildOrderItem.js';
 
 export const getWaiterData = async (req, res, next) => {
     try {
@@ -135,16 +136,10 @@ export const createWaiterOrder = async (req, res, next) => {
                 });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             subtotal += itemTotal;
-
-            orderItems.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions || ''
-            });
+            orderItems.push(built);
         }
 
         const taxInfo = await getTaxInfo(restaurant, restaurantDoc);
@@ -373,7 +368,11 @@ export const addWaiterOrderItems = async (req, res, next) => {
         }
 
         for (const item of items) {
-            const existingItem = order.items.find(i => i.menuItem.toString() === item.menuItem);
+            const variantName = item.variant?.name;
+            const existingItem = order.items.find(i =>
+                i.menuItem.toString() === item.menuItem &&
+                (i.variant?.name || '') === (variantName || '')
+            );
             if (existingItem) {
                 existingItem.quantity += item.quantity || 1;
             } else {
@@ -381,13 +380,7 @@ export const addWaiterOrderItems = async (req, res, next) => {
                 if (!menuItem) {
                     return res.status(404).json({ success: false, message: `Menu item not found: ${item.menuItem}` });
                 }
-                order.items.push({
-                    menuItem: menuItem._id,
-                    name: menuItem.name,
-                    price: menuItem.price,
-                    quantity: item.quantity || 1,
-                    specialInstructions: item.specialInstructions || ''
-                });
+                order.items.push(buildOrderItem(menuItem, item));
             }
         }
 

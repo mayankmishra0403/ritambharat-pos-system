@@ -13,6 +13,14 @@ const orderItemSchema = new mongoose.Schema({
         required: true,
         min: 1
     },
+    variant: {
+        name: String,
+        price: Number
+    },
+    modifiers: [{
+        name: String,
+        price: Number
+    }],
     specialInstructions: String
 }, { _id: false });
 

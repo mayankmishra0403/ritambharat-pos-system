@@ -264,6 +264,10 @@ export const releaseWaiter = async ({ restaurantId, tableId, changedBy, reason }
             reason: reason || 'Table closed'
         });
 
+        table.currentSession.waiterId = undefined;
+        table.currentSession.waiterAssignedAt = undefined;
+        await table.save();
+
         logger.info(`Waiter released from table ${table.name}`);
 
         return { success: true, waiterId: oldWaiterId };

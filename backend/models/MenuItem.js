@@ -60,6 +60,16 @@ const menuItemSchema = new mongoose.Schema({
             default: 'None'
         }
     },
+    variants: [{
+        name: { type: String, required: true },
+        price: { type: Number, required: true, min: 0 },
+        isDefault: { type: Boolean, default: false }
+    }],
+    modifiers: [{
+        name: { type: String, required: true },
+        price: { type: Number, default: 0, min: 0 },
+        maxSelect: { type: Number, default: 1, min: 1 }
+    }],
     isAvailable: {
         type: Boolean,
         default: true

@@ -7,6 +7,7 @@ import logger from '../utils/logger.js';
 import { sendWhatsAppToStaff, sendWhatsAppForTable } from '../services/whatsapp.service.js';
 import { sendCustomerWhatsApp } from '../services/msg91.service.js';
 import { assignWaiter, releaseWaiter } from '../services/waiterAssignment.service.js';
+import { buildOrderItem } from '../utils/buildOrderItem.js';
 
 // @desc    Create order
 // @route   POST /api/orders
@@ -94,16 +95,10 @@ export const createOrder = async (req, res, next) => {
                 });
             }
 
-            const itemTotal = menuItem.price * item.quantity;
+            const built = buildOrderItem(menuItem, item);
+            const itemTotal = built.price * item.quantity;
             subtotal += itemTotal;
-
-            orderItems.push({
-                menuItem: menuItem._id,
-                name: menuItem.name,
-                price: menuItem.price,
-                quantity: item.quantity,
-                specialInstructions: item.specialInstructions
-            });
+            orderItems.push(built);
         }
 
         // Calculate tax and total

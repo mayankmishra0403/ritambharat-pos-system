@@ -14,6 +14,7 @@ import POSPaymentModal from '../../components/pos/POSPaymentModal';
 import POSPrintModal from '../../components/pos/POSPrintModal';
 import POSSessionBar from '../../components/pos/POSSessionBar';
 import POSSessionModal from '../../components/pos/POSSessionModal';
+import POSVariantModal from '../../components/pos/POSVariantModal';
 import { useInvoiceSettings } from '../../hooks/useInvoiceSettings';
 import printKOT from '../../utils/printKOT';
 
@@ -41,6 +42,7 @@ const POSDashboard = () => {
     const [showTransfer, setShowTransfer] = useState(false);
     const [transferWaiterId, setTransferWaiterId] = useState('');
     const [preferredWaiterId, setPreferredWaiterId] = useState('');
+    const [variantModalItem, setVariantModalItem] = useState(null);
 
     useEffect(() => {
         if (user?.restaurant) {
@@ -317,6 +319,11 @@ const POSDashboard = () => {
             toast.error('Open a POS session first');
             return;
         }
+        const hasOptions = (item.variants && item.variants.length > 0) || (item.modifiers && item.modifiers.length > 0);
+        if (hasOptions) {
+            setVariantModalItem(item);
+            return;
+        }
         setCartItems(prev => {
             const existing = prev.find(i => i.menuItem === item._id);
             if (existing) {
@@ -332,6 +339,24 @@ const POSDashboard = () => {
             }];
         });
     }, [session]);
+
+    const handleVariantConfirm = useCallback((cartItem) => {
+        setCartItems(prev => {
+            const existing = prev.find(i =>
+                i.menuItem === cartItem.menuItem &&
+                (i.variant?.name || '') === (cartItem.variant?.name || '')
+            );
+            if (existing) {
+                return prev.map(i =>
+                    i.menuItem === cartItem.menuItem && (i.variant?.name || '') === (cartItem.variant?.name || '')
+                        ? { ...i, quantity: i.quantity + cartItem.quantity }
+                        : i
+                );
+            }
+            return [...prev, { ...cartItem, price: cartItem.price, variant: cartItem.variant || undefined, modifiers: cartItem.modifiers || undefined }];
+        });
+        setVariantModalItem(null);
+    }, []);
 
     const handleUpdateQty = useCallback((idx, qty) => {
         setCartItems(prev => prev.map((item, i) => i === idx ? { ...item, quantity: qty } : item));
@@ -488,11 +513,21 @@ const POSDashboard = () => {
                                 </div>
                                 <div className="space-y-1">
                                     {activeTableOrder.items?.map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-between text-xs">
-                                            <span className="text-muted-foreground">
-                                                <span className="font-bold text-foreground">{item.quantity}x</span> {item.name}
-                                            </span>
-                                            <span className="font-mono font-bold">₹{(item.price * item.quantity).toFixed(2)}</span>
+                                        <div key={idx} className="text-xs">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-muted-foreground">
+                                                    <span className="font-bold text-foreground">{item.quantity}x</span> {item.name}
+                                                </span>
+                                                <span className="font-mono font-bold">₹{(item.price * item.quantity).toFixed(2)}</span>
+                                            </div>
+                                            {item.variant && (
+                                                <span className="block text-[10px] text-muted-foreground/60 pl-3">{item.variant.name}</span>
+                                            )}
+                                            {item.modifiers && item.modifiers.length > 0 && (
+                                                <span className="block text-[10px] text-muted-foreground/60 pl-3">
+                                                    +{item.modifiers.map(m => m.name).join(', ')}
+                                                </span>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -673,6 +708,14 @@ const POSDashboard = () => {
                     onClose={() => { setShowPaymentModal(false); setPayingOrder(null); }}
                     onPayment={handlePayment}
                     loading={paymentMutation.isPending}
+                />
+            )}
+
+            {variantModalItem && (
+                <POSVariantModal
+                    item={variantModalItem}
+                    onConfirm={handleVariantConfirm}
+                    onClose={() => setVariantModalItem(null)}
                 />
             )}
         </div>

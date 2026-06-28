@@ -8,6 +8,9 @@ function generateKOT(order, restaurant) {
         const name = item.name || (item.menuItem && item.menuItem.name) || '';
         const qty = item.quantity || 0;
         const extras = [];
+        if (item.variant) {
+            extras.push(`<tr><td colspan="3" style="padding:1.5pt 0 1.5pt 6px;font-size:9pt;font-weight:bold;color:#555">${item.variant.name}</td></tr>`);
+        }
         if (item.specialInstructions) {
             extras.push(`<tr><td colspan="3" style="padding:1.5pt 0 1.5pt 6px;font-size:9.5pt;font-weight:bold;color:#000">— ${item.specialInstructions}</td></tr>`);
         }
