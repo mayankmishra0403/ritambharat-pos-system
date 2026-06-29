@@ -25,23 +25,11 @@ const getConfig = () => {
 const checkAndDeductCredit = async (restaurantId, recipient) => {
     try {
         const costPerMsg = getCostPerMsg();
-        let credit = await WhatsAppCredit.findOne({ restaurant: restaurantId });
+        const credit = await WhatsAppCredit.findOne({ restaurant: restaurantId });
 
         if (!credit) {
-            credit = await WhatsAppCredit.create({
-                restaurant: restaurantId,
-                balance: 10,
-                totalCredited: 10
-            });
-            await CreditTransaction.create({
-                restaurant: restaurantId,
-                type: 'credit',
-                amount: 10,
-                balanceBefore: 0,
-                balanceAfter: 10,
-                messageType: 'initial_credit',
-                description: 'Initial free credits'
-            });
+            logger.warn(`WhatsApp credit not found for restaurant ${restaurantId} — blocking send`);
+            return { success: false, reason: 'no_credit_record', balance: 0, cost: costPerMsg };
         }
 
         if (credit.balance < costPerMsg) {
