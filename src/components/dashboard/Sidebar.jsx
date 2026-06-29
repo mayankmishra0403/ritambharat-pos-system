@@ -5,8 +5,10 @@ import {
     BarChart3, Star, LogOut, Bell, Calendar,
     MessageSquare, Settings, ChevronLeft, ChevronRight,
     UtensilsCrossed,     Pin, PinOff, Users, QrCode,
-    DollarSign, ChefHat, FileText, Percent, UserCheck, ShoppingBag
+    DollarSign, ChefHat, FileText, Percent, UserCheck, ShoppingBag,
+    Hash, Copy
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { useState } from 'react';
@@ -44,7 +46,6 @@ const Sidebar = ({ className, open, onClose }) => {
         { label: 'Live Orders', icon: ShoppingCart, link: '/orders', permission: 'orders' },
         { label: 'POS Billing', icon: DollarSign, link: '/admin/pos', permission: 'revenue' },
         { label: 'Kitchen Display', icon: ChefHat, link: '/kitchen', permission: 'orders' },
-        { label: 'Waiter App', icon: UtensilsCrossed, link: '/waiter-app', permission: 'orders' },
         { label: 'Takeaway', icon: ShoppingBag, link: '/takeaway', permission: 'orders' },
         { label: 'Billing', icon: FileText, link: '/billing', permission: 'revenue' },
         { label: 'Menu Management', icon: MenuIcon, link: '/menu-management', permission: 'menu' },
@@ -64,6 +65,7 @@ const Sidebar = ({ className, open, onClose }) => {
     const menuItems = allMenuItems.filter(item => {
         if (user?.role === 'ADMIN') return true;
         if (user?.role === 'OWNER') return true;
+        if (user?.role === 'SUPER_ADMIN') return true;
         if (user?.role === 'STAFF_MANAGEMENT') return item.permission === 'staff';
         return user?.permissions?.includes(item.permission);
     });
@@ -112,7 +114,7 @@ const Sidebar = ({ className, open, onClose }) => {
         >
             {/* Logo Section */}
             <div className="h-20 flex items-center px-6 relative justify-between">
-                <Link to={user?.role === 'OWNER' || user?.role === 'ADMIN' ? '/dashboard' : (user?.permissions?.includes('orders') ? '/orders' : '/dashboard')}>
+                <Link to={user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? '/dashboard' : (user?.permissions?.includes('orders') ? '/orders' : '/dashboard')}>
                     <Logo iconOnly={collapsed && !isPinned} className={(collapsed && !isPinned) ? "w-10 h-10" : "w-auto h-10"} />
                 </Link>
 
@@ -195,6 +197,36 @@ const Sidebar = ({ className, open, onClose }) => {
                     );
                 })}
             </div>
+
+            {/* Restaurant Code Display */}
+            {(user?.role === 'OWNER' || user?.role === 'ADMIN') && user?.restaurant?.code && (
+                <div className="px-4 pb-2">
+                    <div
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 transition-all group"
+                        onClick={() => {
+                            navigator.clipboard.writeText(user.restaurant.code);
+                            toast.success('Restaurant code copied!');
+                        }}
+                        title="Click to copy"
+                    >
+                        <Hash size={18} className="text-primary shrink-0" />
+                        <AnimatePresence mode="wait">
+                            {!((collapsed && !isPinned) && window.innerWidth >= 1024) && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className="flex items-center gap-2 flex-1 min-w-0"
+                                >
+                                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Code:</span>
+                                    <span className="font-black text-primary tracking-wider">{user.restaurant.code}</span>
+                                    <Copy size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            )}
 
             {/* Logout Section */}
             <div className="p-4 border-t border-border/40">

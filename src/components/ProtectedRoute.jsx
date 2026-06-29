@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, roles = [], permission }) => {
     }
 
     const hasRole = roles.length === 0 || roles.includes(user.role);
-    const hasPermission = !permission || user.permissions?.includes(permission) || user.role === 'OWNER' || user.role === 'ADMIN';
+    const hasPermission = !permission || user.permissions?.includes(permission) || user.role === 'OWNER' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
 
     if (!hasRole || !hasPermission) {
         console.warn('[ProtectedRoute] Access denied. Redirecting...', {
