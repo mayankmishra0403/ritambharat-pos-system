@@ -349,7 +349,7 @@ export const processPayment = async (req, res, next) => {
                 amount: `${order.total}`,
                 bill_url: billLink,
                 message
-            });
+            }, order.restaurant?._id || order.restaurant);
         }
 
         const changeDue = amountPaid ? Math.max(0, amountPaid - order.total) : 0;

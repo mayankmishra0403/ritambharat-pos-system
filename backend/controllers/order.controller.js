@@ -651,7 +651,7 @@ export const updateOrderPayment = async (req, res, next) => {
                     amount: `${order.total}`,
                     bill_url: billLink,
                     message
-                });
+                }, order.restaurant?._id || order.restaurant);
             }
         }
 

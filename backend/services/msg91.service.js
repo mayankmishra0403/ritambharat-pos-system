@@ -1,6 +1,12 @@
 import logger from '../utils/logger.js';
+import WhatsAppCredit from '../models/WhatsAppCredit.js';
+import CreditTransaction from '../models/CreditTransaction.js';
 
 const MSG91_API_URL = 'https://control.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/';
+
+const getCostPerMsg = () => {
+    return parseFloat(process.env.WHATSAPP_COST_PER_MSG) || 0.50;
+};
 
 const getConfig = () => {
     const authKey = process.env.MSG91_AUTH_KEY;
@@ -16,9 +22,69 @@ const getConfig = () => {
     return { authKey, integratedNumber };
 };
 
-export const sendCustomerWhatsApp = async (to, variables) => {
+const checkAndDeductCredit = async (restaurantId, recipient) => {
+    try {
+        const costPerMsg = getCostPerMsg();
+        let credit = await WhatsAppCredit.findOne({ restaurant: restaurantId });
+
+        if (!credit) {
+            credit = await WhatsAppCredit.create({
+                restaurant: restaurantId,
+                balance: 10,
+                totalCredited: 10
+            });
+            await CreditTransaction.create({
+                restaurant: restaurantId,
+                type: 'credit',
+                amount: 10,
+                balanceBefore: 0,
+                balanceAfter: 10,
+                messageType: 'initial_credit',
+                description: 'Initial free credits'
+            });
+        }
+
+        if (credit.balance < costPerMsg) {
+            logger.warn(`WhatsApp credit insufficient for restaurant ${restaurantId}: balance=₹${credit.balance}, cost=₹${costPerMsg}`);
+            return { success: false, reason: 'insufficient_credits', balance: credit.balance, cost: costPerMsg };
+        }
+
+        const balanceBefore = credit.balance;
+        credit.balance = Math.round((credit.balance - costPerMsg) * 100) / 100;
+        credit.totalUsed = Math.round((credit.totalUsed + costPerMsg) * 100) / 100;
+        await credit.save();
+
+        await CreditTransaction.create({
+            restaurant: restaurantId,
+            type: 'deduction',
+            amount: costPerMsg,
+            balanceBefore,
+            balanceAfter: credit.balance,
+            messageType: 'customer_bill',
+            recipient,
+            description: 'Customer bill WhatsApp'
+        });
+
+        return { success: true, balanceAfter: credit.balance };
+    } catch (error) {
+        logger.error(`Credit check/deduct error for restaurant ${restaurantId}: ${error.message}`);
+        return { success: false, reason: 'error', error: error.message };
+    }
+};
+
+export const sendCustomerWhatsApp = async (to, variables, restaurantId) => {
     const config = getConfig();
     if (!config) return false;
+
+    if (!restaurantId) {
+        logger.warn('sendCustomerWhatsApp called without restaurantId — skipping credit check');
+    } else {
+        const creditResult = await checkAndDeductCredit(restaurantId, to);
+        if (!creditResult.success) {
+            logger.warn(`Customer WhatsApp blocked: ${creditResult.reason} for restaurant ${restaurantId}`);
+            return false;
+        }
+    }
 
     const templateId = process.env.MSG91_WHATSAPP_TEMPLATE_ID;
 
