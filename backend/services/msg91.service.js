@@ -25,35 +25,48 @@ const getConfig = () => {
 const checkAndDeductCredit = async (restaurantId, recipient) => {
     try {
         const costPerMsg = getCostPerMsg();
-        const credit = await WhatsAppCredit.findOne({ restaurant: restaurantId });
 
+        const credit = await WhatsAppCredit.findOne({ restaurant: restaurantId });
         if (!credit) {
             logger.warn(`WhatsApp credit not found for restaurant ${restaurantId} — blocking send`);
             return { success: false, reason: 'no_credit_record', balance: 0, cost: costPerMsg };
         }
 
-        if (credit.balance < costPerMsg) {
-            logger.warn(`WhatsApp credit insufficient for restaurant ${restaurantId}: balance=₹${credit.balance}, cost=₹${costPerMsg}`);
-            return { success: false, reason: 'insufficient_credits', balance: credit.balance, cost: costPerMsg };
+        // Atomic update: only deduct if balance >= costPerMsg
+        const result = await WhatsAppCredit.findOneAndUpdate(
+            {
+                restaurant: restaurantId,
+                balance: { $gte: costPerMsg }
+            },
+            {
+                $inc: {
+                    balance: -costPerMsg,
+                    totalUsed: costPerMsg
+                }
+            },
+            { new: true }
+        );
+
+        if (!result) {
+            const current = await WhatsAppCredit.findOne({ restaurant: restaurantId });
+            logger.warn(`WhatsApp credit insufficient for restaurant ${restaurantId}: balance=₹${current?.balance || 0}, cost=₹${costPerMsg}`);
+            return { success: false, reason: 'insufficient_credits', balance: current?.balance || 0, cost: costPerMsg };
         }
 
-        const balanceBefore = credit.balance;
-        credit.balance = Math.round((credit.balance - costPerMsg) * 100) / 100;
-        credit.totalUsed = Math.round((credit.totalUsed + costPerMsg) * 100) / 100;
-        await credit.save();
+        const balanceBefore = Math.round((result.balance + costPerMsg) * 100) / 100;
 
         await CreditTransaction.create({
             restaurant: restaurantId,
             type: 'deduction',
             amount: costPerMsg,
             balanceBefore,
-            balanceAfter: credit.balance,
+            balanceAfter: result.balance,
             messageType: 'customer_bill',
             recipient,
             description: 'Customer bill WhatsApp'
         });
 
-        return { success: true, balanceAfter: credit.balance };
+        return { success: true, balanceAfter: result.balance };
     } catch (error) {
         logger.error(`Credit check/deduct error for restaurant ${restaurantId}: ${error.message}`);
         return { success: false, reason: 'error', error: error.message };
